@@ -31,7 +31,7 @@ flowchart TD
     lines(["source.lines()"]) --> entries["iter_entries<br/>one numbered entry"]
     entries --> sauce{"is_sauce<br/>heading says sauce,<br/>or names a mother<br/>in a sauce chapter?"}
     sauce -->|yes| terms["terms_in<br/>one Term per name"]
-    terms --> parent["resolve_parent<br/>opening paragraph only"]
+    terms --> parent["resolve_parent<br/>opening paragraph only,<br/>one mother or none"]
     parent --> cat(["Catalogue<br/>124 preparations<br/>95 unresolved"])
     sauce -->|no| drop(["stays out of the catalogue"])
     lines --> mothers["find_mothers<br/>whole body, once"]

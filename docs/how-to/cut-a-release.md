@@ -16,14 +16,15 @@ flowchart TD
         opens a release PR carrying the version bump and the CHANGELOG entry.
         The update-lockfile job then commits uv.lock onto the same release PR,
         because release-please bumps pyproject.toml and leaves the lockfile
-        behind. Merging the release PR makes release-please cut a tag and a
-        GitHub Release. What happens next depends on which token cut it. Cut
-        with RELEASE_PLEASE_TOKEN, the tag and the release trigger two
-        workflows in parallel: publish.yml builds and uploads to PyPI over
-        OIDC, and docs.yml builds the site and deploys it to GitHub Pages. Cut
-        with GITHUB_TOKEN, the tag still exists, but GitHub starts no workflow
-        from it, so neither PyPI nor Pages updates. release-please.yml detects
-        that case and fails its own run rather than reporting success.
+        behind. Merging the release PR makes release-please cut a GitHub
+        Release as a draft. A draft carries no tag, so nothing downstream
+        runs. release-please.yml fails its own run when no personal access
+        token is set, because a lockfile commit pushed with GITHUB_TOKEN does
+        not re-run CI, and the release PR then shows a passing run for an
+        earlier commit. You edit the draft notes and publish the release by
+        hand. Publishing creates the tag, which starts two workflows in
+        parallel: publish.yml builds and uploads to PyPI over OIDC, and
+        docs.yml builds the site and deploys it to GitHub Pages.
     }
 
     pr["Pull request"] --> ci["ci.yml<br/>lint, types, structure, test"]
@@ -32,9 +33,11 @@ flowchart TD
     rp --> relpr["Release PR<br/>version bump and CHANGELOG"]
     relpr --> lock["update-lockfile job<br/>commits uv.lock"]
     lock --> mergerel["Merge the release PR"]
-    mergerel --> token{"Which token<br/>cut the release?"}
-    token -->|RELEASE_PLEASE_TOKEN| cut["Tag and GitHub Release<br/>start the next workflows"]
-    token -->|GITHUB_TOKEN| stall(["Tag exists.<br/>No workflow starts.<br/>The run fails on purpose."])
+    mergerel --> pat{"Is RELEASE_PLEASE_TOKEN<br/>set?"}
+    pat -->|no| stall(["The run fails on purpose.<br/>CI never re-ran on the<br/>lockfile commit."])
+    pat -->|yes| draft(["Draft release.<br/>No tag yet.<br/>Nothing downstream runs."])
+    draft --> human["You edit the notes,<br/>then publish by hand"]
+    human --> cut["Publishing creates the tag"]
     cut --> pypi(["publish.yml<br/>build, then PyPI over OIDC"])
     cut --> pages(["docs.yml<br/>mkdocs build, then Pages"])
 ```

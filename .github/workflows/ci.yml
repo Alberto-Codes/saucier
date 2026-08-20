@@ -57,6 +57,8 @@ jobs:
         run: uv run python scripts/check_versions.py
       - name: Dotted references resolve
         run: uv run python scripts/check_doc_refs.py
+      - name: Published counts match the parser
+        run: uv run python scripts/check_census.py
       - name: Strict-mode pages obey the writing system
         run: uv run python scripts/check_prose.py
       - name: Rejected name stays out
