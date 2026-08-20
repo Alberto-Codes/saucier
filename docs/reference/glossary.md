@@ -60,22 +60,31 @@ in the same change.
     sauce".
 
 **Derivation**
-:   The relation from a preparation to the mother its opening paragraph names.
-    Not "relationship", "edge", or "link".
+:   The relation from a preparation to the candidate its opening paragraph
+    states. Not "relationship", "edge", or "link".
+
+**Candidate**
+:   One name a stated parent may use: any name of a catalogued preparation,
+    or a mother. Not "option" or "match".
+
+**Chain**
+:   The derivations walked from a preparation through its parents. A chain
+    terminates, because no preparation is its own ancestor. Not "lineage" or
+    "path".
 
 **Resolved**
 :   A preparation whose derivation the parser found. Its `parent` is set.
 
 **Unresolved**
-:   A preparation whose opening paragraph names no mother, or names more than
-    one. Its `parent` is `None`. This states an absence of evidence and never
-    evidence of absence. Not "missing", "unknown", or "no parent" — each of
-    those reads as a fact about the preparation rather than about what the
-    source said.
+:   A preparation whose opening paragraph states no candidate, or states more
+    than one. Its `parent` is `None`. This states an absence of evidence and
+    never evidence of absence. Not "missing", "unknown", or "no parent" —
+    each of those reads as a fact about the preparation rather than about
+    what the source said.
 
 **Ambiguous**
-:   An opening paragraph that names two or more mothers. The source stated
-    both and chose neither, so the preparation is unresolved. Not
+:   An opening paragraph that states two or more candidates. The source
+    stated both and chose neither, so the preparation is unresolved. Not
     "conflicting" or "uncertain", which describe the parser rather than the
     text.
 

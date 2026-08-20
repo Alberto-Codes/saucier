@@ -88,10 +88,43 @@ def test_sauces_served_with_something_are_still_sauces(escoffier):
 
 
 @pytest.mark.corpus
-def test_a_recorded_parent_is_always_a_mother_the_source_named(escoffier):
+def test_a_recorded_parent_is_always_in_the_catalogue(escoffier):
     for preparation in escoffier.preparations:
         if preparation.parent is not None:
-            assert preparation.parent in escoffier.mothers
+            found = escoffier.find(preparation.parent)
+            assert found is not None or preparation.parent in escoffier.mothers
+
+
+@pytest.mark.corpus
+def test_marrow_sauce_resolves_to_bordelaise(escoffier):
+    """Entry 45 says "only a variety of the Bordelaise", at line 1895."""
+    marrow = escoffier.find(ConceptId("marrow-sauce"))
+    assert marrow is not None
+    assert marrow.parent == "sauce-bordelaise"
+    children = escoffier.children_of(ConceptId("bordelaise"))
+    assert marrow in children
+
+
+@pytest.mark.corpus
+def test_bordelaise_stays_unresolved_on_the_half_glaze_trap(escoffier):
+    """Entry 32 names half-glaze, which encodes a derivation but states none."""
+    bordelaise = escoffier.find(ConceptId("bordelaise"))
+    assert bordelaise is not None
+    assert bordelaise.title == "SAUCE BORDELAISE"
+    assert bordelaise.parent is None
+
+
+@pytest.mark.corpus
+def test_every_chain_of_parents_terminates(escoffier):
+    """No preparation is its own ancestor, however long the chain."""
+    for preparation in escoffier.preparations:
+        walked = {preparation.ref.entry}
+        current = preparation
+        while current is not None and current.parent is not None:
+            current = escoffier.find(current.parent)
+            if current is not None:
+                assert current.ref.entry not in walked, preparation.title
+                walked.add(current.ref.entry)
 
 
 @pytest.mark.corpus

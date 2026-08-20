@@ -3,17 +3,22 @@ import pytest
 from saucier.domain.errors import NoPreparationsFound
 from saucier.domain.types import Language, to_concept_id
 from saucier.services.extraction import (
+    Candidate,
     extract,
     find_mothers,
     is_sauce,
     iter_entries,
     names_a_sauce,
+    parent_candidates,
     resolve_parent,
     sauce_chapters,
     terms_in,
 )
 
 MOTHERS = frozenset(to_concept_id(m) for m in ["espagnole", "veloute", "bechamel"])
+
+CANDIDATES = {m: Candidate(m, m, mother=True) for m in MOTHERS}
+"""Mothers alone, the smallest candidate set a source can declare."""
 
 
 class FakeSource:
@@ -154,36 +159,159 @@ def test_entries_split_on_the_numbered_heading():
 @pytest.mark.unit
 def test_a_preparation_is_never_its_own_parent():
     own = frozenset({to_concept_id("espagnole")})
-    assert resolve_parent("Dissolve the espagnole.", own, MOTHERS) is None
+    assert resolve_parent("Dissolve the espagnole.", own, CANDIDATES) is None
 
 
 @pytest.mark.unit
 def test_only_the_opening_paragraph_establishes_a_base():
     body = "Reduce the wine.\n\nUnlike the espagnole, this sauce is not despumated."
-    assert resolve_parent(body, frozenset(), MOTHERS) is None
+    assert resolve_parent(body, frozenset(), CANDIDATES) is None
 
 
 @pytest.mark.unit
 def test_a_base_named_in_the_opening_paragraph_resolves():
     body = "Add one pint of espagnole to the reduction.\n\nSeason and strain."
-    assert resolve_parent(body, frozenset(), MOTHERS) == "espagnole"
+    assert resolve_parent(body, frozenset(), CANDIDATES) == "espagnole"
 
 
 @pytest.mark.unit
 def test_two_bases_in_one_paragraph_resolve_to_nothing():
     body = "Boil one pint of fish velouté or, failing this, Béchamel sauce."
-    assert resolve_parent(body, frozenset(), MOTHERS) is None
+    assert resolve_parent(body, frozenset(), CANDIDATES) is None
 
 
 @pytest.mark.unit
 def test_a_mother_must_appear_as_a_whole_word():
-    mothers = frozenset({to_concept_id("tomato")})
-    assert resolve_parent("Peel a pound of tomatoes.", frozenset(), mothers) is None
+    candidates = {
+        to_concept_id("tomato"): Candidate(
+            to_concept_id("tomato"), to_concept_id("tomato"), mother=True
+        )
+    }
+    assert resolve_parent("Peel a pound of tomatoes.", frozenset(), candidates) is None
 
 
 @pytest.mark.unit
 def test_an_entry_with_no_prose_resolves_to_nothing():
-    assert resolve_parent("", frozenset(), MOTHERS) is None
+    assert resolve_parent("", frozenset(), CANDIDATES) is None
+
+
+@pytest.mark.unit
+def test_a_catalogued_preparation_may_be_a_parent():
+    candidates = {
+        to_concept_id("sauce-bordelaise"): Candidate(
+            32, to_concept_id("sauce-bordelaise"), False
+        )
+    }
+    body = "Follow the proportions indicated under Sauce Bordelaise."
+    assert resolve_parent(body, frozenset({45}), candidates) == "sauce-bordelaise"
+
+
+@pytest.mark.unit
+def test_a_name_split_across_a_full_stop_is_not_a_statement():
+    candidates = {
+        to_concept_id("sauce-bordelaise"): Candidate(
+            32, to_concept_id("sauce-bordelaise"), False
+        )
+    }
+    body = "Strain the sauce. Bordelaise butter follows in the next entry."
+    assert resolve_parent(body, frozenset(), candidates) is None
+
+
+@pytest.mark.unit
+def test_a_longer_stated_name_shadows_the_mother_inside_it():
+    candidates = dict(CANDIDATES)
+    candidates[to_concept_id("lenten-espagnole")] = Candidate(
+        24, to_concept_id("lenten-espagnole"), False
+    )
+    body = "Add one pint of Lenten Espagnole, and allow to cook."
+    assert resolve_parent(body, frozenset(), candidates) == "lenten-espagnole"
+
+
+@pytest.mark.unit
+def test_a_mother_stated_by_its_entry_name_records_the_mother():
+    candidates = dict(CANDIDATES)
+    candidates[to_concept_id("bechamel")] = Candidate(
+        28, to_concept_id("bechamel"), mother=True
+    )
+    candidates[to_concept_id("bechamel-sauce")] = Candidate(
+        28, to_concept_id("bechamel-sauce"), False
+    )
+    body = "Add one pint of Béchamel Sauce and reduce."
+    assert resolve_parent(body, frozenset(), candidates) == "bechamel"
+
+
+@pytest.mark.unit
+def test_a_run_inside_the_entry_own_name_states_no_parent():
+    candidates = {
+        to_concept_id("horse-radish"): Candidate(
+            119, to_concept_id("horse-radish"), False
+        )
+    }
+    own = frozenset({138, to_concept_id("horse-radish-sauce")})
+    body = "Add one lb. of finely-rasped horse-radish and one pint of cream."
+    assert resolve_parent(body, own, candidates) is None
+
+
+@pytest.mark.unit
+def test_candidates_come_from_the_catalogue_and_the_mothers():
+    source = FakeSource(
+        [
+            "The basic sauces: Espagnole.",
+            "22—BROWN SAUCE",
+            "Reduce the wine.",
+            "",
+            "23—MADEIRA SAUCE",
+            "Add espagnole.",
+        ]
+    )
+    candidates = parent_candidates(extract(source))
+    assert candidates[to_concept_id("madeira-sauce")] == Candidate(
+        23, to_concept_id("madeira-sauce"), False
+    )
+    assert candidates[to_concept_id("espagnole")].mother is True
+
+
+@pytest.mark.unit
+def test_two_preparations_deriving_from_each_other_resolve_to_nothing():
+    source = FakeSource(
+        [
+            "22—ONION SAUCE",
+            "Blend with the caper sauce.",
+            "",
+            "23—CAPER SAUCE",
+            "Blend with the onion sauce.",
+        ]
+    )
+    first, second = extract(source).preparations
+    assert first.parent is None
+    assert second.parent is None
+
+
+@pytest.mark.unit
+def test_a_chain_of_stated_parents_terminates():
+    source = FakeSource(
+        [
+            "22—ONION SAUCE",
+            "Reduce the wine.",
+            "",
+            "23—CAPER SAUCE",
+            "Add the onion sauce.",
+            "",
+            "24—MARROW SAUCE",
+            "A variety of the caper sauce.",
+        ]
+    )
+    catalogue = extract(source)
+    onion, caper, marrow = catalogue.preparations
+    assert onion.parent is None
+    assert caper.parent == "onion-sauce"
+    assert marrow.parent == "caper-sauce"
+    walked = set()
+    current = marrow
+    while current is not None and current.parent is not None:
+        assert current.ref.entry not in walked
+        walked.add(current.ref.entry)
+        current = catalogue.find(current.parent)
 
 
 @pytest.mark.unit

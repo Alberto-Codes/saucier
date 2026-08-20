@@ -8,7 +8,7 @@ hide:
 Structured procedure extraction from culinary sources.
 
 `saucier` reads a cookbook and returns a catalogue. Each preparation carries
-its terms, the language of each term, the mother it derives from, and the
+its terms, the language of each term, the parent it derives from, and the
 source line the claim came from. No model runs.
 
 <div class="sc-specimen">
@@ -43,21 +43,26 @@ them out of that sentence. Nobody supplied the list.
 ## The number this release is judged on
 
 <div class="sc-census">
-<div class="sc-census__bar" role="img" aria-label="Of 124 preparations, 29 resolve to a mother and 95 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
+<div class="sc-census__bar" role="img" aria-label="Of 124 preparations, 51 resolve to a stated parent and 73 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
 <ul class="sc-census__key">
 <li><b>124</b> preparations</li>
-<li><b>29</b> resolved</li>
-<li><b>95</b> unresolved</li>
+<li><b>51</b> resolved</li>
+<li><b>73</b> unresolved</li>
 </ul>
 </div>
 
-95 preparations state no mother in their prose. The parser records those as
+73 preparations state no base in their prose. The parser records those as
 unresolved and does not guess at them. The hatched share is what the source
 declined to say, not what the extraction failed to find. Lowering that count
 by guessing would be the one unrecoverable mistake here, so the number is
 published rather than hidden.
 
-An entry that names two mothers counts as unresolved. `SHRIMP SAUCE` says
+A parent may be any catalogued preparation, not only a mother. Marrow Sauce
+says it is "only a variety of the Bordelaise", so it resolves to Bordelaise.
+Bordelaise itself states no base, and stays unresolved, so a derivation tree
+can root in an unresolved sauce.
+
+An entry that states two bases counts as unresolved. `SHRIMP SAUCE` says
 "fish velouté or, failing this, Béchamel". The source declined to choose, so
 the parser declines too.
 
@@ -66,8 +71,8 @@ $ uv run saucier parse
 source      escoffier-1907
 mothers     bechamel, espagnole, hollandaise, tomato, veloute
 sauces      124
-derived     29 linked to a mother
-unresolved  95 state no base in their prose
+derived     51 linked to a stated parent
+unresolved  73 state no base in their prose
 ```
 
 ## Where to go

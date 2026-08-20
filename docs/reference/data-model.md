@@ -4,10 +4,10 @@ Every entity is a frozen dataclass. Nothing in the domain performs IO.
 
 ## How one source becomes a catalogue
 
-`saucier.services.extraction` makes every entity below in one pass.
-`find_mothers` and `sauce_chapters` run before the filter, and the parent
-rule reads the mothers too. The five mothers and the three sauce chapters are
-therefore read out of the source, not supplied to it.
+`saucier.services.extraction` makes every entity below in two passes. The
+first pass reads the mothers, the sauce chapters, and every kept entry. The
+second pass resolves each parent against every name the first pass produced.
+The candidates are therefore read out of the source, not supplied to it.
 
 ```mermaid
 flowchart TD
@@ -22,23 +22,26 @@ flowchart TD
         itself says sauce, and otherwise keeps it only when the heading names a
         mother inside a sauce chapter. A rejected entry stays out of the
         catalogue. terms_in splits a kept heading into one language-tagged Term
-        per alternative name. resolve_parent reads the opening paragraph only,
-        and sets the parent to the single mother that paragraph names, or to
-        None when it names none or names more than one. The result is a
-        Catalogue of 124 preparations, 29 resolved and 95 unresolved.
+        per alternative name. parent_candidates collects every name of every
+        kept preparation, plus the mothers. resolve_parent reads the opening
+        paragraph only, and sets the parent to the single candidate that
+        paragraph states, or to None when it states none or states more than
+        one. A cycle of stated parents is cleared. The result is a
+        Catalogue of 124 preparations, 51 resolved and 73 unresolved.
     }
 
     lines(["source.lines()"]) --> entries["iter_entries<br/>one numbered entry"]
     entries --> sauce{"is_sauce<br/>heading says sauce,<br/>or names a mother<br/>in a sauce chapter?"}
     sauce -->|yes| terms["terms_in<br/>one Term per name"]
-    terms --> parent["resolve_parent<br/>opening paragraph only,<br/>one mother or none"]
-    parent --> cat(["Catalogue<br/>124 preparations<br/>95 unresolved"])
+    terms --> names["parent_candidates<br/>every kept name"]
+    names --> parent["resolve_parent<br/>opening paragraph only,<br/>one candidate or none"]
+    parent --> cat(["Catalogue<br/>124 preparations<br/>73 unresolved"])
     sauce -->|no| drop(["stays out of the catalogue"])
     lines --> mothers["find_mothers<br/>whole body, once"]
     lines --> chapters["sauce_chapters<br/>chapter titles"]
     mothers --> sauce
     chapters --> sauce
-    mothers --> parent
+    mothers --> names
 ```
 
 <details markdown="1">
@@ -57,11 +60,15 @@ flowchart TD
 6. A rejected entry stays out of the catalogue.
 7. `terms_in` splits a kept heading into one `Term` per alternative name, each
    tagged with its language.
-8. `resolve_parent` reads the opening paragraph only. It sets the parent to
-   the single mother that paragraph names. It sets `None` when the paragraph
-   names none, and also when it names more than one.
-9. The result is a `Catalogue` of 124 preparations. 29 resolve to a mother and
-   95 are unresolved.
+8. `parent_candidates` collects every name a stated parent may use. The names
+   are every term of every kept preparation, plus the mothers.
+9. `resolve_parent` reads the opening paragraph only. It sets the parent to
+   the single candidate that paragraph states. It sets `None` when the
+   paragraph states none, and also when it states more than one.
+10. A cycle of stated parents is cleared, so no preparation is its own
+    ancestor.
+11. The result is a `Catalogue` of 124 preparations. 51 resolve to a stated parent
+    and 73 are unresolved.
 
 </details>
 
@@ -117,13 +124,18 @@ two editions of one book number their entries differently.
 One numbered entry. Carries its `title`, its `terms`, its unparsed `body`,
 its `ref`, and its `parent`.
 
-`parent` is `None` when the source states no mother. That is "unresolved", not
-"has no mother". The distinction matters, and the parser never guesses across
+`parent` may name a mother or any catalogued preparation. When the opening
+paragraph states a mother, the mother concept is recorded. Otherwise the
+parent preparation's own concept is. Chains never cycle, because the
+extractor clears every link on a cycle.
+
+`parent` is `None` when the source states no base. That is "unresolved", not
+"has no parent". The distinction matters, and the parser never guesses across
 it. `parent` has no default, so every construction site states the absence
 rather than inheriting it.
 
-An entry whose opening paragraph names two mothers is also unresolved. The
-source named both and chose neither, so the parser records no choice.
+An entry whose opening paragraph states two candidates is also unresolved.
+The source named both and chose neither, so the parser records no choice.
 
 ## `Catalogue`
 
