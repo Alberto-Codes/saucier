@@ -42,9 +42,10 @@ shows.
 **Stay on `mkdocs` 1.x with `mkdocs-material`, and pin an upper bound on every
 documentation dependency.**
 
-The mkdocstrings chain this project depends on — `mkdocs-gen-files`,
-`mkdocs-literate-nav`, `mkdocs-section-index` — targets MkDocs 1.x. Moving off
-it means moving all of them at once, for no benefit the site needs today.
+The mkdocstrings chain this project depends on targets MkDocs 1.x. That chain
+is `mkdocs-gen-files`, `mkdocs-literate-nav`, and `mkdocs-section-index`.
+Moving off it means moving all of them at once, for no benefit the site needs
+today.
 
 Upper bounds are set on every entry rather than on `mkdocs` alone. A caret-free
 floor on a package whose ecosystem is mid-split invites a surprise major
