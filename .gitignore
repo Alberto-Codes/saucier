@@ -7,6 +7,8 @@ dist/
 build/
 .pytest_cache/
 .ruff_cache/
-corpus/*.txt
-corpus/*.json
-!corpus/.gitkeep
+# Derived artifacts are reproducible from corpus/ and are not tracked.
+# Source material small enough to commit lives in corpus/ and IS tracked,
+# so that a clone runs with no fetch step and every reader gets identical
+# bytes. Large or restrictively licensed corpora get a fetch script instead.
+data/
