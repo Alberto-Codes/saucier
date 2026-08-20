@@ -18,6 +18,18 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+# MkDocs 1.x is unmaintained and MkDocs 2.0 will break every plugin and
+# theme, so both bounds are deliberate. See docs/adr/0001-docs-stack.md.
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.7,<10",
+    "mkdocs-gen-files>=0.6,<1",
+    "mkdocs-literate-nav>=0.6,<1",
+    "mkdocs-section-index>=0.3,<1",
+    "mkdocstrings[python]>=1.0,<2",
+]
+
 [project.scripts]
 saucier = "saucier.adapters.driving.cli:main"
 

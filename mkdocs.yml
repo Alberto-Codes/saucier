@@ -1,0 +1,105 @@
+site_name: saucier
+site_description: Structured procedure extraction from culinary sources.
+site_url: https://alberto-codes.github.io/saucier/
+repo_url: https://github.com/Alberto-Codes/saucier
+repo_name: Alberto-Codes/saucier
+copyright: "Copyright &copy; 2026 Alberto-Codes &mdash; MIT License"
+
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.tooltips
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Alberto-Codes/saucier
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/saucier/
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          inventories:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_style: google
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            separate_signature: true
+            signature_crossrefs: true
+            modernize_annotations: true
+            line_length: 88
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            show_category_heading: true
+            merge_init_into_class: true
+            docstring_section_style: table
+            docstring_options:
+              ignore_init_summary: true
+
+nav:
+  - Home: index.md
+  - Tutorial:
+      - First run: tutorial/first-run.md
+  - How-to:
+      - Add a source: how-to/add-a-source.md
+  - Reference:
+      - CLI: reference/cli.md
+      - Data model: reference/data-model.md
+      - Glossary: reference/glossary.md
+      - API: reference/api/
+  - Explanation:
+      - Why no model yet: explanation/why-no-model-yet.md
+      - Why the layers: explanation/hexagon.md
+  - Decisions:
+      - The documentation stack: adr/0001-docs-stack.md
+
+markdown_extensions:
+  - abbr
+  - def_list
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
