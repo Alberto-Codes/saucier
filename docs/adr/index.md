@@ -12,7 +12,7 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0001: The documentation stack](0001-docs-stack.md). Why this site is
   pinned on both sides, and what to watch.
 - [ADR-0002: An unresolved parent is recorded as absent, never
-  inferred](0002-unresolved-is-not-none.md). Why 102 preparations stay
+  inferred](0002-unresolved-is-not-none.md). Why 95 preparations stay
   unresolved, and why raising that number by guessing fails a test.
 - [ADR-0003: Culinary terms carry a language tag and are never
   translated](0003-terms-are-never-translated.md). Why *mole* is not "sauce",
@@ -26,3 +26,6 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0006: Storage arrives in stages](0006-storage-arrives-in-stages.md).
   Why each store waits for the previous one to fail, and why SQLite rather
   than DuckDB.
+- [ADR-0007: The source decides what counts as a
+  sauce](0007-the-source-classifies-its-own-contents.md). Why the catalogue
+  fell from 166 entries to 124, and why an ambiguous base resolves to nothing.

@@ -67,10 +67,17 @@ in the same change.
 :   A preparation whose derivation the parser found. Its `parent` is set.
 
 **Unresolved**
-:   A preparation whose opening paragraph names no mother. Its `parent` is
-    `None`. This states an absence of evidence and never evidence of absence.
-    Not "missing", "unknown", or "no parent" — each of those reads as a fact
-    about the preparation rather than about what the source said.
+:   A preparation whose opening paragraph names no mother, or names more than
+    one. Its `parent` is `None`. This states an absence of evidence and never
+    evidence of absence. Not "missing", "unknown", or "no parent" — each of
+    those reads as a fact about the preparation rather than about what the
+    source said.
+
+**Ambiguous**
+:   An opening paragraph that names two or more mothers. The source stated
+    both and chose neither, so the preparation is unresolved. Not
+    "conflicting" or "uncertain", which describe the parser rather than the
+    text.
 
 ## Extraction
 
@@ -81,6 +88,11 @@ in the same change.
 **Provenance**
 :   The `SourceRef` every preparation carries: source, entry number, and
     line. Not "citation" or "reference".
+
+**Sauce chapter**
+:   A chapter the source itself titles as sauces. Escoffier has three. An
+    entry that does not say "sauce" in its own heading qualifies only inside
+    one. Not "section" or "sauce section".
 
 ## Names this project does not use
 

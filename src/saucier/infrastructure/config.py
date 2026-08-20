@@ -1,5 +1,9 @@
 """Where things live. One place, so no other module hardcodes a path.
 
+Discovery walks up for a directory holding `corpus/`. It raises when it
+finds none, rather than falling back to the working directory and reporting
+a missing file under a path the caller never chose.
+
 Examples:
     Locate the committed corpus from anywhere in the tree:
 
@@ -18,6 +22,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+
+from saucier.domain.errors import ProjectRootNotFound
 
 ESCOFFIER = "escoffier-1907"
 """Source id for Escoffier's 'A Guide to Modern Cookery', Gutenberg 71395."""
@@ -45,17 +51,26 @@ class Paths:
     root: Path
 
     @classmethod
-    def discover(cls) -> Paths:
-        """Find the project root by walking up from this file.
+    def discover(cls, start: Path | None = None) -> Paths:
+        """Find the project root by walking up from a starting file.
+
+        Args:
+            start: File to walk up from, this module when omitted.
 
         Returns:
             Paths rooted at the directory containing `corpus/`.
+
+        Raises:
+            ProjectRootNotFound: If no ancestor holds `corpus/`. Saucier
+                reads a committed corpus, so a tree without one is a
+                situation to report, not to guess a root for.
         """
-        here = Path(__file__).resolve()
+        here = (start or Path(__file__)).resolve()
         for parent in here.parents:
             if (parent / "corpus").is_dir():
                 return cls(root=parent)
-        return cls(root=Path.cwd())
+        msg = f"no corpus/ directory above {here}. Run saucier from a clone"
+        raise ProjectRootNotFound(msg)
 
     @property
     def corpus(self) -> Path:

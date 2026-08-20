@@ -16,9 +16,9 @@ $ cd saucier && uv sync
 $ uv run saucier parse
 source      escoffier-1907
 mothers     bechamel, espagnole, hollandaise, tomato, veloute
-sauces      166
-derived     64 linked to a mother
-unresolved  102 state no base in their prose
+sauces      124
+derived     29 linked to a mother
+unresolved  95 state no base in their prose
 ```
 
 The five mothers were not supplied. Escoffier names them in his own text, and
@@ -27,18 +27,23 @@ the parser reads them out of it.
 ```console
 $ uv run saucier tree espagnole
 BROWN SAUCE OR ESPAGNOLE  [espagnole]
-├── LENTEN ESPAGNOLE  (en)
+├── LENTEN ESPAGNOLE  (fr)
 ├── GENEVOISE SAUCE  (en)
 ├── ORDINARY POIVRADE SAUCE  (en)
 └── POIVRADE SAUCE FOR VENISON  (en)
 ```
 
-## The interesting number is 102
+## The interesting number is 95
 
-Two thirds of these preparations never state what they are built on.
+Three quarters of these preparations never state what they are built on.
 Escoffier wrote for a reader who already knew, so he did not write it down.
 That gap is the point: it is the measured bar that anything cleverer has to
 beat. See [why there is no model in this yet](docs/explanation/why-no-model-yet.md).
+
+The catalogue holds 124 entries, not every sauce in the book. An entry gets
+in when its own heading says "sauce", or when it names a mother inside a
+chapter Escoffier titles as sauces. Both tests read the source. Neither
+guesses.
 
 ## Documentation
 

@@ -123,6 +123,7 @@ nav:
       - ADR-0004 Corpus and derived data: adr/0004-corpus-is-committed-data-is-derived.md
       - ADR-0005 Layers and dependencies: adr/0005-hexagon-and-no-runtime-dependencies.md
       - ADR-0006 Storage in stages: adr/0006-storage-arrives-in-stages.md
+      - ADR-0007 The source classifies itself: adr/0007-the-source-classifies-its-own-contents.md
 
 markdown_extensions:
   - abbr
