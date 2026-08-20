@@ -64,7 +64,7 @@ jobs:
       - name: Docstrings are present
         run: uv run interrogate
       - name: Docstrings are complete
-        run: uv run docvet check src
+        run: uv run docvet check --all
       - name: The documentation site builds
         run: |
           uv sync --locked --extra docs
