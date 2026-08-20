@@ -17,7 +17,7 @@ Examples:
 
     ```console
     $ uv run python scripts/check_banned_terms.py
-    allowed 2 occurrences in 2 allowlisted files
+    allowed N occurrences in M allowlisted files
     ```
 """
 
@@ -169,9 +169,9 @@ def main() -> int:
         print(line)
     if failures:
         print(
-            f"{len(failures)} banned-term failure(s). The tool renamed to "
-            "saucier (, ). Issue  ruled the sweep. Extend "
-            "ALLOWLIST only for a file whose subject is the old name.",
+            f"{len(failures)} banned-term failure(s). The tool is named "
+            "saucier. Use the glossary term. Extend ALLOWLIST only for a "
+            "file whose subject is the old name.",
             file=sys.stderr,
         )
         return 1

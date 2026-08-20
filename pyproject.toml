@@ -152,6 +152,16 @@ type = "forbidden"
 source_modules = ["saucier.services"]
 forbidden_modules = ["saucier.adapters", "saucier.infrastructure"]
 
+[[tool.importlinter.contracts]]
+name = "Ports import domain only"
+type = "forbidden"
+source_modules = ["saucier.ports"]
+forbidden_modules = [
+    "saucier.services",
+    "saucier.adapters",
+    "saucier.infrastructure",
+]
+
 # --------------------------------------------------------------------------- #
 # Pytest
 # --------------------------------------------------------------------------- #

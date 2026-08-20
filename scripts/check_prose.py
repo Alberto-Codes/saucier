@@ -5,17 +5,19 @@ drifts across a long series, so the mechanical rules are checked rather
 than trusted: no semicolons, at most one em-dash per paragraph, sentences
 within the word cap, and no marketing adjectives.
 
-Only strict-mode surfaces are gated. Explanation pages are flavored mode,
-where range and analogy are allowed, so they are left alone. Fenced code
-blocks and inline code are skipped everywhere, because a semicolon in a
-shell snippet is not prose.
+The gate covers the markdown surfaces listed in `STRICT`. Code comments,
+docstrings, CLI help, and error messages are strict mode too, and are not
+yet gated here. Explanation pages are flavored mode, where range and
+analogy are allowed, so they are left alone. Fenced code blocks and inline
+code are skipped everywhere, because a semicolon in a shell snippet is not
+prose.
 
 Examples:
     Run against the strict-mode pages:
 
     ```console
     $ uv run python scripts/check_prose.py
-    checked 3 files
+    checked N files
     ```
 """
 
@@ -96,6 +98,11 @@ def prose_paragraphs(text: str) -> list[str]:
 
     Returns:
         Paragraphs of prose, with inline code and link targets removed.
+
+    Raises:
+        ValueError: If a code fence is never closed. The rest of the page
+            would be skipped silently, and the gate would report success on
+            prose it never read.
     """
     units: list[str] = []
     buffer: list[str] = []
@@ -120,6 +127,9 @@ def prose_paragraphs(text: str) -> list[str]:
         if stripped.strip():
             buffer.append(stripped.strip())
     flush()
+    if fenced:
+        msg = "unbalanced code fence, so the rest of the page went unchecked"
+        raise ValueError(msg)
     return [u for u in units if u]
 
 
@@ -172,6 +182,11 @@ def main() -> int:
     """
     root = Path(__file__).resolve().parent.parent
     files = strict_files(root)
+    if not files:
+        # A gate that scans nothing must fail loudly, not pass silently —
+        # a renamed page would otherwise disable it.
+        print("FAIL: no strict-mode pages found")
+        return 1
     failed = False
     for path in files:
         for paragraph in prose_paragraphs(path.read_text(encoding="utf-8")):
