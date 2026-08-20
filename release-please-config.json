@@ -13,15 +13,45 @@
           "path": "src/saucier/__init__.py"
         }
       ],
+      "draft": true,
+      "pull-request-header": "Pre-flight for a release cut. The release is created as a **draft**, so nothing reaches PyPI or Pages until it is published by hand.\n\n- [ ] The version above is the one intended. If not, do not merge.\n- [ ] `uv run saucier parse` still prints the counts quoted in `README.md` and `docs/index.md`. Those numbers are load-bearing and go stale silently.\n- [ ] The post this tag belongs to is drafted, so the release notes can link it.\n- [ ] `uv.lock` was updated by the `update-lockfile` job below.\n",
+      "pull-request-footer": "After merging: edit the draft release to say what this tag is in the series and how to run it, link the post, then publish. Publishing creates the tag, which triggers PyPI and the documentation deploy.",
       "changelog-sections": [
-        { "type": "feat", "section": "Features" },
-        { "type": "fix", "section": "Fixes" },
-        { "type": "perf", "section": "Performance" },
-        { "type": "refactor", "section": "Refactoring" },
-        { "type": "docs", "section": "Documentation" },
-        { "type": "test", "section": "Tests", "hidden": true },
-        { "type": "chore", "section": "Chores", "hidden": true },
-        { "type": "ci", "section": "CI", "hidden": true }
+        {
+          "type": "feat",
+          "section": "Features"
+        },
+        {
+          "type": "fix",
+          "section": "Fixes"
+        },
+        {
+          "type": "perf",
+          "section": "Performance"
+        },
+        {
+          "type": "refactor",
+          "section": "Refactoring"
+        },
+        {
+          "type": "docs",
+          "section": "Documentation"
+        },
+        {
+          "type": "test",
+          "section": "Tests",
+          "hidden": true
+        },
+        {
+          "type": "chore",
+          "section": "Chores",
+          "hidden": true
+        },
+        {
+          "type": "ci",
+          "section": "CI",
+          "hidden": true
+        }
       ]
     }
   }
