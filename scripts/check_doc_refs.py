@@ -51,6 +51,9 @@ def _resolves(ref: str) -> bool:
         if importlib.util.find_spec(ref) is not None:
             return True
     except ModuleNotFoundError:
+        # Not a module. That is the common case for an attribute reference
+        # such as `saucier.domain.models.Catalogue`, so fall through to the
+        # attribute check below rather than reporting the reference broken.
         pass
     parent, _, attr = ref.rpartition(".")
     try:

@@ -1,0 +1,13 @@
+name: saucier CodeQL config
+
+queries:
+  - uses: security-and-quality
+
+query-filters:
+  # `py/ineffectual-statement` fires on every `...` body in a `typing.Protocol`
+  # method. That is the idiomatic form for a protocol, so the query reports one
+  # finding per port method and will do so for every port added. Ruff's B018
+  # covers genuinely useless expressions and correctly exempts `...`, so
+  # nothing is lost by excluding this one query.
+  - exclude:
+      id: py/ineffectual-statement
