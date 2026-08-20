@@ -9,6 +9,7 @@ docs_dir: docs
 
 theme:
   name: material
+  custom_dir: overrides
   palette:
     - scheme: slate
       toggle:
@@ -21,16 +22,29 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
+  favicon: assets/favicon.svg
+  logo: assets/logo.svg
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
     - navigation.top
+    - navigation.tracking
+    - toc.follow
     - navigation.instant
     - navigation.footer
     - search.highlight
     - search.suggest
     - content.code.copy
+    - content.code.annotate
     - content.tooltips
+    - announce.dismiss
+
+extra_css:
+  - stylesheets/theme.css
 
 extra:
   social:
@@ -74,19 +88,24 @@ plugins:
 nav:
   - Home: index.md
   - Tutorial:
+      - tutorial/index.md
       - First run: tutorial/first-run.md
   - How-to:
+      - how-to/index.md
       - Add a source: how-to/add-a-source.md
   - Reference:
+      - reference/index.md
       - CLI: reference/cli.md
       - Data model: reference/data-model.md
       - Glossary: reference/glossary.md
       - API: reference/api/
   - Explanation:
+      - explanation/index.md
       - Why no model yet: explanation/why-no-model-yet.md
       - Why the layers: explanation/hexagon.md
   - Decisions:
-      - The documentation stack: adr/0001-docs-stack.md
+      - adr/index.md
+      - ADR-0001 Documentation stack: adr/0001-docs-stack.md
 
 markdown_extensions:
   - abbr
@@ -94,10 +113,29 @@ markdown_extensions:
   - admonition
   - attr_list
   - md_in_html
+  - footnotes
+  - tables
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.keys
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.snippets:
+      # Resolved against the project root, not docs_dir.
+      base_path: [docs]
+      auto_append:
+        - includes/abbreviations.md
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
+      # Emits a `.language-<lang>` class on the wrapper, which the stylesheet
+      # uses to mark console output as the evidence it is.
+      pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.tabbed:
       alternate_style: true
