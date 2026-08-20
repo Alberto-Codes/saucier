@@ -25,7 +25,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run yamllint -c .yamllint.yaml .
       - uses: raven-actions/actionlint@v2
-      - run: uv run uv-secure
+      - run: uv audit --preview-features audit-command
       - run: uv cache prune --ci
 
   types:

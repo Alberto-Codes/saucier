@@ -130,9 +130,9 @@ repos:
         stages: [pre-push]
         types: [python]
 
-      - id: uv-secure
+      - id: uv-audit
         name: dependency audit
-        entry: uv run uv-secure
+        entry: uv audit --preview-features audit-command
         language: system
         pass_filenames: false
         stages: [pre-push]
