@@ -7,15 +7,53 @@ hide:
 
 Structured procedure extraction from culinary sources.
 
-Reads a cookbook and returns a catalogue. Each preparation carries its names,
-the language of each name, the mother it derives from, and the source line the
-claim came from. No model runs. Every output is traceable to the text.
+`saucier` reads a cookbook and returns a catalogue. Each preparation carries
+its terms, the language of each term, the mother it derives from, and the
+source line the claim came from. No model runs.
 
-<p class="sc-stat" markdown>
-<strong class="sc-figure">102</strong>
-<span class="sc-caption">preparations out of 166 state no mother in their
-prose. That gap is the measured bar, not a shortfall.</span>
-</p>
+<div class="sc-specimen">
+<p class="sc-specimen__label">One preparation, as the catalogue holds it</p>
+<p class="sc-term"><span class="sc-term__surface">BÉARNAISE TOMATÉE SAUCE</span><span class="sc-term__lang">fr</span></p>
+<p class="sc-term"><span class="sc-term__surface">CHORON SAUCE</span><span class="sc-term__lang">en</span></p>
+<p class="sc-specimen__rel"><span class="sc-specimen__key">derives from</span><span class="sc-mother" data-mother="tomato">tomato</span></p>
+<p class="sc-specimen__ref"><span class="sc-specimen__key">source</span> escoffier-1907 &nbsp;·&nbsp; <span class="sc-specimen__key">entry</span> <b>64</b> &nbsp;·&nbsp; <span class="sc-specimen__key">line</span> <b>2114</b></p>
+</div>
+
+One preparation, two terms, two languages. Neither term is translated into the
+other, and both are kept exactly as Escoffier set them. `BÉARNAISE` folds to
+`bearnaise` to give the concept its id, and the accented surface form is what
+the catalogue stores. The citation is the point: entry 64 at line 2114 is a
+line you can open in `corpus/` and read.
+
+## The five mothers
+
+Escoffier names his own foundational sauces in his own text. The parser reads
+them out of that sentence. Nobody supplied the list.
+
+<ul class="sc-mothers">
+<li class="sc-mother" data-mother="bechamel">bechamel</li>
+<li class="sc-mother" data-mother="espagnole">espagnole</li>
+<li class="sc-mother" data-mother="hollandaise">hollandaise</li>
+<li class="sc-mother" data-mother="tomato">tomato</li>
+<li class="sc-mother" data-mother="veloute">veloute</li>
+</ul>
+
+## The number this release is judged on
+
+<div class="sc-census">
+<div class="sc-census__bar" role="img" aria-label="Of 166 preparations, 64 resolve to a mother and 102 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
+<ul class="sc-census__key">
+<li><b>166</b> preparations</li>
+<li><b>64</b> resolved</li>
+<li><b>102</b> unresolved</li>
+</ul>
+</div>
+
+102 preparations state no mother in their prose. The parser records those as
+unresolved and does not guess at them. The hatched share is what the source
+declined to say, not what the extraction failed to find. Raising that count by
+guessing would be the one unrecoverable mistake here, so the number is
+published rather than hidden.
 
 ```console
 $ uv run saucier parse
@@ -26,46 +64,28 @@ derived     64 linked to a mother
 unresolved  102 state no base in their prose
 ```
 
-The five mothers were not supplied. Escoffier names his own base sauces in the
-text, and the parser reads them out of that sentence.
+## Where to go
 
-<div class="grid cards" markdown>
+<div class="sc-pointers" markdown>
 
--   :material-play-circle:{ .lg .middle } **Start here**
+[First run](tutorial/first-run.md)
+:   Clone the repository and print a derivation tree from a 1907 cookbook. No
+    GPU, no key, no database, no network.
 
-    ---
+[Add a source](how-to/add-a-source.md)
+:   Point the extractor at another public-domain book, and find out whether
+    the entry pattern fits it.
 
-    Clone it and print a sauce family tree from a 1907 cookbook. No GPU, no
-    key, no database, no network.
-
-    [:octicons-arrow-right-24: First run](tutorial/first-run.md)
-
--   :material-tools:{ .lg .middle } **Point it somewhere else**
-
-    ---
-
-    Add a public-domain source, write an adapter, and find out whether the
-    entry pattern fits.
-
-    [:octicons-arrow-right-24: How-to guides](how-to/index.md)
-
--   :material-book-open-variant:{ .lg .middle } **Look something up**
-
-    ---
-
-    Commands, the data model, the glossary, and the API generated from the
+[Reference](reference/index.md)
+:   The commands, the data model, the glossary, and the API generated from the
     docstrings.
 
-    [:octicons-arrow-right-24: Reference](reference/index.md)
+[Explanation](explanation/index.md)
+:   Why a parser comes before a model, why four layers on 900 lines, and what
+    the unresolved count is for.
 
--   :material-lightbulb-on:{ .lg .middle } **Understand the choices**
-
-    ---
-
-    Why a parser comes before a model, why four layers on a small codebase,
-    and what the unresolved count is for.
-
-    [:octicons-arrow-right-24: Explanation](explanation/index.md)
+[Decisions](adr/index.md)
+:   The architecture decision records, each with a status and a date.
 
 </div>
 

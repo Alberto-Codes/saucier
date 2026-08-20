@@ -1,97 +1,505 @@
 /* ------------------------------------------------------------------------- *
- * saucier — a reduction palette.
+ * saucier — a critical edition.
  *
- * Burgundy for the wine a brown sauce is built on, copper for the pan.
- * Default Material indigo says nothing about the subject, and a docs site
- * that looks templated reads as one.
+ * This project is a book about a book. It reads a printed 1907 reference work
+ * and emits a catalogue in which every claim cites an entry and a line. The
+ * design language is therefore bibliographic rather than culinary: paper and
+ * ink, hairline rules, a single rubric for editorial marks, and no rounded
+ * corners. Sauce colour appears in exactly one place, on the five mothers,
+ * where it carries data rather than decoration.
+ *
+ * Two typefaces do two jobs, and the split is the whole idea:
+ *   Newsreader (serif)   — what the source says. Titles, surface forms.
+ *   IBM Plex Mono        — what the parser produced. Refs, tags, figures.
+ *   IBM Plex Sans        — the documentation's own voice. Body copy.
  * ------------------------------------------------------------------------- */
 
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap");
+
 :root {
-  --sc-wine:        #7B2D26;
-  --sc-wine-deep:   #5C1F1A;
-  --sc-copper:      #C77D3F;
-  --sc-copper-lit:  #E8B27D;
-  --sc-cream:       #FBF6EF;
-  --sc-char:        #191310;
+  /* Chrome. The wine is the one editorial colour, and it is the same value
+     in both schemes so the site has one identity rather than two. */
+  --sc-wine:        #52201A;
+  --sc-rubric:      #7A2A24;
+  --sc-rubric-lit:  #E2988C;
+
+  /* Paper */
+  --sc-paper:       #FBFAF7;
+  --sc-paper-sunk:  #EDE8DF;
+  --sc-ink:         #191714;
+  --sc-ink-soft:    #5B544C;
+  --sc-rule-light:  #DCD6CA;
+  --sc-rule:        #BDB4A3;
+
+  /* Ink */
+  --sc-dark:        #131110;
+  --sc-dark-sunk:   #1C1917;
+  --sc-bone:        #EAE5DD;
+  --sc-bone-soft:   #A79E93;
+  --sc-rule-dk-lt:  #3A352F;
+  --sc-rule-dk:     #4A443C;
+
+  /* The five mothers, in the colour the sauce actually is. Used only where a
+     mother is named, always beside its name, never as the only signal. */
+  --sc-m-bechamel:    #F2EAD9;
+  --sc-m-veloute:     #E0C088;
+  --sc-m-espagnole:   #6B4423;
+  --sc-m-hollandaise: #EBB63C;
+  --sc-m-tomato:      #B23A2B;
+
+  --sc-display: "Newsreader", Georgia, "Times New Roman", serif;
 }
 
-/* Light ------------------------------------------------------------------- */
+/* Paper ------------------------------------------------------------------- */
 [data-md-color-scheme="default"] {
-  --md-primary-fg-color:         var(--sc-wine);
-  --md-primary-fg-color--light:  #9A4038;
-  --md-primary-fg-color--dark:   var(--sc-wine-deep);
-  --md-accent-fg-color:          #A85A22;
-  --md-default-bg-color:         var(--sc-cream);
-  --md-typeset-a-color:          #A0392F;
-  --md-code-bg-color:            #F3EADD;
-  /* Copper at 3.04:1 on cream only just clears AA for large text. The stat
-     is the page's centrepiece, so it gets a darker copper with headroom. */
-  --sc-figure-color:             #93521C;
+  --md-primary-fg-color:          var(--sc-wine);
+  --md-primary-fg-color--light:   #6B2A22;
+  --md-primary-fg-color--dark:    #3C1712;
+  --md-primary-bg-color:          var(--sc-paper);
+  --md-accent-fg-color:           var(--sc-rubric);
+  --md-default-bg-color:          var(--sc-paper);
+  --md-default-fg-color:          var(--sc-ink);
+  --md-default-fg-color--light:   var(--sc-ink-soft);
+  --md-typeset-a-color:           var(--sc-rubric);
+  --md-code-bg-color:             var(--sc-paper-sunk);
+  --md-code-fg-color:             var(--sc-ink);
+  --md-footer-bg-color:           #241713;
+
+  --sc-surface:     var(--sc-paper-sunk);
+  --sc-hairline:    var(--sc-rule-light);
+  --sc-rule-strong: var(--sc-rule);
+  --sc-accent:      var(--sc-rubric);
+  --sc-muted:       var(--sc-ink-soft);
 }
 
-[data-md-color-scheme="slate"] {
-  --sc-figure-color:             var(--sc-copper);
-}
-
-/* Dark -------------------------------------------------------------------- */
+/* Ink --------------------------------------------------------------------- */
 [data-md-color-scheme="slate"] {
   --md-hue: 24;
-  --md-primary-fg-color:         #211814;
-  --md-primary-bg-color:         var(--sc-cream);
-  --md-accent-fg-color:          var(--sc-copper-lit);
-  --md-default-bg-color:         var(--sc-char);
-  --md-default-fg-color:         #EDE3D7;
-  --md-default-fg-color--light:  #C4B5A5;
-  --md-default-fg-color--lighter:#8A7A6B;
-  --md-typeset-a-color:          var(--sc-copper-lit);
-  --md-code-bg-color:            #221A15;
-  --md-code-fg-color:            #E3D6C6;
-  --md-footer-bg-color:          #120D0A;
+  --md-primary-fg-color:          var(--sc-wine);
+  --md-primary-fg-color--light:   #6B2A22;
+  --md-primary-fg-color--dark:    #3C1712;
+  --md-primary-bg-color:          var(--sc-bone);
+  --md-accent-fg-color:           var(--sc-rubric-lit);
+  --md-default-bg-color:          var(--sc-dark);
+  --md-default-fg-color:          var(--sc-bone);
+  --md-default-fg-color--light:   var(--sc-bone-soft);
+  --md-default-fg-color--lighter: var(--sc-bone-soft);
+  --md-typeset-a-color:           var(--sc-rubric-lit);
+  --md-code-bg-color:             var(--sc-dark-sunk);
+  --md-code-fg-color:             var(--sc-bone);
+  --md-footer-bg-color:           #0D0B0A;
+
+  --sc-surface:     var(--sc-dark-sunk);
+  --sc-hairline:    var(--sc-rule-dk-lt);
+  --sc-rule-strong: var(--sc-rule-dk);
+  --sc-accent:      var(--sc-rubric-lit);
+  --sc-muted:       var(--sc-bone-soft);
 }
 
-/* Typography --------------------------------------------------------------- */
+/* Typography -------------------------------------------------------------- */
+/* Headings take the serif. It is the source's voice, and it is the fastest
+   way to say that this is a reference work rather than a product page. */
 .md-typeset h1,
-.md-typeset h2 {
-  font-weight: 600;
-  letter-spacing: -0.015em;
+.md-typeset h2,
+.md-typeset h3 {
+  font-family: var(--sc-display);
+  font-weight: 500;
+  letter-spacing: -0.005em;
 }
 
 .md-typeset h1 {
   color: var(--md-default-fg-color);
+  font-weight: 600;
+  font-size: 2.1rem;
+  line-height: 1.15;
+  margin-bottom: 1.2rem;
 }
 
-/* A quiet rule under section headings, so long reference pages have rhythm. */
+/* A rule under section headings. Printed reference works separate sections
+   with a rule, not with whitespace alone. */
 .md-typeset h2 {
-  padding-bottom: 0.3rem;
-  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--sc-hairline);
+  font-size: 1.4rem;
 }
 
-/* Terminal output ---------------------------------------------------------- */
-/* Console blocks are the evidence in this project. Give them a copper edge
-   so a reader's eye lands on the numbers rather than on the prose. */
-.md-typeset .language-console.highlight,
-.md-typeset .language-console > pre {
-  border-left: 3px solid var(--sc-copper);
-  border-radius: 0 0.2rem 0.2rem 0;
-}
-
-/* Tables ------------------------------------------------------------------- */
-.md-typeset table:not([class]) th {
-  background: var(--md-default-fg-color--lightest);
+.md-typeset h3 {
+  font-size: 1.15rem;
   font-weight: 600;
 }
 
-/* Grid cards on the landing page ------------------------------------------- */
-.md-typeset .grid.cards > ul > li {
-  border-radius: 0.4rem;
-  transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+/* Body copy sits a little wider than Material's default measure, because
+   these pages carry long definition lists that read badly when cramped. */
+.md-typeset {
+  font-size: 0.78rem;
+  line-height: 1.72;
 }
 
-.md-typeset .grid.cards > ul > li:hover,
-.md-typeset .grid.cards > ul > li:focus-within {
-  border-color: var(--sc-copper);
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.16);
-  transform: translateY(-1px);
+/* Links are marked with a rule under the text, the way a citation is. */
+.md-typeset a {
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+/* Terminal output ---------------------------------------------------------- */
+/* Console blocks are the evidence in this project. A rule on the left marks
+   them as quoted machine output rather than as code to copy. */
+.md-typeset .language-console.highlight,
+.md-typeset .language-console > pre {
+  border-left: 2px solid var(--sc-accent);
+  border-radius: 0;
+}
+
+.md-typeset pre > code {
+  border-radius: 0;
+}
+
+.md-typeset code {
+  border-radius: 0;
+  font-size: 0.86em;
+}
+
+/* Tables ------------------------------------------------------------------- */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--sc-hairline);
+  border-radius: 0;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--sc-surface);
+  border-bottom: 1px solid var(--sc-rule-strong);
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The specimen ------------------------------------------------------------- */
+/* One real preparation, rendered the way the parser holds it. This is the
+   landing page's argument: not a claim about the catalogue, but a row of it,
+   with the citation that makes the row checkable by hand. */
+.sc-specimen {
+  border: 1px solid var(--sc-rule-strong);
+  background: var(--md-default-bg-color);
+  padding: 1.4rem 1.5rem 0;
+  margin: 1.8rem 0;
+}
+
+.sc-specimen__label {
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sc-muted);
+  margin: 0 0 0.9rem;
+}
+
+/* Each term keeps its own surface form and its own language tag. Nothing is
+   translated here, and the layout is built so that nothing can be. */
+.sc-term {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin: 0 0 0.5rem;
+}
+
+.sc-term__surface {
+  font-family: var(--sc-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.sc-term__lang {
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sc-muted);
+  border: 1px solid var(--sc-hairline);
+  padding: 0.08rem 0.34rem;
+  flex: none;
+}
+
+.sc-specimen__rel {
+  margin: 1rem 0 0;
+  font-size: 0.75rem;
+}
+
+.sc-specimen__key {
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sc-muted);
+  margin-right: 0.5rem;
+}
+
+/* The citation. Mono, because the parser wrote it, and it is the part a
+   reader is invited to check against `corpus/`. */
+.sc-specimen__ref {
+  margin: 1.1rem -1.5rem 0;
+  padding: 0.6rem 1.5rem;
+  border-top: 1px solid var(--sc-hairline);
+  background: var(--sc-surface);
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.68rem;
+  color: var(--sc-muted);
+}
+
+.sc-specimen__ref b {
+  color: var(--md-default-fg-color);
+  font-weight: 500;
+}
+
+/* Mother marks ------------------------------------------------------------- */
+/* The dot carries the sauce's own colour. It is outlined so that it survives
+   a pale fill on pale paper, and the name is always present beside it, so
+   colour is never the only signal. */
+/* A mother is named here by its concept id, which the parser folded. That is
+   machine output, so it takes the mono face rather than the serif. */
+.sc-mother {
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+
+.sc-mother::before {
+  content: "";
+  display: inline-block;
+  width: 0.62em;
+  height: 0.62em;
+  margin-right: 0.34em;
+  border: 1px solid var(--sc-muted);
+  background: var(--sc-mother-fill, transparent);
+  vertical-align: baseline;
+}
+
+.sc-mother[data-mother="bechamel"]    { --sc-mother-fill: var(--sc-m-bechamel); }
+.sc-mother[data-mother="veloute"]     { --sc-mother-fill: var(--sc-m-veloute); }
+.sc-mother[data-mother="espagnole"]   { --sc-mother-fill: var(--sc-m-espagnole); }
+.sc-mother[data-mother="hollandaise"] { --sc-mother-fill: var(--sc-m-hollandaise); }
+.sc-mother[data-mother="tomato"]      { --sc-mother-fill: var(--sc-m-tomato); }
+
+.md-typeset ul.sc-mothers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  margin: 1rem 0 1.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.md-typeset ul.sc-mothers > li {
+  margin: 0;
+  list-style: none;
+}
+
+.md-typeset ul.sc-mothers > li::marker {
+  content: "";
+}
+
+/* The census --------------------------------------------------------------- */
+/* 166 preparations, split 64 to 102. The unresolved share is hatched rather
+   than left empty, because the source stating no mother is a reading, not a
+   hole. An empty bar would argue the opposite of what this project holds. */
+.sc-census {
+  margin: 1.6rem 0 1.8rem;
+}
+
+.sc-census__bar {
+  display: flex;
+  height: 0.6rem;
+  border: 1px solid var(--sc-rule-strong);
+}
+
+.sc-census__seg--resolved {
+  flex: 64;
+  background: var(--sc-accent);
+}
+
+.sc-census__seg--unresolved {
+  flex: 102;
+  border-left: 1px solid var(--sc-rule-strong);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--sc-accent) 0 1px,
+    transparent 1px 7px
+  );
+}
+
+.md-typeset ul.sc-census__key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.8rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.68rem;
+  color: var(--sc-muted);
+}
+
+.md-typeset ul.sc-census__key > li {
+  margin: 0;
+  list-style: none;
+}
+
+.md-typeset ul.sc-census__key > li::marker {
+  content: "";
+}
+
+.sc-census__key b {
+  color: var(--md-default-fg-color);
+  font-weight: 500;
+}
+
+/* Pointers ----------------------------------------------------------------- */
+/* The header already lists every section. This is not a second navigation, so
+   it is a list with a sentence each, not a grid of cards with an icon each. */
+.md-typeset .sc-pointers dl {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  margin: 1.4rem 0 0;
+  border-top: 1px solid var(--sc-hairline);
+}
+
+.md-typeset .sc-pointers dt {
+  margin: 0;
+  padding: 0.8rem 1.4rem 0.8rem 0;
+  border-bottom: 1px solid var(--sc-hairline);
+  font-family: var(--sc-display);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.md-typeset .sc-pointers dd {
+  margin: 0;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--sc-hairline);
+  color: var(--sc-muted);
+  font-size: 0.74rem;
+}
+
+@media screen and (max-width: 44.9em) {
+  .md-typeset .sc-pointers dl {
+    grid-template-columns: 1fr;
+  }
+
+  .md-typeset .sc-pointers dt {
+    padding: 0.8rem 0 0;
+    border-bottom: 0;
+  }
+
+  .md-typeset .sc-pointers dd {
+    padding: 0.15rem 0 0.8rem;
+  }
+}
+
+/* API reference ------------------------------------------------------------ */
+/* mkdocstrings ships GitHub's syntax palette: green modules, blue classes,
+   purple callables, orange attributes, pink parameters. That is six unrelated
+   hues on a two-colour site, and the badge text already names the kind. Keep
+   one distinction that a reader actually scans for, container against member,
+   and drop the rest of the colour. */
+[data-md-color-scheme="default"],
+[data-md-color-scheme="slate"] {
+  --doc-symbol-module-fg-color:    var(--sc-accent);
+  --doc-symbol-class-fg-color:     var(--sc-accent);
+  --doc-symbol-function-fg-color:  var(--sc-muted);
+  --doc-symbol-method-fg-color:    var(--sc-muted);
+  --doc-symbol-attribute-fg-color: var(--sc-muted);
+  --doc-symbol-parameter-fg-color: var(--sc-muted);
+
+  --doc-symbol-module-bg-color:    transparent;
+  --doc-symbol-class-bg-color:     transparent;
+  --doc-symbol-function-bg-color:  transparent;
+  --doc-symbol-method-bg-color:    transparent;
+  --doc-symbol-attribute-bg-color: transparent;
+  --doc-symbol-parameter-bg-color: transparent;
+}
+
+/* A printed label, not a pill. Squared off and ruled, like the language tag
+   on the landing page, so the two read as one system. */
+.doc-symbol {
+  border: 1px solid var(--sc-hairline);
+  border-radius: 0;
+  padding: 0.06rem 0.32rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.md-typeset .doc-object h2.doc-heading {
+  margin-top: 0.4rem;
+}
+
+/* `See Also:` becomes a `see-also` block, which is not one of Material's
+   known admonition types, so it falls back to the default blue. Retone it to
+   the rubric. Warning and danger keep their own colours, because those still
+   need to alarm. */
+.md-typeset :is(.admonition, details):is(.see-also, .info, .note) {
+  border-color: var(--sc-accent);
+  border-radius: 0;
+}
+
+.md-typeset
+  :is(.see-also, .info, .note)
+  > :is(.admonition-title, summary) {
+  background: color-mix(in srgb, var(--sc-accent) 10%, transparent);
+}
+
+.md-typeset
+  :is(.see-also, .info, .note)
+  > :is(.admonition-title, summary)::before {
+  background-color: var(--sc-accent);
+}
+
+/* The `Source code in ...` collapsibles are apparatus, not argument. Keep
+   them quiet so they do not compete with the documented symbol. */
+.md-typeset details.mkdocstrings-source {
+  border: 1px solid var(--sc-hairline);
+  border-radius: 0;
+}
+
+.md-typeset details.mkdocstrings-source > summary {
+  background: var(--sc-surface);
+  font-family: var(--md-code-font-family, monospace);
+  font-size: 0.66rem;
+}
+
+/* Glossary tooltips -------------------------------------------------------- */
+/* A dotted rule marks a defined term. Kept quiet, because these pages define
+   a term in nearly every sentence and a loud mark would stripe the page. */
+.md-typeset abbr[title] {
+  border-bottom: 1px dotted var(--sc-muted);
+  cursor: help;
+  text-decoration: none;
+}
+
+/* Header mark -------------------------------------------------------------- */
+/* The logo is inlined by `overrides/partials/logo.html` so it inherits
+   `currentColor`. The header is wine in both schemes, so name the light
+   foreground explicitly rather than relying on an inherited default. */
+.md-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.md-header__button.md-logo {
+  color: var(--sc-paper);
+  opacity: 1;
+}
+
+.md-header__button.md-logo :is(img, svg) {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.md-header__title {
+  font-family: var(--sc-display);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 /* Motion ------------------------------------------------------------------- */
@@ -105,64 +513,32 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-
-  .md-typeset .grid.cards > ul > li:hover,
-  .md-typeset .grid.cards > ul > li:focus-within {
-    transform: none;
-  }
 }
 
 /* Forced colours ----------------------------------------------------------- */
-/* Windows High Contrast drops backgrounds. Keep the console marker visible
-   as a border rather than relying on colour alone. */
+/* Windows High Contrast drops backgrounds. Every mark this stylesheet adds
+   carries a border as well as a fill, so each one survives the drop. */
 @media (forced-colors: active) {
   .md-typeset .language-console.highlight,
   .md-typeset .language-console > pre {
-    border-left: 3px solid CanvasText;
+    border-left: 2px solid CanvasText;
   }
 
-  .md-typeset .grid.cards > ul > li:focus-within {
-    outline: 2px solid Highlight;
+  .sc-specimen,
+  .sc-census__bar,
+  .sc-term__lang {
+    border-color: CanvasText;
   }
-}
 
-/* The number that carries the argument ------------------------------------- */
-.sc-stat {
-  margin: 1.4rem 0 1.6rem;
-}
+  .sc-census__seg--resolved {
+    background: CanvasText;
+  }
 
-.sc-figure {
-  display: block;
-  font-size: 2.6rem;
-  line-height: 1.05;
-  font-weight: 700;
-  color: var(--sc-figure-color, var(--sc-copper));
-  letter-spacing: -0.03em;
-}
+  .sc-census__seg--unresolved {
+    background: Canvas;
+  }
 
-.sc-figure + .sc-caption {
-  display: block;
-  color: var(--md-default-fg-color--light);
-  margin-bottom: 1.2rem;
-}
-
-/* Glossary tooltips -------------------------------------------------------- */
-.md-typeset abbr[title] {
-  border-bottom: 1px dotted var(--sc-copper);
-  cursor: help;
-  text-decoration: none;
-}
-
-/* Header mark -------------------------------------------------------------- */
-/* The logo is inlined by `overrides/partials/logo.html` so it inherits
-   `currentColor`. The header is dark in both schemes, so name the light
-   foreground explicitly rather than relying on an inherited default. */
-.md-header__button.md-logo {
-  color: var(--sc-cream);
-  opacity: 1;
-}
-
-.md-header__button.md-logo :is(img, svg) {
-  height: 1.5rem;
-  width: 1.5rem;
+  .sc-mother::before {
+    border-color: CanvasText;
+  }
 }

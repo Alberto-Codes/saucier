@@ -11,17 +11,24 @@ theme:
   name: material
   custom_dir: overrides
   palette:
+    # `custom` stops Material emitting its own colour rules, which are written
+    # with a two-attribute selector that outranks anything in `theme.css`.
+    # Without it the slate link colour stays Material indigo on a wine site.
     - scheme: slate
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
     - scheme: default
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
   font:
-    text: Roboto
-    code: Roboto Mono
+    text: IBM Plex Sans
+    code: IBM Plex Mono
   favicon: assets/favicon.svg
   logo: assets/logo.svg
   icon:
@@ -79,7 +86,11 @@ plugins:
             show_symbol_type_heading: true
             show_symbol_type_toc: true
             members_order: source
-            show_category_heading: true
+            # Category headings put "Attributes", "Classes" and
+            # "Methods:" into the table of contents beside the symbols
+            # themselves, which buries the names a reader is looking
+            # for. The symbol badges already name each kind.
+            show_category_heading: false
             merge_init_into_class: true
             docstring_section_style: table
             docstring_options:

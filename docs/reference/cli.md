@@ -13,7 +13,7 @@ Reads the committed source, extracts the catalogue, writes it to
 | `mothers` | Base preparations, as named by the source itself |
 | `sauces` | Preparations that qualified as sauces |
 | `derived` | Preparations linked to a base |
-| `unresolved` | Preparations whose prose names no base |
+| `unresolved` | Preparations whose prose names no mother |
 
 Exit codes: `0` on success, `2` when the source is unreadable or matches no
 entry pattern.
