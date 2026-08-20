@@ -15,6 +15,11 @@ jobs:
       pull-requests: write
     env:
       HAS_PAT: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
+    outputs:
+      prs_created: ${{ steps.release.outputs.prs_created }}
+      pr_branch: >-
+        ${{ steps.release.outputs.prs_created == 'true'
+        && fromJSON(steps.release.outputs.pr).headBranchName || '' }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -34,3 +39,33 @@ jobs:
           GITHUB_TOKEN. The tag will not trigger publish.yml. Set \
           RELEASE_PLEASE_TOKEN, then push the tag by hand."
           exit 1
+
+  # release-please bumps pyproject.toml but not uv.lock, which records the
+  # project version. Without this the release PR fails its own `uv lock
+  # --check`, and the failure looks like a lockfile problem rather than a
+  # release-tooling one.
+  update-lockfile:
+    needs: release-please
+    if: needs.release-please.outputs.prs_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          ref: ${{ needs.release-please.outputs.pr_branch }}
+      - uses: astral-sh/setup-uv@v7
+      - run: uv python install 3.12
+      - run: uv lock --upgrade-package saucier
+      - name: Commit if the lockfile moved
+        run: |
+          if git diff --quiet uv.lock; then
+            echo "uv.lock already matches the bumped version"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add uv.lock
+            git commit -m "chore(config): update uv.lock after version bump"
+            git push
+          fi
