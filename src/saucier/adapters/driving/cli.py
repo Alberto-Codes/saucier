@@ -1,7 +1,11 @@
 """Command line entry point.
 
 Uses `argparse` rather than a CLI framework so that the package has no
-runtime dependencies at all. A reader clones and runs; nothing is installed.
+runtime dependencies at all. A reader clones and runs, and nothing is
+installed.
+
+Three exit codes. Zero on success, `NOT_FOUND` when a lookup matches no
+preparation, and `FAILED` when a source or a store could not be read.
 
 Examples:
     Drive the interface in process:
@@ -20,6 +24,7 @@ See Also:
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
 
@@ -32,6 +37,12 @@ from saucier.services.extraction import extract
 
 BRANCH, LAST, PIPE, GAP = "├── ", "└── ", "│   ", "    "
 
+NOT_FOUND = 1
+"""Exit code when the catalogue holds no preparation under the given name."""
+
+FAILED = 2
+"""Exit code when a source or a store could not be read or written."""
+
 
 def _parse(_: argparse.Namespace) -> int:
     """Extract the catalogue from the committed source and store it.
@@ -40,20 +51,18 @@ def _parse(_: argparse.Namespace) -> int:
         _: Parsed arguments, unused.
 
     Returns:
-        Process exit code.
+        Zero. Failures raise instead.
     """
     catalogue = extract(escoffier_source())
-    catalogue_store().save(catalogue)
+    written = catalogue_store().save(catalogue)
 
-    total = len(catalogue.preparations)
-    unresolved = total - catalogue.resolved
     print(f"source      {catalogue.source_id}")
     print(f"mothers     {', '.join(sorted(catalogue.mothers))}")
-    print(f"sauces      {total}")
+    print(f"sauces      {len(catalogue.preparations)}")
     print(f"derived     {catalogue.resolved} linked to a mother")
-    print(f"unresolved  {unresolved} state no base in their prose")
+    print(f"unresolved  {catalogue.unresolved} state no base in their prose")
     print()
-    print(f"Wrote data/{catalogue.source_id}.json")
+    print(f"Wrote {os.path.relpath(written)}")
     print("Those unresolved entries are the honest score. A parser cannot")
     print("read a derivation the source never wrote down.")
     return 0
@@ -66,35 +75,46 @@ def _tree(args: argparse.Namespace) -> int:
         args: Parsed arguments carrying the root concept.
 
     Returns:
-        Process exit code.
+        Zero, or `NOT_FOUND` when nothing answers to the concept.
     """
-    catalogue = catalogue_store().load(ESCOFFIER)
     root = to_concept_id(args.concept)
+    catalogue = catalogue_store().load(ESCOFFIER)
     found = catalogue.find(root)
     if found is None and root not in catalogue.mothers:
         print(f"no preparation named {args.concept!r}", file=sys.stderr)
-        return 1
+        return NOT_FOUND
 
-    heading = found.title if found else args.concept
-    print(f"{heading}  [{root}]")
-    _print_children(catalogue, root, prefix="")
+    # The bracket names the concept whose children follow, so a heading
+    # drawn from a near match cannot pass itself off as the root.
+    print(f"{found.title if found else args.concept}  [{root}]")
+    _print_children(catalogue, root, prefix="", seen={root})
     return 0
 
 
-def _print_children(catalogue: Catalogue, parent: ConceptId, prefix: str) -> None:
+def _print_children(
+    catalogue: Catalogue, parent: ConceptId, prefix: str, seen: set[ConceptId]
+) -> None:
     """Print one level of derivations, then recurse.
 
     Args:
         catalogue: The catalogue being walked.
         parent: Concept whose children to print.
         prefix: Indentation carried down from the parent.
+        seen: Concepts already printed on this branch, so a cycle in the
+            recorded parents cannot recurse without end.
     """
     children = catalogue.children_of(parent)
     for position, child in enumerate(children):
         final = position == len(children) - 1
         languages = "/".join(sorted({t.language.value for t in child.terms}))
         print(f"{prefix}{LAST if final else BRANCH}{child.title}  ({languages})")
-        _print_children(catalogue, child.concept, prefix + (GAP if final else PIPE))
+        if child.concept not in seen:
+            _print_children(
+                catalogue,
+                child.concept,
+                prefix + (GAP if final else PIPE),
+                seen | {child.concept},
+            )
 
 
 def _show(args: argparse.Namespace) -> int:
@@ -104,22 +124,43 @@ def _show(args: argparse.Namespace) -> int:
         args: Parsed arguments carrying the concept to show.
 
     Returns:
-        Process exit code.
+        Zero, or `NOT_FOUND` when nothing answers to the concept.
     """
-    catalogue = catalogue_store().load(ESCOFFIER)
-    preparation = catalogue.find(to_concept_id(args.concept))
-    if preparation is None:
+    concept = to_concept_id(args.concept)
+    matches = catalogue_store().load(ESCOFFIER).matches(concept)
+    if not matches:
         print(f"no preparation named {args.concept!r}", file=sys.stderr)
-        return 1
+        return NOT_FOUND
 
+    preparation = matches[0]
     print(preparation.title)
     print(f"entry {preparation.ref.entry}, line {preparation.ref.line}")
     for term in preparation.terms:
         print(f"  term  {term.surface}  [{term.language.value}]  {term.concept}")
-    print(f"  parent  {preparation.parent or '(unresolved)'}")
+    print(
+        f"  parent  {'(unresolved)' if preparation.parent is None else preparation.parent}"
+    )
     print()
-    print(preparation.body[: args.chars])
+    print(_prose(preparation.body, args.chars))
+    if len(matches) > 1:
+        others = ", ".join(p.title for p in matches[1:])
+        print(f"\nAlso matching {args.concept!r}: {others}", file=sys.stderr)
     return 0
+
+
+def _prose(body: str, limit: int) -> str:
+    """Cut the prose to length, saying so when anything was cut.
+
+    Args:
+        body: The entry's prose.
+        limit: How many characters to print.
+
+    Returns:
+        The prose, with a note when it was truncated.
+    """
+    if len(body) <= limit:
+        return body
+    return f"{body[:limit]}...\n[{len(body) - limit} more characters, raise --chars to read them]"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -156,14 +197,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         argv: Arguments to parse, taken from the process when omitted.
 
     Returns:
-        Process exit code.
+        Zero on success, `NOT_FOUND` when a lookup misses, `FAILED` when a
+        source or store could not be read or written.
     """
     args = build_parser().parse_args(argv)
     try:
         return int(args.run(args))
     except SaucierError as exc:
         print(f"saucier: {exc}", file=sys.stderr)
-        return 2
+        return FAILED
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -10,9 +10,9 @@ Accepted.
 
 ## Context
 
-The parser reads 166 sauce preparations from Escoffier. It links 64 of them to
-a mother. The remaining 102 name no mother in their opening paragraph, so their
-`parent` field is `None`.
+The parser reads 124 sauce preparations from Escoffier. It links 29 of them to
+a mother. The remaining 95 name no mother in their opening paragraph, or name
+more than one, so their `parent` field is `None`.
 
 That number is the project's headline claim. It appears on the landing page, in
 the tutorial, in the README, and in the argument for why a model comes later.
@@ -24,7 +24,7 @@ not write it down. The knowledge exists. The sentence does not.
 
 A contributor improving parser coverage will reach for a heuristic. Mentioning
 a mother anywhere in the prose, matching an ingredient list, or asking a model
-would each raise the resolved count. Each would also convert 102 honest
+would each raise the resolved count. Each would also convert 95 honest
 absences into confident assertions, most of them unverifiable against the text.
 
 The failure is silent. Coverage improves, the tests still pass, and the

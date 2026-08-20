@@ -16,13 +16,13 @@ source line the claim came from. No model runs.
 <p class="sc-term"><span class="sc-term__surface">BÉARNAISE TOMATÉE SAUCE</span><span class="sc-term__lang">fr</span></p>
 <p class="sc-term"><span class="sc-term__surface">CHORON SAUCE</span><span class="sc-term__lang">en</span></p>
 <p class="sc-specimen__rel"><span class="sc-specimen__key">derives from</span><span class="sc-mother" data-mother="tomato">tomato</span></p>
-<p class="sc-specimen__ref"><span class="sc-specimen__key">source</span> escoffier-1907 &nbsp;·&nbsp; <span class="sc-specimen__key">entry</span> <b>64</b> &nbsp;·&nbsp; <span class="sc-specimen__key">line</span> <b>2114</b></p>
+<p class="sc-specimen__ref"><span class="sc-specimen__key">source</span> escoffier-1907 &nbsp;·&nbsp; <span class="sc-specimen__key">entry</span> <b>64</b> &nbsp;·&nbsp; <span class="sc-specimen__key">line</span> <b>2138</b></p>
 </div>
 
 One preparation, two terms, two languages. Neither term is translated into the
 other, and both are kept exactly as Escoffier set them. `BÉARNAISE` folds to
 `bearnaise` to give the concept its id, and the accented surface form is what
-the catalogue stores. The citation is the point: entry 64 at line 2114 is a
+the catalogue stores. The citation is the point: entry 64 at line 2138 is a
 line you can open in `corpus/` and read. The source is Escoffier's
 [*A Guide to Modern Cookery*](https://www.gutenberg.org/ebooks/71395), tracked
 here in full.
@@ -43,27 +43,31 @@ them out of that sentence. Nobody supplied the list.
 ## The number this release is judged on
 
 <div class="sc-census">
-<div class="sc-census__bar" role="img" aria-label="Of 166 preparations, 64 resolve to a mother and 102 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
+<div class="sc-census__bar" role="img" aria-label="Of 124 preparations, 29 resolve to a mother and 95 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
 <ul class="sc-census__key">
-<li><b>166</b> preparations</li>
-<li><b>64</b> resolved</li>
-<li><b>102</b> unresolved</li>
+<li><b>124</b> preparations</li>
+<li><b>29</b> resolved</li>
+<li><b>95</b> unresolved</li>
 </ul>
 </div>
 
-102 preparations state no mother in their prose. The parser records those as
+95 preparations state no mother in their prose. The parser records those as
 unresolved and does not guess at them. The hatched share is what the source
-declined to say, not what the extraction failed to find. Raising that count by
-guessing would be the one unrecoverable mistake here, so the number is
+declined to say, not what the extraction failed to find. Lowering that count
+by guessing would be the one unrecoverable mistake here, so the number is
 published rather than hidden.
+
+An entry that names two mothers counts as unresolved. `SHRIMP SAUCE` says
+"fish velouté or, failing this, Béchamel". The source declined to choose, so
+the parser declines too.
 
 ```console
 $ uv run saucier parse
 source      escoffier-1907
 mothers     bechamel, espagnole, hollandaise, tomato, veloute
-sauces      166
-derived     64 linked to a mother
-unresolved  102 state no base in their prose
+sauces      124
+derived     29 linked to a mother
+unresolved  95 state no base in their prose
 ```
 
 ## Where to go

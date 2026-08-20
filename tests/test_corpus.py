@@ -1,12 +1,18 @@
 """Tests against the committed Escoffier text.
 
 These lock in what the source actually says, so a parser change that quietly
-loses preparations fails here rather than in a blog post.
+loses preparations, or quietly gains some, fails here rather than in a blog
+post.
+
+The published counts live in `conftest.CENSUS`. Changing them is a deliberate
+act: update the README, the tutorial, and the documentation home page in the
+same commit, and say why in the changelog.
 """
 
 import pytest
 
 from saucier.domain.types import ConceptId
+from saucier.infrastructure.config import Paths
 
 
 @pytest.mark.corpus
@@ -17,8 +23,10 @@ def test_the_source_names_its_own_five_base_sauces(escoffier):
 
 
 @pytest.mark.corpus
-def test_the_catalogue_is_substantial(escoffier):
-    assert len(escoffier.preparations) > 100
+def test_the_published_census_still_holds(escoffier, census):
+    assert len(escoffier.preparations) == census.sauces
+    assert escoffier.resolved == census.derived
+    assert escoffier.unresolved == census.unresolved
 
 
 @pytest.mark.corpus
@@ -30,6 +38,13 @@ def test_espagnole_is_present_and_is_its_own_root(escoffier):
 
 
 @pytest.mark.corpus
+def test_every_mother_the_parser_prints_can_be_looked_up(escoffier):
+    for mother in escoffier.mothers:
+        found = escoffier.find(mother)
+        assert found is not None, f"{mother} is advertised but unreachable"
+
+
+@pytest.mark.corpus
 def test_french_terms_survive_untranslated(escoffier):
     bordelaise = escoffier.find(ConceptId("bordelaise"))
     assert bordelaise is not None
@@ -37,18 +52,57 @@ def test_french_terms_survive_untranslated(escoffier):
 
 
 @pytest.mark.corpus
-def test_every_preparation_is_traceable_to_a_line(escoffier):
-    assert all(p.ref.line > 0 and p.ref.entry > 0 for p in escoffier.preparations)
+def test_every_line_reference_lands_on_its_own_heading(escoffier):
+    """The provenance claim, checked the way a reader would check it."""
+    lines = Paths.discover().escoffier.read_text(encoding="utf-8").splitlines()
+    for preparation in escoffier.preparations:
+        found = lines[preparation.ref.line - 1]
+        assert found.startswith(f"{preparation.ref.entry}—"), (
+            f"entry {preparation.ref.entry} claims line {preparation.ref.line}, "
+            f"which reads {found!r}"
+        )
 
 
 @pytest.mark.corpus
 def test_no_dish_entries_leaked_into_the_sauce_catalogue(escoffier):
-    titles = [p.title.upper() for p in escoffier.preparations]
-    assert not [t for t in titles if " WITH " in t]
+    """Headings a reader can confirm are not sauces, by name."""
+    known_dishes = {
+        "BOMBE HOLLANDAISE",
+        "TOMATO SALAD",
+        "GRILLED TOMATOES",
+        "TOMATO JAM",
+        "SOLE A LA HOLLANDAISE",
+        "THE VELOUTÉS",
+        "VELOUTÉ AGNÈS SOREL",
+        "ASPARAGUS WITH VARIOUS SAUCES",
+    }
+    titles = {p.title for p in escoffier.preparations}
+    assert not titles & known_dishes
+
+
+@pytest.mark.corpus
+def test_sauces_served_with_something_are_still_sauces(escoffier):
+    titles = {p.title for p in escoffier.preparations}
+    assert "SOUBISE SAUCE WITH RICE" in titles
+    assert "EGG SAUCE WITH MELTED BUTTER" in titles
+
+
+@pytest.mark.corpus
+def test_a_recorded_parent_is_always_a_mother_the_source_named(escoffier):
+    for preparation in escoffier.preparations:
+        if preparation.parent is not None:
+            assert preparation.parent in escoffier.mothers
+
+
+@pytest.mark.corpus
+def test_an_ambiguous_base_is_left_unresolved(escoffier):
+    """`SHRIMP SAUCE` names velouté and Béchamel. The source chose neither."""
+    shrimp = escoffier.find(ConceptId("shrimp-sauce"))
+    assert shrimp is not None
+    assert shrimp.parent is None
 
 
 @pytest.mark.corpus
 def test_a_meaningful_share_stays_unresolved(escoffier):
-    """The honest score. A rise here means the parser started guessing."""
-    unresolved = len(escoffier.preparations) - escoffier.resolved
-    assert unresolved > 0
+    """The honest score. A fall here means the parser started guessing."""
+    assert escoffier.unresolved > len(escoffier.preparations) // 2

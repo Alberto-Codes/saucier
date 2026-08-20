@@ -9,7 +9,7 @@ a blog series, and each published post corresponds to an immutable tag.
 ## Project stances (do not flag these as issues)
 
 - **`parent = None` means the source stated no mother.** It never means the
-  preparation has none. 102 of 166 preparations are unresolved and that number
+  preparation has none. 95 of 124 preparations are unresolved and that number
   is correct. Do not suggest heuristics, fuzzy matching, or a model to raise
   it. A rule that resolves less and is right beats one that resolves more and
   sometimes guesses. `tests/test_corpus.py` fails if everything resolves.
@@ -55,8 +55,9 @@ a blog series, and each published post corresponds to an immutable tag.
   of evidence as evidence of absence.
 - A term normalised, translated, or stripped of its language tag.
 - A claim in the docs that no longer matches `uv run saucier parse` output. The
-  counts 166, 64 and 102 appear in `README.md` and `docs/index.md` and go stale
-  silently.
+  counts 124, 29 and 95 appear in `README.md`, `docs/index.md`, and the
+  tutorial. `tests/conftest.py` pins them, so a parser change fails there
+  first.
 - A new runtime dependency in `[project.dependencies]`.
 - An import that crosses a layer boundary in the wrong direction.
 - A docstring that describes behaviour the code no longer has.

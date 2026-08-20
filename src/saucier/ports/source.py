@@ -31,6 +31,7 @@ class SourceText(Protocol):
         ```python
         class Fixture:
             source_id = "fixture"
+            line_offset = 0
 
             def lines(self) -> list[str]:
                 return ["22—BROWN SAUCE", "body"]
@@ -40,6 +41,15 @@ class SourceText(Protocol):
     @property
     def source_id(self) -> str:
         """Stable identifier for this source document."""
+        ...
+
+    @property
+    def line_offset(self) -> int:
+        """Count of file lines removed from the front of the body.
+
+        Added to a body index to name a line in the file on disk, so a
+        reader can open the source and check a claim by hand.
+        """
         ...
 
     def lines(self) -> list[str]:

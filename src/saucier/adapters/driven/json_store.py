@@ -3,6 +3,11 @@
 JSON while a human still checks the parser's work by eye. It stops being the
 right answer the moment appending one record means rewriting the file.
 
+A write goes to a temporary file and is renamed over the target, so an
+interrupted run leaves the previous catalogue intact. A damaged file is
+reported as a domain error, because a derived file that will not parse is a
+situation to report, not a bug in the reader.
+
 Examples:
     Write a catalogue and read it back unchanged:
 
@@ -23,13 +28,14 @@ See Also:
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from saucier.domain.errors import SourceUnreadable
+from saucier.domain.errors import CatalogueUnwritable, SourceUnreadable
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
-from saucier.domain.types import ConceptId, Language
+from saucier.domain.types import ConceptId, Language, to_concept_id
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,7 +56,7 @@ class JsonCatalogueStore:
 
     directory: Path
 
-    def _path_for(self, source_id: str) -> Path:
+    def path_for(self, source_id: str) -> Path:
         """Resolve the file backing one source's catalogue.
 
         Args:
@@ -58,24 +64,49 @@ class JsonCatalogueStore:
 
         Returns:
             Path to that source's catalogue file.
+
+        Raises:
+            CatalogueUnwritable: If the source id is not a plain file name,
+                which would send the write outside the store.
         """
+        if source_id != Path(source_id).name or source_id in {"", ".", ".."}:
+            msg = f"source id is not a plain file name: {source_id!r}"
+            raise CatalogueUnwritable(msg)
         return self.directory / f"{source_id}.json"
 
-    def save(self, catalogue: Catalogue) -> None:
+    def save(self, catalogue: Catalogue) -> str:
         """Write a catalogue, replacing any previous one for its source.
+
+        Writes a temporary file and renames it over the target, so an
+        interrupted run leaves the previous catalogue intact rather than a
+        half-written one.
 
         Args:
             catalogue: The catalogue to persist.
+
+        Returns:
+            The path written.
+
+        Raises:
+            CatalogueUnwritable: If the directory or the file cannot be
+                written.
         """
-        self.directory.mkdir(parents=True, exist_ok=True)
+        path = self.path_for(catalogue.source_id)
         payload = {
             "source_id": catalogue.source_id,
             "mothers": sorted(catalogue.mothers),
             "preparations": [_as_dict(p) for p in catalogue.preparations],
         }
-        self._path_for(catalogue.source_id).write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-        )
+        rendered = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+        temporary = path.with_suffix(".json.tmp")
+        try:
+            self.directory.mkdir(parents=True, exist_ok=True)
+            temporary.write_text(rendered, encoding="utf-8")
+            os.replace(temporary, path)
+        except OSError as exc:
+            msg = f"cannot write catalogue to {path}: {exc}"
+            raise CatalogueUnwritable(msg) from exc
+        return str(path)
 
     def load(self, source_id: str) -> Catalogue:
         """Read back a previously saved catalogue.
@@ -87,23 +118,39 @@ class JsonCatalogueStore:
             The stored catalogue.
 
         Raises:
-            SourceUnreadable: If no catalogue is stored for that source.
+            SourceUnreadable: If no catalogue is stored for that source, or
+                the stored file is not readable, not JSON, or not shaped like
+                a catalogue.
         """
-        path = self._path_for(source_id)
+        path = self.path_for(source_id)
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except OSError as exc:
-            msg = f"no catalogue stored for {source_id} at {path}"
+            text = path.read_text(encoding="utf-8")
+        except FileNotFoundError as exc:
+            msg = f"no catalogue stored for {source_id} at {path}. Run `saucier parse`"
             raise SourceUnreadable(msg) from exc
-        return Catalogue(
-            source_id=payload["source_id"],
-            preparations=tuple(_from_dict(p) for p in payload["preparations"]),
-            mothers=frozenset(ConceptId(m) for m in payload["mothers"]),
-        )
+        except (OSError, UnicodeDecodeError) as exc:
+            msg = f"cannot read catalogue at {path}: {exc}"
+            raise SourceUnreadable(msg) from exc
+
+        try:
+            payload = json.loads(text)
+            return Catalogue(
+                source_id=payload["source_id"],
+                preparations=tuple(_from_dict(p) for p in payload["preparations"]),
+                mothers=frozenset(to_concept_id(m) for m in payload["mothers"]),
+            )
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            msg = (
+                f"catalogue at {path} is damaged: {exc}. Run `saucier parse` to rebuild"
+            )
+            raise SourceUnreadable(msg) from exc
 
 
 def _as_dict(preparation: Preparation) -> dict[str, Any]:
     """Render a preparation as JSON-safe primitives.
+
+    `concept` is written for a reader's convenience. It is derived from the
+    surface forms, so the loader recomputes it rather than trusting the file.
 
     Args:
         preparation: The preparation to render.
@@ -131,6 +178,9 @@ def _as_dict(preparation: Preparation) -> dict[str, Any]:
 def _from_dict(payload: dict[str, Any]) -> Preparation:
     """Rebuild a preparation from its JSON representation.
 
+    A `parent` of `null` is unresolved. Any other falsy value is malformed,
+    and raises rather than being read as an absence of evidence.
+
     Args:
         payload: A dictionary previously produced by `_as_dict`.
 
@@ -142,11 +192,7 @@ def _from_dict(payload: dict[str, Any]) -> Preparation:
     return Preparation(
         title=str(payload["title"]),
         terms=tuple(
-            Term(
-                surface=str(t["surface"]),
-                language=Language(t["language"]),
-                concept=ConceptId(str(t["concept"])),
-            )
+            Term(surface=str(t["surface"]), language=Language(t["language"]))
             for t in payload["terms"]
         ),
         body=str(payload["body"]),
@@ -155,5 +201,5 @@ def _from_dict(payload: dict[str, Any]) -> Preparation:
             entry=int(ref["entry"]),
             line=int(ref["line"]),
         ),
-        parent=ConceptId(str(parent)) if parent else None,
+        parent=None if parent is None else ConceptId(to_concept_id(str(parent))),
     )

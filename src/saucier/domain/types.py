@@ -5,6 +5,10 @@ every surface form carries the language it was written in, and equivalent
 surface forms across languages resolve to one language-independent concept
 identifier.
 
+A surface that folds to nothing raises `UnfoldableTerm` rather than
+returning an empty id, so an entry point reports it instead of carrying an
+unnamed concept forward.
+
 Examples:
     Fold two spellings of one term onto a single concept:
 
@@ -24,6 +28,8 @@ import re
 import unicodedata
 from enum import StrEnum
 from typing import NewType
+
+from saucier.domain.errors import UnfoldableTerm
 
 ConceptId = NewType("ConceptId", str)
 """Language-independent identifier for one culinary concept.
@@ -49,31 +55,34 @@ class Language(StrEnum):
 
     ENGLISH = "en"
     FRENCH = "fr"
-    SPANISH = "es"
 
 
 def to_concept_id(surface: str) -> ConceptId:
     """Fold a surface form into a language-independent concept identifier.
 
-    Strips diacritics and punctuation and lowercases, so that `Velouté` and
-    `veloute` reach the same id. This is deliberately crude: it resolves
-    orthographic variation only, never semantic equivalence across languages.
+    Strips diacritics, lowercases, and replaces every run of other
+    characters with a single hyphen, so that `Velouté` and `veloute` reach
+    the same id. This is deliberately crude: it resolves orthographic
+    variation only, never semantic equivalence across languages.
     Cross-language resolution is a later concern and needs evidence, not
     string folding.
 
+    Only Latin letters and digits survive the fold. A surface written in
+    another script folds to nothing and is rejected rather than guessed at.
+
     Args:
-        surface: A term as it appears in a source, in any language.
+        surface: A term as it appears in a source, in Latin script.
 
     Returns:
         The concept identifier for that surface form.
 
     Raises:
-        ValueError: If the surface form folds to an empty identifier.
+        UnfoldableTerm: If the surface form folds to an empty identifier.
     """
     decomposed = unicodedata.normalize("NFKD", surface.casefold())
     stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
     folded = re.sub(r"[^a-z0-9]+", "-", stripped).strip("-")
     if not folded:
         msg = f"surface form yields an empty concept id: {surface!r}"
-        raise ValueError(msg)
+        raise UnfoldableTerm(msg)
     return ConceptId(folded)

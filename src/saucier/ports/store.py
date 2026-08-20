@@ -26,16 +26,20 @@ class CatalogueStore(Protocol):
         Persist and restore through the contract:
 
         ```python
-        store.save(catalogue)
+        where = store.save(catalogue)
         assert store.load(catalogue.source_id) == catalogue
         ```
     """
 
-    def save(self, catalogue: Catalogue) -> None:
+    def save(self, catalogue: Catalogue) -> str:
         """Persist a catalogue, replacing any previous one for its source.
 
         Args:
             catalogue: The catalogue to persist.
+
+        Returns:
+            Where the catalogue went, for a caller to report. A path for a
+            file store, and whatever names the destination for any other.
         """
         ...
 

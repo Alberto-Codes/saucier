@@ -47,7 +47,8 @@ def farmer_source(paths: Paths | None = None) -> SourceText:
 ## Check whether the entry pattern fits
 
 `extract` raises `NoPreparationsFound` when a source numbers its entries
-differently. That is the expected failure, not a bug — Escoffier's
+differently. It raises the same error when the entries parse but none of them
+is a sauce. Both are expected failures, not bugs. Escoffier's
 `22—BROWN SAUCE OR ESPAGNOLE` form is specific to him.
 
 ```console
@@ -59,11 +60,19 @@ print(len(extract(farmer_source()).preparations))
 ```
 
 If that raises, the source needs its own `ENTRY` pattern. Do not loosen the
-existing one to fit both — a looser pattern silently admits garbage from the
+existing one to fit both. A looser pattern silently admits garbage from the
 source it was already working on.
+
+A source that does not divide itself into titled chapters has no sauce
+chapter, so `sauce_chapters` returns nothing and only headings that say
+"sauce" qualify. That resolves less, and it is right. See
+[ADR-0007](../adr/0007-the-source-classifies-its-own-contents.md).
 
 ## For a non-Gutenberg source
 
-Write a new driven adapter beside `gutenberg.py` satisfying `SourceText`:
-a `source_id` property and a `lines()` method returning body lines with the
-format's packaging removed. Nothing above the adapter layer changes.
+Write a new driven adapter beside `gutenberg.py` satisfying `SourceText`: a
+`source_id` property, a `line_offset` property, and a `lines()` method
+returning body lines with the format's packaging removed. `line_offset` is
+the count of file lines the adapter stripped before the body, so a recorded
+line number names a line in the file. Nothing above the adapter layer
+changes.
