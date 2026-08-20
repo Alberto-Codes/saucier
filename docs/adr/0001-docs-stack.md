@@ -17,15 +17,25 @@ site is not decoration here. It is what makes 74 existing references work.
 
 The MkDocs ecosystem split during 2026.
 
-- `mkdocs` last released 1.6.1 on 2024-08-30. Its maintainer announced a
-  version 2 that supports no existing theme, plugin, or configuration file.
-- `mkdocs-material` remains actively maintained and caps `mkdocs<2` from
-  version 9.7.5, so an accidental upgrade cannot break a build.
-- `properdocs` is a community continuation of MkDocs 1.x and a drop-in
-  replacement. Its most recent release is 2026-03-20.
-- `mkdocs-materialx` is a continuation of Material.
-- `zensical` comes from the Material team and is positioned as the long-term
-  replacement. It is at 0.0.56.
+- [`mkdocs`](https://pypi.org/project/mkdocs/) last released 1.6.1 on
+  2024-08-30. Its maintainer announced a version 2 that supports no existing
+  theme, plugin, or configuration file.
+- [`mkdocs-material`](https://pypi.org/project/mkdocs-material/) remains
+  actively maintained and caps `mkdocs<2` from version 9.7.5, so an accidental
+  upgrade cannot break a build.
+- [`properdocs`](https://pypi.org/project/properdocs/) is a community
+  continuation of MkDocs 1.x and a drop-in replacement. It is at 1.6.7,
+  released on 2026-03-20.
+- [`mkdocs-materialx`](https://pypi.org/project/mkdocs-materialx/) is a
+  community continuation of Material, forked at 9.7.1. It is at 10.2.0,
+  released on 2026-07-23.
+- [`zensical`](https://pypi.org/project/zensical/) comes from the Material team
+  and is positioned as the long-term replacement. It is at 0.0.56, released on
+  2026-08-18.
+
+Each entry links to the package index rather than to a homepage. A reader
+revisiting this record needs the current release state, which is what that page
+shows.
 
 ## Decision
 
@@ -41,8 +51,9 @@ floor on a package whose ecosystem is mid-split invites a surprise major
 release to break a build that nobody was watching.
 
 `griffe` carries no bound in this extra. `mkdocstrings-python` 2.x depends on
-`griffelib`, not on `griffe`, so a cap copied from an older project is both
-stale and wrong. It caused an unsatisfiable resolution when first written.
+[`griffelib`](https://pypi.org/project/griffelib/), not on `griffe`, so a cap
+copied from an older project is both stale and wrong. It caused an
+unsatisfiable resolution when first written.
 
 **Zensical is the thing to watch.** It comes from the team that maintains the
 theme this site uses, and it is a declared drop-in replacement. Revisit when
