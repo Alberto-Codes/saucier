@@ -23,7 +23,9 @@ One preparation, two terms, two languages. Neither term is translated into the
 other, and both are kept exactly as Escoffier set them. `BÉARNAISE` folds to
 `bearnaise` to give the concept its id, and the accented surface form is what
 the catalogue stores. The citation is the point: entry 64 at line 2114 is a
-line you can open in `corpus/` and read.
+line you can open in `corpus/` and read. The source is Escoffier's
+[*A Guide to Modern Cookery*](https://www.gutenberg.org/ebooks/71395), tracked
+here in full.
 
 ## The five mothers
 

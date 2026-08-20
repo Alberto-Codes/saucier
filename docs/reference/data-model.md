@@ -41,6 +41,11 @@ $ sed -n '2138p' corpus/escoffier-1907.txt
 64—BÉARNAISE TOMATÉE SAUCE OR CHORON SAUCE
 ```
 
+`escoffier-1907` is [*A Guide to Modern Cookery*](https://www.gutenberg.org/ebooks/71395)
+by A. Escoffier. The copy under `corpus/` is Project Gutenberg ebook 71395,
+released on 2023-08-12. A `source_id` names an edition, not a work, because
+two editions of one book number their entries differently.
+
 ## `Preparation`
 
 One numbered entry. Carries its `title`, its `terms`, its unparsed `body`,
@@ -64,5 +69,6 @@ itself.
 
 ## `Language`
 
-ISO 639-1 codes for languages actually present in tracked sources. A member
-is added when a source in that language is added, not in anticipation.
+[ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes)
+codes for languages actually present in tracked sources. A member is added
+when a source in that language is added, not in anticipation.
