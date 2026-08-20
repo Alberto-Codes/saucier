@@ -170,6 +170,8 @@ def _prose(body: str, limit: int) -> str:
 def build_parser() -> argparse.ArgumentParser:
     """Define the command line interface.
 
+    The tree command roots at any preparation, not only a mother.
+
     Returns:
         The configured argument parser.
     """
@@ -184,7 +186,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     tree = sub.add_parser("tree", help="print the derivations beneath a concept")
-    tree.add_argument("concept", help="a mother sauce, e.g. espagnole")
+    tree.add_argument("concept", help="the root preparation, e.g. bordelaise")
     tree.set_defaults(run=_tree)
 
     show = sub.add_parser("show", help="print one preparation in full")

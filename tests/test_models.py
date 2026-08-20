@@ -88,6 +88,22 @@ def test_lookup_prefers_the_least_qualified_name():
 
 
 @pytest.mark.unit
+def test_a_mother_binds_to_the_first_preparation_answering_to_it():
+    """The source states a base before its derivatives, so order decides."""
+    catalogue = Catalogue(
+        source_id="test",
+        preparations=(
+            preparation("ORDINARY VELOUTÉ SAUCE", entry=1),
+            preparation("THICKENED VELOUTÉ", entry=2),
+        ),
+        mothers=frozenset({ConceptId("veloute")}),
+    )
+    found = catalogue.find(ConceptId("veloute"))
+    assert found is not None
+    assert found.title == "ORDINARY VELOUTÉ SAUCE"
+
+
+@pytest.mark.unit
 def test_lookup_breaks_a_remaining_tie_by_source_order():
     catalogue = Catalogue(
         source_id="test",

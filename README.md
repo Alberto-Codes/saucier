@@ -17,8 +17,8 @@ $ uv run saucier parse
 source      escoffier-1907
 mothers     bechamel, espagnole, hollandaise, tomato, veloute
 sauces      124
-derived     51 linked to a stated parent
-unresolved  73 state no base in their prose
+derived     50 linked to a stated parent
+unresolved  74 state no base in their prose
 ```
 
 The five mothers were not supplied. Escoffier names them in his own text, and
@@ -38,9 +38,9 @@ A parent may be any catalogued preparation, not only a mother. Marrow Sauce
 resolves to Bordelaise, and Bordelaise itself states no base. A derivation
 tree can therefore root in an unresolved sauce.
 
-## The interesting number is 73
+## The interesting number is 74
 
-73 of 124 preparations never state what they are built on. Escoffier wrote
+74 of 124 preparations never state what they are built on. Escoffier wrote
 for a reader who already knew, so he did not write it down. That gap is the
 point: it is the measured bar that anything cleverer has to beat. See
 [why there is no model in this yet](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/).

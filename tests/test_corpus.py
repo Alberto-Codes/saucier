@@ -88,11 +88,31 @@ def test_sauces_served_with_something_are_still_sauces(escoffier):
 
 
 @pytest.mark.corpus
-def test_a_recorded_parent_is_always_in_the_catalogue(escoffier):
+def test_a_recorded_parent_is_always_an_exact_catalogued_name(escoffier):
+    """Exact membership, not a fuzzy lookup, so a fragment cannot pass."""
+    names = escoffier.by_concept()
     for preparation in escoffier.preparations:
         if preparation.parent is not None:
-            found = escoffier.find(preparation.parent)
-            assert found is not None or preparation.parent in escoffier.mothers
+            assert (
+                preparation.parent in names or preparation.parent in escoffier.mothers
+            )
+
+
+@pytest.mark.corpus
+def test_the_veloute_mother_binds_to_its_own_entry(escoffier):
+    """Entry 25, not the Allemande whose alias is THICKENED VELOUTÉ."""
+    veloute = escoffier.find(ConceptId("veloute"))
+    assert veloute is not None
+    assert veloute.title == "ORDINARY VELOUTÉ SAUCE"
+    assert veloute.ref.entry == 25
+
+
+@pytest.mark.corpus
+def test_stating_two_preparations_of_one_family_stays_unresolved(escoffier):
+    """Entry 73 says "substituting Allemande Sauce for the velouté"."""
+    chaud_froid = escoffier.find(ConceptId("ordinary-chaud-froid-sauce"))
+    assert chaud_froid is not None
+    assert chaud_froid.parent is None
 
 
 @pytest.mark.corpus

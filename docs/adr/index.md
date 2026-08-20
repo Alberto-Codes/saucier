@@ -31,4 +31,4 @@ repository, because they govern the writing rather than this implementation.
   fell from 166 entries to 124, and why an ambiguous base resolves to nothing.
 - [ADR-0008: A parent may be any catalogued
   preparation](0008-a-parent-may-be-any-catalogued-preparation.md). Why
-  derived rose from 29 to 51, and which runs of words count as statements.
+  derived rose from 29 to 50, and which runs of words count as statements.
