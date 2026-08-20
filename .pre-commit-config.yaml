@@ -68,6 +68,24 @@ repos:
         pass_filenames: false
         types: [python]
 
+      - id: doc-refs
+        name: dotted references resolve
+        entry: uv run python scripts/check_doc_refs.py
+        language: system
+        pass_filenames: false
+
+      - id: prose
+        name: strict-mode pages obey the writing system
+        entry: uv run python scripts/check_prose.py
+        language: system
+        pass_filenames: false
+
+      - id: banned-terms
+        name: rejected name stays out
+        entry: uv run python scripts/check_banned_terms.py
+        language: system
+        pass_filenames: false
+
       - id: interrogate
         name: docstring presence
         entry: uv run interrogate

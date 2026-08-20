@@ -1,6 +1,6 @@
 # Command line reference
 
-The `saucier` command has no runtime dependencies; it is built on `argparse`.
+The `saucier` command has no runtime dependencies. It is built on `argparse`.
 
 ## `saucier parse`
 
@@ -31,13 +31,14 @@ Exit codes: `0` on success, `1` when no preparation matches.
 
 ## `saucier show CONCEPT [--chars N]`
 
-Prints one preparation: its title, source entry and line, every term with its
-language and concept id, its resolved parent, and the opening of its prose.
+Prints one preparation. The output carries its title and its source entry and
+line. It then lists every term with its language and concept id, the resolved
+parent, and the opening of the prose.
 
 `--chars` sets how much prose to print. Default `600`.
 
-Lookup accepts either the full name or its ending, so `bordelaise` finds
+Lookup accepts the full name or its ending, so `bordelaise` finds
 `SAUCE BORDELAISE`. A preparation with alternative names answers to all of
-them: `BROWN SAUCE OR ESPAGNOLE` is reachable as either.
+them. `BROWN SAUCE OR ESPAGNOLE` is reachable as either.
 
 Exit codes: `0` on success, `1` when no preparation matches.

@@ -27,6 +27,45 @@ These fail the build. Do not work around them.
 
 Run everything at once with `uv run pre-commit run --all-files`.
 
+## Vocabulary
+
+[docs/reference/glossary.md](docs/reference/glossary.md) is law: one term per
+concept, one concept per term, in docs, code identifiers, commit messages, and
+conversation. It is "preparation" (never "recipe"), "mother" (never "base
+sauce"), "unresolved" (never "missing"). Coining a term requires a glossary
+entry in the same change.
+
+`scripts/check_doc_refs.py` verifies that every dotted `saucier.*` reference
+in docs and docstrings resolves to a real module or attribute. Refactors move
+modules; prose does not notice.
+
+## Writing system
+
+Distilled from ASD-STE100. Two modes.
+
+**Strict mode** — ADRs, reference pages, README, error messages, CLI help,
+commit messages, code comments. A misread here costs cycles:
+
+1. One instruction per sentence, at most 20 words. Descriptive sentences at
+   most 25.
+2. Active voice; name the actor ("the parser rejects...", not "it is
+   rejected").
+3. Verbs for actions, not nouns: "extract", never "perform an extraction".
+4. No hedging stacks. State the fact or write an explicit **Open question**.
+   "May potentially help improve" is banned.
+5. No marketing adjectives: seamless, robust, powerful, blazing. Show the
+   number instead.
+6. No semicolons. At most one em-dash per paragraph.
+7. Single verbs over phrasal verbs: "remove", not "take off".
+8. State numbers and units: "102 unresolved", not "many".
+
+**Flavored mode** — explanation pages, discussions, PR descriptions. Keep the
+glossary discipline, active voice, and one-idea-per-sentence habit. Range,
+analogy, and voice are allowed. Explanation pages are where thinking happens,
+so do not strangle them.
+
+Style rules govern *form*. They do not make a claim true.
+
 ## Principles this codebase holds
 
 **`None` means unresolved, never "none".** A preparation whose source states

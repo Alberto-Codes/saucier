@@ -52,7 +52,13 @@ jobs:
       - name: Import boundaries hold
         run: uv run lint-imports
       - name: Modules stay decomposed
-        run: uv run python scripts/check_loc.py src
+        run: uv run python scripts/check_loc.py src scripts
+      - name: Dotted references resolve
+        run: uv run python scripts/check_doc_refs.py
+      - name: Strict-mode pages obey the writing system
+        run: uv run python scripts/check_prose.py
+      - name: Rejected name stays out
+        run: uv run python scripts/check_banned_terms.py
       - name: Docstrings are present
         run: uv run interrogate
       - name: Docstrings are complete

@@ -12,7 +12,7 @@ A culinary term as one source writes it, in one language.
 | `language` | `Language` | ISO 639-1, inferred from the surface form. |
 | `concept` | `ConceptId` | Language-independent identifier. |
 
-Terms are never translated. `mole` is not "sauce"; `nixtamal` is not "corn".
+Terms are never translated. `mole` is not "sauce". `nixtamal` is not "corn".
 Translating a term destroys the distinction the term exists to carry, so
 surface forms are preserved and tagged instead.
 
@@ -21,10 +21,9 @@ surface forms are preserved and tagged instead.
 A folded identifier: diacritics stripped, lowercased, punctuation collapsed
 to hyphens. `Velouté` and `VELOUTE` reach `veloute`.
 
-Folding resolves **orthographic** variation only. It deliberately does not
-resolve semantic equivalence across languages — deciding that `salsa
-española` and `espagnole` denote one concept requires evidence, not string
-manipulation.
+Folding resolves **orthographic** variation only. It does not resolve semantic
+equivalence across languages. Deciding that `salsa española` and `espagnole`
+denote one concept requires evidence, not string manipulation.
 
 ## `SourceRef`
 
