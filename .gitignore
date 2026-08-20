@@ -13,3 +13,7 @@ build/
 # bytes. Large or restrictively licensed corpora get a fetch script instead.
 data/
 site/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
