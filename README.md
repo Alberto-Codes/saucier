@@ -2,10 +2,9 @@
 
 Structured procedure extraction from culinary sources.
 
-Reads a cookbook and returns a catalogue: what each preparation is called, in
-which language, which base preparation it derives from, and the source line
-every claim came from. No model involved — everything here is traceable to the
-text.
+Reads a cookbook and returns a catalogue. Each preparation carries its names,
+the language of each name, the mother it derives from, and the source line the
+claim came from. No model runs. Every output is traceable to the text.
 
 ## Try it
 
