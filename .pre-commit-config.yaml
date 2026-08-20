@@ -68,6 +68,12 @@ repos:
         pass_filenames: false
         types: [python]
 
+      - id: versions
+        name: recorded versions agree
+        entry: uv run python scripts/check_versions.py
+        language: system
+        pass_filenames: false
+
       - id: doc-refs
         name: dotted references resolve
         entry: uv run python scripts/check_doc_refs.py
