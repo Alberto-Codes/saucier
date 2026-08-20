@@ -6,8 +6,9 @@ Point the extractor at a book other than Escoffier.
 
 Only sources you may redistribute go in `corpus/`. Anything published in the
 United States through 1930 is public domain, which covers most historical
-cookbooks worth parsing. Project Gutenberg texts are already cleared, and
-carry a licence wrapper the reader strips automatically.
+cookbooks worth parsing. [Project Gutenberg](https://www.gutenberg.org/) texts
+are already cleared, and carry a licence wrapper the reader strips
+automatically.
 
 If a source cannot be committed, it does not belong in `corpus/` — write a
 fetch script instead, and keep the file untracked.
