@@ -1,0 +1,68 @@
+[project]
+name = "saucier"
+version = "0.0.1"
+description = "Extract sauce procedures from source material into a structured, language-tagged process graph."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12"
+authors = [
+    { name = "Alberto-Codes", email = "alberto.codes.dev@gmail.com" }
+]
+keywords = ["cooking", "process-mining", "bpmn", "knowledge-graph", "multilingual"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://alberto.codes"
+Source = "https://github.com/Alberto-Codes/saucier"
+
+[build-system]
+requires = ["uv_build>=0.9.28,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+exclude = [".uv-cache", ".venv", "__pycache__", "*.egg-info"]
+
+[tool.ruff.lint]
+extend-select = ["E501", "I", "D"]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 100
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["saucier"]
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.interrogate]
+verbose = 1
+fail-under = 95
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+exclude = ["tests", "scripts"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.14.14",
+    "ty>=0.0.14",
+    "interrogate>=1.7.0",
+]
