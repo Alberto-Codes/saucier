@@ -1,0 +1,36 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      HAS_PAT: ${{ secrets.RELEASE_PLEASE_TOKEN != '' }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # A tag pushed by GITHUB_TOKEN does not trigger publish.yml, so the
+      # release would look green and never reach PyPI. Fail at that moment
+      # rather than letting it pass quietly.
+      - name: Fail a release cut without the PAT
+        if: steps.release.outputs.release_created == 'true' && env.HAS_PAT != 'true'
+        run: |
+          echo "::error::Released ${{ steps.release.outputs.tag_name }} with \
+          GITHUB_TOKEN. The tag will not trigger publish.yml. Set \
+          RELEASE_PLEASE_TOKEN, then push the tag by hand."
+          exit 1

@@ -1,0 +1,36 @@
+name: Bug
+description: Something behaves differently from what the docs say.
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version or tag
+      placeholder: "v0.0.1, or a commit sha"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What the docs say should happen
+      description: Link the page if you can.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Paste the command and its full output.
+      render: console
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.12.7"
+    validations:
+      required: true
