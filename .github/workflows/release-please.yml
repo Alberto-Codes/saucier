@@ -29,9 +29,12 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # A tag pushed by GITHUB_TOKEN does not trigger publish.yml, so the
-      # release would look green and never reach PyPI. Fail at that moment
-      # rather than letting it pass quietly.
+      # The release is created as a draft, so publishing it is a human action
+      # and the resulting tag does trigger publish.yml regardless of token.
+      # The token still matters for the update-lockfile commit: pushed with
+      # GITHUB_TOKEN it will not re-run CI on the release PR, leaving a green
+      # check that belongs to an earlier commit. Fail rather than report a
+      # success that is only partly true.
       - name: Fail a release cut without the PAT
         if: steps.release.outputs.release_created == 'true' && env.HAS_PAT != 'true'
         run: |
