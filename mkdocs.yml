@@ -104,6 +104,7 @@ nav:
   - How-to:
       - how-to/index.md
       - Add a source: how-to/add-a-source.md
+      - Cut a release: how-to/cut-a-release.md
   - Reference:
       - reference/index.md
       - CLI: reference/cli.md
@@ -141,7 +142,14 @@ markdown_extensions:
       auto_append:
         - includes/abbreviations.md
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        # Without this a ```mermaid block renders as a plain code listing on
+        # the site. GitHub renders the same block natively, so one source
+        # has to satisfy both renderers.
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
       # Emits a `.language-<lang>` class on the wrapper, which the stylesheet

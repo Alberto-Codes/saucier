@@ -57,6 +57,10 @@
   --md-primary-fg-color--dark:    #3C1712;
   --md-primary-bg-color:          var(--sc-paper);
   --md-accent-fg-color:           var(--sc-rubric);
+  /* Material emits no accent rules under `accent: custom`, so this
+     variant kept Material's stock indigo. Mermaid fills its flowchart
+     nodes with it, which put a blue box on a wine page. */
+  --md-accent-fg-color--transparent: #7A2A241a;
   --md-default-bg-color:          var(--sc-paper);
   --md-default-fg-color:          var(--sc-ink);
   --md-default-fg-color--light:   var(--sc-ink-soft);
@@ -80,6 +84,7 @@
   --md-primary-fg-color--dark:    #3C1712;
   --md-primary-bg-color:          var(--sc-bone);
   --md-accent-fg-color:           var(--sc-rubric-lit);
+  --md-accent-fg-color--transparent: #E2988C1a;
   --md-default-bg-color:          var(--sc-dark);
   --md-default-fg-color:          var(--sc-bone);
   --md-default-fg-color--light:   var(--sc-bone-soft);
