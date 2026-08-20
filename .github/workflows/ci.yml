@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv lock --check
+      - run: uv sync --locked --dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run yamllint -c .yamllint.yaml .
+      - uses: raven-actions/actionlint@v2
+      - run: uv run uv-secure
+      - run: uv cache prune --ci
+
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --locked --dev
+      - run: uv run ty check
+      - run: uv cache prune --ci
+
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --locked --dev
+      - name: Import boundaries hold
+        run: uv run lint-imports
+      - name: Modules stay decomposed
+        run: uv run python scripts/check_loc.py src
+      - name: Docstrings are present
+        run: uv run interrogate
+      - name: Docstrings are complete
+        run: uv run docvet check src
+      - run: uv cache prune --ci
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --locked --dev
+      - run: uv run pytest --cov --cov-report=term-missing
+      - name: The demo in the README still runs
+        run: |
+          uv run saucier parse
+          uv run saucier tree espagnole
+          uv run saucier show bordelaise --chars 80
+      - run: uv cache prune --ci

@@ -11,12 +11,15 @@ authors = [
 ]
 keywords = ["cooking", "recipes", "parsing"]
 classifiers = [
-    "Development Status :: 1 - Planning",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = []
+
+[project.scripts]
+saucier = "saucier.adapters.driving.cli:main"
 
 [project.urls]
 Homepage = "https://alberto.codes"
@@ -26,13 +29,46 @@ Source = "https://github.com/Alberto-Codes/saucier"
 requires = ["uv_build>=0.9.28,<0.12.0"]
 build-backend = "uv_build"
 
+# --------------------------------------------------------------------------- #
+# Ruff
+# --------------------------------------------------------------------------- #
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-exclude = [".uv-cache", ".venv", "__pycache__", "*.egg-info"]
+exclude = [".venv", "__pycache__", "*.egg-info", "corpus", "data"]
 
 [tool.ruff.lint]
-extend-select = ["E501", "I", "D"]
+# Sonar-adjacent set: PL/C901 (complexity), B (bugbear), SIM (simplify),
+# TRY (exception hygiene), S (bandit), PERF, RUF, UP, G on top of the
+# house baseline E501/I/D. A local ruff run covers the ground SonarQube
+# would, without a server.
+extend-select = [
+    "E402",
+    "E501",
+    "I",
+    "D",
+    "B",
+    "SIM",
+    "UP",
+    "RUF",
+    "PL",
+    "C901",
+    "TRY",
+    "PERF",
+    "S",
+    "G",
+]
+ignore = [
+    "TRY003",  # our domain errors carry context in the message
+]
+
+[tool.ruff.lint.mccabe]
+# Buffer under the SonarQube cognitive-complexity threshold of 15.
+max-complexity = 12
+
+[tool.ruff.lint.pylint]
+# Match Sonar's parameter-count threshold (S107 default 7).
+max-args = 7
 
 [tool.ruff.lint.pycodestyle]
 max-line-length = 100
@@ -41,7 +77,11 @@ max-line-length = 100
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["S101"]
+"tests/**/*.py" = [
+    "S101",
+    "D100", "D101", "D102", "D103", "D104",
+    "PLR2004",  # magic values are the point of test assertions
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["saucier"]
@@ -51,18 +91,98 @@ quote-style = "double"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
 
+# --------------------------------------------------------------------------- #
+# Docvet
+# --------------------------------------------------------------------------- #
+[tool.docvet]
+fail-on = ["enrichment", "freshness", "coverage", "griffe", "presence"]
+
+[tool.docvet.presence]
+min-coverage = 100.0
+
+# --------------------------------------------------------------------------- #
+# Ty
+# --------------------------------------------------------------------------- #
+[tool.ty.src]
+include = ["src", "tests"]
+
+# --------------------------------------------------------------------------- #
+# Import boundaries — the hexagon, enforced rather than trusted
+# --------------------------------------------------------------------------- #
+[tool.importlinter]
+root_package = "saucier"
+
+[[tool.importlinter.contracts]]
+name = "Layers are one-directional"
+type = "layers"
+layers = [
+    "saucier.adapters",
+    "saucier.services",
+    "saucier.ports",
+    "saucier.domain",
+]
+exhaustive = false
+
+[[tool.importlinter.contracts]]
+name = "Domain imports nothing of ours"
+type = "forbidden"
+source_modules = ["saucier.domain"]
+forbidden_modules = [
+    "saucier.ports",
+    "saucier.services",
+    "saucier.adapters",
+    "saucier.infrastructure",
+]
+
+[[tool.importlinter.contracts]]
+name = "Services never reach for an adapter"
+type = "forbidden"
+source_modules = ["saucier.services"]
+forbidden_modules = ["saucier.adapters", "saucier.infrastructure"]
+
+# --------------------------------------------------------------------------- #
+# Pytest
+# --------------------------------------------------------------------------- #
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Fast, isolated, no filesystem beyond tmp_path",
+    "corpus: Runs against the committed corpus; slower, still hermetic",
+]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--showlocals"]
+
+# --------------------------------------------------------------------------- #
+# Coverage
+# --------------------------------------------------------------------------- #
+[tool.coverage.run]
+source = ["src/saucier"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:", "\\.\\.\\.", "raise NotImplementedError"]
+fail_under = 85
+
+# --------------------------------------------------------------------------- #
+# Interrogate
+# --------------------------------------------------------------------------- #
 [tool.interrogate]
 verbose = 1
-fail-under = 95
+fail-under = 100
 ignore-init-method = true
-ignore-init-module = true
 ignore-magic = true
 exclude = ["tests", "scripts"]
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
     "ruff>=0.14.14",
     "ty>=0.0.14",
     "interrogate>=1.7.0",
+    "import-linter>=2.0",
+    "docvet>=0.1.0",
+    "pre-commit>=4.6.2",
+    "yamllint>=1.38.0",
+    "uv-secure>=0.17.2",
+    "griffe>=2.2.0",
 ]

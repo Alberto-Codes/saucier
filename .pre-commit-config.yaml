@@ -1,0 +1,108 @@
+# Local hooks run through `uv run` so every tool version tracks uv.lock
+# rather than drifting from a separately pinned pre-commit revision.
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        exclude: ^corpus/
+      - id: trailing-whitespace
+        exclude: ^corpus/
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=4096]
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.11
+    hooks:
+      - id: actionlint
+
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: yamllint
+        entry: uv run yamllint -c .yamllint.yaml .
+        language: system
+        pass_filenames: false
+        types: [yaml]
+
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+
+      - id: uv-lock
+        name: uv lock is current
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock)$
+
+      - id: ty-check
+        name: ty check
+        entry: uv run ty check
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: lint-imports
+        name: import boundaries hold
+        entry: uv run lint-imports
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: loc-check
+        name: modules stay decomposed
+        entry: uv run python scripts/check_loc.py src
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: interrogate
+        name: docstring presence
+        entry: uv run interrogate
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: docvet
+        name: docvet
+        entry: uv run docvet check --staged
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: pytest
+        name: pytest (fast)
+        entry: uv run pytest --no-cov --tb=short -q
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      # ------------------------------------------------------------------- #
+      # pre-push: the slower gates, run once before work leaves the machine
+      # ------------------------------------------------------------------- #
+      - id: pytest-cov
+        name: pytest with coverage gate
+        entry: uv run pytest --cov --cov-report=term-missing -q
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        types: [python]
+
+      - id: uv-secure
+        name: dependency audit
+        entry: uv run uv-secure
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
