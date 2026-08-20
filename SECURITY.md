@@ -28,4 +28,4 @@ amendment to an old one.
 
 ## Dependency audit
 
-`uv-secure` runs on every push before work leaves a machine, and again in CI.
+`uv audit` runs on every push before work leaves a machine, and again in CI.

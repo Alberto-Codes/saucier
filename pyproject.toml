@@ -205,6 +205,5 @@ dev = [
     "docvet>=0.1.0",
     "pre-commit>=4.6.2",
     "yamllint>=1.38.0",
-    "uv-secure>=0.17.2",
     "griffe>=2.2.0",
 ]
