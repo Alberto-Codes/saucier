@@ -1,7 +1,7 @@
 [project]
 name = "saucier"
 version = "0.0.1"
-description = "Extract sauce procedures from source material into a structured, language-tagged process graph."
+description = "Structured procedure extraction from culinary sources."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -9,7 +9,7 @@ requires-python = ">=3.12"
 authors = [
     { name = "Alberto-Codes", email = "alberto.codes.dev@gmail.com" }
 ]
-keywords = ["cooking", "process-mining", "bpmn", "knowledge-graph", "multilingual"]
+keywords = ["cooking", "recipes", "parsing"]
 classifiers = [
     "Development Status :: 1 - Planning",
     "Intended Audience :: Developers",
