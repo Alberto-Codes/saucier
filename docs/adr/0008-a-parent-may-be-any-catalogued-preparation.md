@@ -20,23 +20,23 @@ with a cross-reference number. The record still said `parent: None`, because
 Bordelaise is not a mother. Escoffier's structure is not a five-way star. It
 is a graph with depth, and the old rule flattened it.
 
-Widening the candidate set widens the ways a match can be wrong. Three
+Widening the candidate set widens the ways a reading can be wrong. Three
 appeared while building this rule:
 
 - `HORSE-RADISH SAUCE` (entry 138) opens with "finely-rasped horse-radish".
-  The words match a name of entry 119, `HORSE-RADISH OR ALBERT SAUCE`. The
+  The words answer to a name of entry 119, `HORSE-RADISH OR ALBERT SAUCE`. The
   entry states an ingredient, not a parent.
 - `GENEVOISE SAUCE` (entry 38) opens with "add one pint of Lenten
   Espagnole". The word "Espagnole" sits inside that name. Reading both names
   turns one statement into a false ambiguity.
-- Folding an opening flattens punctuation, so a matcher can join words
-  across a full stop. That is the substring defect of ADR-0007 in a new
+- Folding an opening flattens punctuation, so a careless rule can join
+  words across a full stop. That is the substring defect of ADR-0007 in a new
   disguise.
 
 ## Decision
 
 **A stated parent may be any catalogued preparation, not only a mother. What
-counts as a statement is narrowed to keep every recorded link checkable.**
+counts as a statement is narrowed to keep every derivation checkable.**
 
 **The candidates are the catalogue's own names.** Every term of every kept
 preparation, every folded title, and every declared mother is a candidate.
@@ -58,14 +58,23 @@ mother. When both names reach one preparation, the mother concept is
 recorded, so `parent: bechamel` stays `bechamel`.
 
 **Ambiguity still resolves to nothing.** Exactly one candidate in the
-opening paragraph, or no parent. This rule now dissolves links the old rule
-recorded. `ANDALOUSE SAUCE` names Mayonnaise sauce and tomato purée, and the
-old rule read the purée as the mother Tomato. It records `None` now.
+opening paragraph, or no parent. This rule now dissolves derivations the
+old rule recorded. `ANDALOUSE SAUCE` names Mayonnaise sauce and tomato
+purée, and the old rule read the purée as the mother Tomato. It records
+`None` now.
+
+**A mother binds to its own entry.** Among the preparations answering to a
+mother's name, the first the source presents is the mother's entry. The
+source states a base before its derivatives. Binding by name length
+instead would bind velouté to `THICKENED VELOUTÉ`, an alias of Allemande,
+and collapse two preparations into one candidate. `ORDINARY CHAUD-FROID
+SAUCE` says "substituting Allemande Sauce for the velouté". That states two
+preparations, so it records `None`.
 
 **A cycle is cleared, never broken by choice.** Two preparations deriving
-from each other would make each its own ancestor. Every link on a cycle is
-cleared, and links leading into it stay. Choosing one link to keep would be
-an arbitrary choice wearing the costume of determinism.
+from each other would make each its own ancestor. Every derivation on a cycle
+is cleared, and derivations leading into it stay. Choosing one to keep
+would be an arbitrary choice wearing the costume of determinism.
 
 **Half-glaze stays unencoded.** Bordelaise's opening names half-glaze and
 never Espagnole. A term that encodes a derivation is not a statement of one,
@@ -76,13 +85,13 @@ against, and this rule does not lower it.
 
 ### Positive
 
-- Derived rises from 29 to 51, and unresolved falls from 95 to 73. All 24
-  new links quote a name the source wrote in the opening paragraph.
+- Derived rises from 29 to 50, and unresolved falls from 95 to 74. All 24
+  new derivations quote a name the source wrote in the opening paragraph.
 - `saucier tree` gains depth. Marrow Sauce sits beneath Bordelaise, and
   Bordelaise itself still reports no parent.
-- Two links the old rule recorded from ingredient words or compound phrases
-  now dissolve to `None`, which is the honest reading.
-- One link moves to the statement itself. Genevoise records Lenten
+- Three derivations the old rule recorded from ingredient words or
+  compound statements now dissolve to `None`, which is the honest reading.
+- One derivation moves to the statement itself. Genevoise records Lenten
   Espagnole, where the old rule recorded the mother the name contains.
 
 ### Negative
@@ -90,7 +99,7 @@ against, and this rule does not lower it.
 - A recorded parent is no longer always a mother, so consumers must resolve
   a parent concept through the catalogue rather than a five-entry table.
 - The subject and shadow rules are two more things a contributor must know
-  before touching the matcher.
+  before touching the resolver.
 - A derivation stated under a name the catalogue does not carry, such as
   "the Bordelaise" alone, is still unresolved. The rule resolves less than a
   reader would, and that is the accepted trade.

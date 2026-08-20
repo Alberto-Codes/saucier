@@ -67,6 +67,21 @@ in the same change.
 :   One name a stated parent may use: any name of a catalogued preparation,
     or a mother. Not "option" or "match".
 
+**Statement**
+:   A candidate's name written as a whole run of words inside one sentence
+    of the opening paragraph. Only a statement records a derivation. Not
+    "mention" or "reference".
+
+**Subject**
+:   What an entry's own name denotes. A run of words inside the entry's own
+    name states the subject, never a parent. A mother is never a subject.
+    Not "topic".
+
+**Shadow**
+:   A statement lying entirely inside a longer statement that reaches a
+    different preparation. A shadowed name is part of the longer statement
+    and is not read on its own. Not "overlap".
+
 **Chain**
 :   The derivations walked from a preparation through its parents. A chain
     terminates, because no preparation is its own ancestor. Not "lineage" or

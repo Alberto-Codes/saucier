@@ -8,10 +8,10 @@ reason is not cost.
 
 Escoffier structured his own book. Every preparation is numbered, titled, and
 placed in a sequence, and he states his five mothers in a sentence you can
-point at. A regular expression recovers 124 sauce preparations and links 51 of
+point at. A regular expression recovers 124 sauce preparations and links 50 of
 them to a base.
 
-That number is the bar. Any model applied to this source has to beat 51, and
+That number is the bar. Any model applied to this source has to beat 50, and
 until a parser has been run, nobody knows what "beating it" would mean. A
 model that recovers 35 looks impressive in isolation and is nearly worthless
 next to free.
@@ -23,16 +23,16 @@ adding anything.
 
 A schema validates shape, not truth. A model asked for JSON will return
 well-formed JSON, with a plausible parent for every preparation, including the
-73 where the source states none. Those outputs pass validation, read
+74 where the source states none. Those outputs pass validation, read
 correctly, and are wrong.
 
 The parser cannot produce that failure. It resolves a parent only where the
-opening paragraph names exactly one, so `parent` is `None` on 73 entries.
+opening paragraph names exactly one, so `parent` is `None` on 74 entries.
 Unresolved is a visible, countable state. Confidently wrong is not.
 
 ## The unresolved entries are the finding
 
-73 of 124 preparations do not state a base in their opening paragraph. That
+74 of 124 preparations do not state a base in their opening paragraph. That
 is not parser weakness — it is what the source is like. Escoffier assumed a
 reader who already knew that a Bordelaise is built on a reduction and finished
 with an Espagnole, so he did not write it down.

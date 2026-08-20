@@ -27,7 +27,7 @@ flowchart TD
         paragraph only, and sets the parent to the single candidate that
         paragraph states, or to None when it states none or states more than
         one. A cycle of stated parents is cleared. The result is a
-        Catalogue of 124 preparations, 51 resolved and 73 unresolved.
+        Catalogue of 124 preparations, 50 resolved and 74 unresolved.
     }
 
     lines(["source.lines()"]) --> entries["iter_entries<br/>one numbered entry"]
@@ -35,7 +35,7 @@ flowchart TD
     sauce -->|yes| terms["terms_in<br/>one Term per name"]
     terms --> names["parent_candidates<br/>every kept name"]
     names --> parent["resolve_parent<br/>opening paragraph only,<br/>one candidate or none"]
-    parent --> cat(["Catalogue<br/>124 preparations<br/>73 unresolved"])
+    parent --> cat(["Catalogue<br/>124 preparations<br/>74 unresolved"])
     sauce -->|no| drop(["stays out of the catalogue"])
     lines --> mothers["find_mothers<br/>whole body, once"]
     lines --> chapters["sauce_chapters<br/>chapter titles"]
@@ -67,8 +67,8 @@ flowchart TD
    paragraph states none, and also when it states more than one.
 10. A cycle of stated parents is cleared, so no preparation is its own
     ancestor.
-11. The result is a `Catalogue` of 124 preparations. 51 resolve to a stated parent
-    and 73 are unresolved.
+11. The result is a `Catalogue` of 124 preparations. 50 resolve to a stated parent
+    and 74 are unresolved.
 
 </details>
 
@@ -127,7 +127,7 @@ its `ref`, and its `parent`.
 `parent` may name a mother or any catalogued preparation. When the opening
 paragraph states a mother, the mother concept is recorded. Otherwise the
 parent preparation's own concept is. Chains never cycle, because the
-extractor clears every link on a cycle.
+extractor clears every derivation on a cycle.
 
 `parent` is `None` when the source states no base. That is "unresolved", not
 "has no parent". The distinction matters, and the parser never guesses across
@@ -153,10 +153,10 @@ itself.
 
 `matches` takes an exact hit outright. Otherwise the name has to appear as a
 whole run of words, so `bordelaise` reaches `SAUCE BORDELAISE` and never
-`bordelaise-butter`. Candidates are ordered by how little else their name
-carries, then by source order. Both signals come from the source: the least
-qualified name is the base, and Escoffier states a base before its
-derivatives.
+`bordelaise-butter`. A mother binds to the first preparation the source
+presents among its hits, because the source states a base before its
+derivatives. Any other concept prefers the least qualified name, then source
+order.
 
 ## `Language`
 

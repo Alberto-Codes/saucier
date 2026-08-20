@@ -7,7 +7,8 @@ source already carries, and therefore the bar any later model has to clear.
 Extraction runs in two passes. The first reads the mothers, the sauce
 chapters, and every kept entry. The second resolves each parent against
 every name the first pass produced, so a parent may be any catalogued
-preparation, and a chain of stated parents never cycles.
+preparation, and a chain of stated parents never cycles. A mother binds to
+the first preparation in source order that answers to its name.
 
 Examples:
     Read a catalogue and report what stayed unresolved:
@@ -32,7 +33,7 @@ from dataclasses import replace
 from typing import NamedTuple
 
 from saucier.domain.errors import NoPreparationsFound
-from saucier.domain.models import Catalogue, Preparation, SourceRef, Term, contains_run
+from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
 from saucier.domain.types import ConceptId, Language, to_concept_id
 from saucier.ports.source import SourceText
 
@@ -305,11 +306,11 @@ def resolve_parent(
     otherwise the parent preparation's own concept is.
 
     Two further runs of words are not statements. A catalogued name inside
-    the entry's own name denotes the entry's own subject, so `HORSE-RADISH
-    SAUCE` naming horse-radish states an ingredient, not a parent. A mother
-    is exempt, because a mother is never an entry's own subject, so `LENTEN
-    ESPAGNOLE` naming Espagnole does state its base. And a name found only
-    inside a longer stated name of another preparation is part of that
+    the entry's own name states the subject, so `HORSE-RADISH SAUCE` naming
+    horse-radish states an ingredient, not a parent. A mother is exempt,
+    because a mother is never an entry's own subject, so `LENTEN ESPAGNOLE`
+    naming Espagnole does state its base. And a shadowed name, found only
+    inside a longer stated name of another preparation, is part of that
     statement, so `Lenten Espagnole` does not also state Espagnole.
 
     Args:
@@ -323,13 +324,11 @@ def resolve_parent(
         candidate or states more than one.
     """
     segments = _folded_segments(body.split("\n\n", 1)[0])
-    own_names = [str(name).split("-") for name in own if not isinstance(name, int)]
+    own_names = tuple(str(key).split("-") for key in own if not isinstance(key, int))
     found: dict[ConceptId, tuple[Span, ...]] = {}
     for name, candidate in candidates.items():
         words = name.split("-")
-        subject = not candidate.mother and any(
-            contains_run(name, words) for name in own_names
-        )
+        subject = not candidate.mother and bool(_spans(words, own_names))
         if candidate.key in own or subject:
             continue
         spans = _spans(words, segments)
@@ -434,16 +433,16 @@ def _without_cycles(
     """Clear the parent of every preparation that lies on a cycle.
 
     A preparation is never its own ancestor. A cycle means the source stated
-    contradictory derivations, so every link on the cycle is cleared rather
-    than one of them chosen. Links leading into a cycle stay, and the chain
-    beneath them now terminates.
+    contradictory derivations, so every derivation on the cycle is cleared
+    rather than one of them chosen. Derivations leading into a cycle stay,
+    and the chain beneath them now terminates.
 
     Args:
         parents: Resolved parent per entry number, `None` where unresolved.
         successor: Entry number each recorded concept resolves to.
 
     Returns:
-        The same mapping, with every link on a cycle cleared.
+        The same mapping, with every derivation on a cycle cleared.
     """
     cleared = dict(parents)
     for start in parents:

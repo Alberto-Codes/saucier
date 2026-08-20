@@ -43,15 +43,15 @@ them out of that sentence. Nobody supplied the list.
 ## The number this release is judged on
 
 <div class="sc-census">
-<div class="sc-census__bar" role="img" aria-label="Of 124 preparations, 51 resolve to a stated parent and 73 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
+<div class="sc-census__bar" role="img" aria-label="Of 124 preparations, 50 resolve to a stated parent and 74 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
 <ul class="sc-census__key">
 <li><b>124</b> preparations</li>
-<li><b>51</b> resolved</li>
-<li><b>73</b> unresolved</li>
+<li><b>50</b> resolved</li>
+<li><b>74</b> unresolved</li>
 </ul>
 </div>
 
-73 preparations state no base in their prose. The parser records those as
+74 preparations state no base in their prose. The parser records those as
 unresolved and does not guess at them. The hatched share is what the source
 declined to say, not what the extraction failed to find. Lowering that count
 by guessing would be the one unrecoverable mistake here, so the number is
@@ -71,8 +71,8 @@ $ uv run saucier parse
 source      escoffier-1907
 mothers     bechamel, espagnole, hollandaise, tomato, veloute
 sauces      124
-derived     51 linked to a stated parent
-unresolved  73 state no base in their prose
+derived     50 linked to a stated parent
+unresolved  74 state no base in their prose
 ```
 
 ## Where to go

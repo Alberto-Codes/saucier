@@ -27,7 +27,6 @@ See Also:
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from saucier.domain.types import ConceptId, Language, to_concept_id
@@ -198,11 +197,10 @@ class Catalogue:
 
         An exact hit wins outright. Otherwise the concept has to appear as a
         whole run of words inside a name, so `bordelaise` reaches
-        `SAUCE BORDELAISE` but never `bordelaise-butter`. Hits are ordered
-        by how little else their name carries, then by the order the source
-        presents them. Both signals come from the source: the least
-        qualified name is the base, and Escoffier states a base before its
-        derivatives.
+        `SAUCE BORDELAISE` but never `bordelaise-butter`. A mother is
+        ordered by the order the source presents its hits, because the
+        source states a base before its derivatives. Any other concept
+        prefers the least qualified name, then source order.
 
         Args:
             concept: The concept to look for.
@@ -218,9 +216,14 @@ class Catalogue:
         hits = []
         for name, found in index.items():
             parts = name.split("-")
-            if contains_run(parts, wanted):
+            if _contains_run(parts, wanted):
                 hits.append((len(parts), order[found.ref.entry], found))
-        return tuple(found for _, _, found in sorted(hits, key=lambda h: h[:2]))
+        ranked = (
+            sorted(hits, key=lambda h: h[1])
+            if concept in self.mothers
+            else sorted(hits, key=lambda h: h[:2])
+        )
+        return tuple(found for _, _, found in ranked)
 
     def find(self, concept: ConceptId) -> Preparation | None:
         """Look up the preparation a concept names.
@@ -281,18 +284,15 @@ class Catalogue:
         return len(self.preparations) - self.resolved
 
 
-def contains_run(parts: Sequence[str], wanted: Sequence[str]) -> bool:
+def _contains_run(parts: list[str], wanted: list[str]) -> bool:
     """Test whether one word run appears whole inside another.
 
     Args:
-        parts: Words of the text being searched.
-        wanted: Words of the name being looked for.
+        parts: Words of the name being searched.
+        wanted: Words of the concept being looked for.
 
     Returns:
         True if `wanted` appears as a contiguous run within `parts`.
     """
     span = len(wanted)
-    target = list(wanted)
-    return any(
-        list(parts[i : i + span]) == target for i in range(len(parts) - span + 1)
-    )
+    return any(parts[i : i + span] == wanted for i in range(len(parts) - span + 1))
