@@ -24,8 +24,12 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-STRICT = ("README.md", "docs/reference")
-"""Surfaces where a misread costs cycles. Explanation pages are exempt."""
+STRICT = ("README.md", "docs/reference", "docs/adr")
+"""Surfaces where a misread costs cycles.
+
+The writing system names decision records as strict mode, so `docs/adr`
+belongs here. Explanation pages are flavored mode and stay exempt.
+"""
 
 MAX_WORDS = 25
 """Descriptive sentences cap here. Instructions should be shorter still."""
@@ -57,7 +61,8 @@ _INLINE_CODE = re.compile(r"`[^`]*`")
 _LINK_TARGET = re.compile(r"\]\([^)]*\)")
 _TABLE_ROW = re.compile(r"^\s*\|")
 _LIST_ITEM = re.compile(r"^\s*(?:[-*+]|\d+\.|:)\s")
-_SENTENCE = re.compile(r"[.!?]+(?:\s|$)")
+# Markdown emphasis can close after the full stop, as in `**Rule.**`.
+_SENTENCE = re.compile(r"[.!?]+[*_`)\]\"']*(?:\s|$)")
 
 
 def strict_files(root: Path) -> list[Path]:
