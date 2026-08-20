@@ -1,0 +1,15 @@
+{#-
+  Material renders `theme.logo` as `<img>`, which cannot inherit
+  `currentColor`, so the mark rendered black against a dark header. Inlining
+  the SVG lets it take the header foreground in both colour schemes.
+
+  This partial supplies the mark only. `partials/header.html` provides the
+  anchor and its aria-label, so the mark itself is decorative.
+-#}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"
+     stroke="currentColor" stroke-width="2.6" stroke-linecap="round"
+     stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <path d="M5.6 13.2 C6.6 21.4 9.9 24.9 14.2 24.9 C18.5 24.9 21.8 21.4 22.8 13.2" />
+  <path d="M3.6 13.2 H24.8" />
+  <path d="M24.8 13.2 L29 9.6" />
+</svg>

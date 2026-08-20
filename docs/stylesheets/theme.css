@@ -1,0 +1,168 @@
+/* ------------------------------------------------------------------------- *
+ * saucier — a reduction palette.
+ *
+ * Burgundy for the wine a brown sauce is built on, copper for the pan.
+ * Default Material indigo says nothing about the subject, and a docs site
+ * that looks templated reads as one.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --sc-wine:        #7B2D26;
+  --sc-wine-deep:   #5C1F1A;
+  --sc-copper:      #C77D3F;
+  --sc-copper-lit:  #E8B27D;
+  --sc-cream:       #FBF6EF;
+  --sc-char:        #191310;
+}
+
+/* Light ------------------------------------------------------------------- */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color:         var(--sc-wine);
+  --md-primary-fg-color--light:  #9A4038;
+  --md-primary-fg-color--dark:   var(--sc-wine-deep);
+  --md-accent-fg-color:          #A85A22;
+  --md-default-bg-color:         var(--sc-cream);
+  --md-typeset-a-color:          #A0392F;
+  --md-code-bg-color:            #F3EADD;
+  /* Copper at 3.04:1 on cream only just clears AA for large text. The stat
+     is the page's centrepiece, so it gets a darker copper with headroom. */
+  --sc-figure-color:             #93521C;
+}
+
+[data-md-color-scheme="slate"] {
+  --sc-figure-color:             var(--sc-copper);
+}
+
+/* Dark -------------------------------------------------------------------- */
+[data-md-color-scheme="slate"] {
+  --md-hue: 24;
+  --md-primary-fg-color:         #211814;
+  --md-primary-bg-color:         var(--sc-cream);
+  --md-accent-fg-color:          var(--sc-copper-lit);
+  --md-default-bg-color:         var(--sc-char);
+  --md-default-fg-color:         #EDE3D7;
+  --md-default-fg-color--light:  #C4B5A5;
+  --md-default-fg-color--lighter:#8A7A6B;
+  --md-typeset-a-color:          var(--sc-copper-lit);
+  --md-code-bg-color:            #221A15;
+  --md-code-fg-color:            #E3D6C6;
+  --md-footer-bg-color:          #120D0A;
+}
+
+/* Typography --------------------------------------------------------------- */
+.md-typeset h1,
+.md-typeset h2 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+}
+
+/* A quiet rule under section headings, so long reference pages have rhythm. */
+.md-typeset h2 {
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* Terminal output ---------------------------------------------------------- */
+/* Console blocks are the evidence in this project. Give them a copper edge
+   so a reader's eye lands on the numbers rather than on the prose. */
+.md-typeset .language-console.highlight,
+.md-typeset .language-console > pre {
+  border-left: 3px solid var(--sc-copper);
+  border-radius: 0 0.2rem 0.2rem 0;
+}
+
+/* Tables ------------------------------------------------------------------- */
+.md-typeset table:not([class]) th {
+  background: var(--md-default-fg-color--lightest);
+  font-weight: 600;
+}
+
+/* Grid cards on the landing page ------------------------------------------- */
+.md-typeset .grid.cards > ul > li {
+  border-radius: 0.4rem;
+  transition: border-color 160ms, box-shadow 160ms, transform 160ms;
+}
+
+.md-typeset .grid.cards > ul > li:hover,
+.md-typeset .grid.cards > ul > li:focus-within {
+  border-color: var(--sc-copper);
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1px);
+}
+
+/* Motion ------------------------------------------------------------------- */
+/* Vestibular disorders are not an edge case. Honour the system setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .md-typeset .grid.cards > ul > li:hover,
+  .md-typeset .grid.cards > ul > li:focus-within {
+    transform: none;
+  }
+}
+
+/* Forced colours ----------------------------------------------------------- */
+/* Windows High Contrast drops backgrounds. Keep the console marker visible
+   as a border rather than relying on colour alone. */
+@media (forced-colors: active) {
+  .md-typeset .language-console.highlight,
+  .md-typeset .language-console > pre {
+    border-left: 3px solid CanvasText;
+  }
+
+  .md-typeset .grid.cards > ul > li:focus-within {
+    outline: 2px solid Highlight;
+  }
+}
+
+/* The number that carries the argument ------------------------------------- */
+.sc-stat {
+  margin: 1.4rem 0 1.6rem;
+}
+
+.sc-figure {
+  display: block;
+  font-size: 2.6rem;
+  line-height: 1.05;
+  font-weight: 700;
+  color: var(--sc-figure-color, var(--sc-copper));
+  letter-spacing: -0.03em;
+}
+
+.sc-figure + .sc-caption {
+  display: block;
+  color: var(--md-default-fg-color--light);
+  margin-bottom: 1.2rem;
+}
+
+/* Glossary tooltips -------------------------------------------------------- */
+.md-typeset abbr[title] {
+  border-bottom: 1px dotted var(--sc-copper);
+  cursor: help;
+  text-decoration: none;
+}
+
+/* Header mark -------------------------------------------------------------- */
+/* The logo is inlined by `overrides/partials/logo.html` so it inherits
+   `currentColor`. The header is dark in both schemes, so name the light
+   foreground explicitly rather than relying on an inherited default. */
+.md-header__button.md-logo {
+  color: var(--sc-cream);
+  opacity: 1;
+}
+
+.md-header__button.md-logo :is(img, svg) {
+  height: 1.5rem;
+  width: 1.5rem;
+}
