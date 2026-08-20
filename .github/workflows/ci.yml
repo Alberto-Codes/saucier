@@ -63,6 +63,10 @@ jobs:
         run: uv run interrogate
       - name: Docstrings are complete
         run: uv run docvet check src
+      - name: The documentation site builds
+        run: |
+          uv sync --locked --extra docs
+          uv run mkdocs build --strict
       - run: uv cache prune --ci
 
   test:
