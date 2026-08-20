@@ -3,6 +3,27 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.2.0](https://github.com/Alberto-Codes/saucier/compare/v0.1.0...v0.2.0) (2026-08-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **extraction:** `resolve_parent` takes a mapping of candidates rather than the mother set, and a recorded `parent` may be any catalogued concept rather than a mother concept.
+
+### Features
+
+* **extraction:** resolve a parent to any catalogued preparation ([5ac256c](https://github.com/Alberto-Codes/saucier/commit/5ac256c31ed83d6f295eca4b3793fdb209816a9c))
+
+
+### Fixes
+
+* **extraction:** bind a mother to its own entry, not its shortest alias ([590c312](https://github.com/Alberto-Codes/saucier/commit/590c3128004f375aeea147d7d2b7126bcb46f58a))
+
+
+### Documentation
+
+* **readme:** link the rendered site rather than raw markdown ([ce7b04f](https://github.com/Alberto-Codes/saucier/commit/ce7b04f7156f40caad9a27605fc404093cf7643b))
+
 ## [0.1.0](https://github.com/Alberto-Codes/saucier/compare/v0.0.1...v0.1.0) (2026-08-20)
 
 
