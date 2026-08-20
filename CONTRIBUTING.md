@@ -76,6 +76,9 @@ Do not put issue numbers in the scope. It breaks release-please.
 Releases are cut by release-please from these commit types. A `feat` bumps the
 minor version, a `fix` bumps the patch.
 
+[Cut a release](docs/how-to/cut-a-release.md) draws the whole flow, including
+the token condition that decides whether a tag reaches PyPI and Pages.
+
 ## Corpus
 
 `corpus/` is tracked, so a clone runs with no fetch step. Only add source
