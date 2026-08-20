@@ -25,7 +25,7 @@ def test_parse_prints_the_census_it_just_computed(wired, capsys, census):
     assert cli.main(["parse"]) == 0
     out = capsys.readouterr().out
     assert f"sauces      {census.sauces}" in out
-    assert f"derived     {census.derived} linked to a mother" in out
+    assert f"derived     {census.derived} linked to a stated parent" in out
     assert f"unresolved  {census.unresolved} state no base in their prose" in out
     assert "mothers     bechamel, espagnole, hollandaise, tomato, veloute" in out
 

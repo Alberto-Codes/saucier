@@ -47,6 +47,10 @@ FAILED = 2
 def _parse(_: argparse.Namespace) -> int:
     """Extract the catalogue from the committed source and store it.
 
+    Prints the census: the source, the mothers, and the counts of sauces,
+    derived, and unresolved preparations. Derived counts every preparation
+    linked to a stated parent, mother or not.
+
     Args:
         _: Parsed arguments, unused.
 
@@ -59,7 +63,7 @@ def _parse(_: argparse.Namespace) -> int:
     print(f"source      {catalogue.source_id}")
     print(f"mothers     {', '.join(sorted(catalogue.mothers))}")
     print(f"sauces      {len(catalogue.preparations)}")
-    print(f"derived     {catalogue.resolved} linked to a mother")
+    print(f"derived     {catalogue.resolved} linked to a stated parent")
     print(f"unresolved  {catalogue.unresolved} state no base in their prose")
     print()
     print(f"Wrote {os.path.relpath(written)}")

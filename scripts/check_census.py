@@ -35,7 +35,7 @@ def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, .
 
     Args:
         sauces: Preparations in the catalogue.
-        derived: Preparations linked to a mother.
+        derived: Preparations linked to a stated parent.
         unresolved: Preparations stating no base.
 
     Returns:
@@ -43,7 +43,7 @@ def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, .
     """
     census = (
         f"sauces      {sauces}",
-        f"derived     {derived} linked to a mother",
+        f"derived     {derived} linked to a stated parent",
         f"unresolved  {unresolved} state no base in their prose",
     )
     return {
@@ -54,8 +54,8 @@ def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, .
             f"<b>{derived}</b> resolved",
             f"<b>{unresolved}</b> unresolved",
             (
-                f"Of {sauces} preparations, {derived} resolve to a mother "
-                f"and {unresolved} are unresolved."
+                f"Of {sauces} preparations, {derived} resolve to a stated "
+                f"parent and {unresolved} are unresolved."
             ),
         ),
         "docs/tutorial/first-run.md": (
@@ -66,7 +66,7 @@ def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, .
         "docs/reference/data-model.md": (
             f"{sauces} preparations<br/>{unresolved} unresolved",
             f"Catalogue of {sauces}",
-            f"`Catalogue` of {sauces} preparations. {derived} resolve to a mother",
+            f"`Catalogue` of {sauces} preparations. {derived} resolve to a stated parent",
         ),
         # The bar is drawn from flex ratios, so it lies silently when the
         # split moves and nobody redraws it.

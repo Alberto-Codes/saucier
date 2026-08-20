@@ -3,7 +3,7 @@
 Structured procedure extraction from culinary sources.
 
 Reads a cookbook and returns a catalogue. Each preparation carries its names,
-the language of each name, the mother it derives from, and the source line the
+the language of each name, the parent it derives from, and the source line the
 claim came from. No model runs. Every output is traceable to the text.
 
 ## Try it
@@ -17,8 +17,8 @@ $ uv run saucier parse
 source      escoffier-1907
 mothers     bechamel, espagnole, hollandaise, tomato, veloute
 sauces      124
-derived     29 linked to a mother
-unresolved  95 state no base in their prose
+derived     51 linked to a stated parent
+unresolved  73 state no base in their prose
 ```
 
 The five mothers were not supplied. Escoffier names them in his own text, and
@@ -28,17 +28,22 @@ the parser reads them out of it.
 $ uv run saucier tree espagnole
 BROWN SAUCE OR ESPAGNOLE  [espagnole]
 ├── LENTEN ESPAGNOLE  (fr)
-├── GENEVOISE SAUCE  (en)
+│   └── GENEVOISE SAUCE  (en)
 ├── ORDINARY POIVRADE SAUCE  (en)
+│   └── REFORM SAUCE  (en)
 └── POIVRADE SAUCE FOR VENISON  (en)
 ```
 
-## The interesting number is 95
+A parent may be any catalogued preparation, not only a mother. Marrow Sauce
+resolves to Bordelaise, and Bordelaise itself states no base. A derivation
+tree can therefore root in an unresolved sauce.
 
-Three quarters of these preparations never state what they are built on.
-Escoffier wrote for a reader who already knew, so he did not write it down.
-That gap is the point: it is the measured bar that anything cleverer has to
-beat. See [why there is no model in this yet](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/).
+## The interesting number is 73
+
+73 of 124 preparations never state what they are built on. Escoffier wrote
+for a reader who already knew, so he did not write it down. That gap is the
+point: it is the measured bar that anything cleverer has to beat. See
+[why there is no model in this yet](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/).
 
 The catalogue holds 124 entries, not every sauce in the book. An entry gets
 in when its own heading says "sauce", or when it names a mother inside a
@@ -54,7 +59,7 @@ reference is generated from the docstrings, so it cannot drift from the code.
 - [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
 - [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
 - [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
-- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the seven records, and what each one accepted
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the eight records, and what each one accepted
 
 ## Licence
 

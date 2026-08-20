@@ -2,7 +2,8 @@
 
 The model records what a source says, and how confidently it was read. It
 does not record what the parser wishes were true: an unresolved parent is
-`None`, never a guess.
+`None`, never a guess. A recorded parent may name any preparation in the
+catalogue, under any of its names, and lookups resolve that identity.
 
 The entities refuse states a source could not produce. A concept is derived
 from its surface form rather than stored beside it, a reference has to name
@@ -26,6 +27,7 @@ See Also:
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from saucier.domain.types import ConceptId, Language, to_concept_id
@@ -196,9 +198,9 @@ class Catalogue:
 
         An exact hit wins outright. Otherwise the concept has to appear as a
         whole run of words inside a name, so `bordelaise` reaches
-        `SAUCE BORDELAISE` but never `bordelaise-butter`. Candidates are
-        ordered by how little else their name carries, then by the order the
-        source presents them. Both signals come from the source: the least
+        `SAUCE BORDELAISE` but never `bordelaise-butter`. Hits are ordered
+        by how little else their name carries, then by the order the source
+        presents them. Both signals come from the source: the least
         qualified name is the base, and Escoffier states a base before its
         derivatives.
 
@@ -216,7 +218,7 @@ class Catalogue:
         hits = []
         for name, found in index.items():
             parts = name.split("-")
-            if _contains_run(parts, wanted):
+            if contains_run(parts, wanted):
                 hits.append((len(parts), order[found.ref.entry], found))
         return tuple(found for _, _, found in sorted(hits, key=lambda h: h[:2]))
 
@@ -235,14 +237,27 @@ class Catalogue:
     def children_of(self, concept: ConceptId) -> tuple[Preparation, ...]:
         """Find preparations the source derives from a given concept.
 
+        A recorded parent may be any name of the parent preparation, so a
+        child counts when its parent matches the concept exactly, or when
+        both names reach the same preparation.
+
         Args:
             concept: The parent concept to search for.
 
         Returns:
-            Preparations whose recorded parent is that concept, in source
+            Preparations the concept is the recorded parent of, in source
             order.
         """
-        return tuple(p for p in self.preparations if p.parent == concept)
+        target = self.find(concept)
+        return tuple(
+            p
+            for p in self.preparations
+            if p.parent is not None
+            and (
+                p.parent == concept
+                or (target is not None and self.find(p.parent) is target)
+            )
+        )
 
     @property
     def resolved(self) -> int:
@@ -266,15 +281,18 @@ class Catalogue:
         return len(self.preparations) - self.resolved
 
 
-def _contains_run(parts: list[str], wanted: list[str]) -> bool:
+def contains_run(parts: Sequence[str], wanted: Sequence[str]) -> bool:
     """Test whether one word run appears whole inside another.
 
     Args:
-        parts: Words of the name being searched.
-        wanted: Words of the concept being looked for.
+        parts: Words of the text being searched.
+        wanted: Words of the name being looked for.
 
     Returns:
         True if `wanted` appears as a contiguous run within `parts`.
     """
     span = len(wanted)
-    return any(parts[i : i + span] == wanted for i in range(len(parts) - span + 1))
+    target = list(wanted)
+    return any(
+        list(parts[i : i + span]) == target for i in range(len(parts) - span + 1)
+    )
