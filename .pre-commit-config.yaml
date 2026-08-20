@@ -80,6 +80,12 @@ repos:
         language: system
         pass_filenames: false
 
+      - id: census
+        name: published counts match the parser
+        entry: uv run python scripts/check_census.py
+        language: system
+        pass_filenames: false
+
       - id: prose
         name: strict-mode pages obey the writing system
         entry: uv run python scripts/check_prose.py
