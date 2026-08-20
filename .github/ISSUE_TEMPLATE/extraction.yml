@@ -1,0 +1,35 @@
+name: Extraction result
+description: The parser read something wrongly, or missed something.
+labels: ["extraction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Unresolved is not a bug. A preparation whose source states no mother
+        has `parent = None` on purpose. Report it here only if the source
+        does state one and the parser missed it.
+
+  - type: input
+    id: entry
+    attributes:
+      label: Source entry and line
+      description: From `saucier show <concept>`.
+      placeholder: "entry 32, line 1656"
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: What the source text actually says
+      description: Quote the lines from `corpus/`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What the parser produced
+      render: console
+    validations:
+      required: true
