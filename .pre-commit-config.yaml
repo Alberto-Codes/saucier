@@ -101,7 +101,7 @@ repos:
 
       - id: docvet
         name: docvet
-        entry: uv run docvet check --staged
+        entry: uv run docvet check --all
         language: system
         pass_filenames: false
         types: [python]
