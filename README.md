@@ -38,7 +38,7 @@ BROWN SAUCE OR ESPAGNOLE  [espagnole]
 Three quarters of these preparations never state what they are built on.
 Escoffier wrote for a reader who already knew, so he did not write it down.
 That gap is the point: it is the measured bar that anything cleverer has to
-beat. See [why there is no model in this yet](docs/explanation/why-no-model-yet.md).
+beat. See [why there is no model in this yet](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/).
 
 The catalogue holds 124 entries, not every sauce in the book. An entry gets
 in when its own heading says "sauce", or when it names a mother inside a
@@ -47,10 +47,14 @@ guesses.
 
 ## Documentation
 
-- [Tutorial](docs/tutorial/first-run.md) — clone it and print a family tree
-- [How-to](docs/how-to/add-a-source.md) — point it at a different book
-- [Reference](docs/reference/cli.md) — commands and data model
-- [Explanation](docs/explanation/why-no-model-yet.md) — why a parser comes first
+The rendered site is <https://alberto-codes.github.io/saucier/>. Its API
+reference is generated from the docstrings, so it cannot drift from the code.
+
+- [Tutorial](https://alberto-codes.github.io/saucier/tutorial/first-run/) — clone it and print a family tree
+- [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
+- [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
+- [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the seven records, and what each one accepted
 
 ## Licence
 
