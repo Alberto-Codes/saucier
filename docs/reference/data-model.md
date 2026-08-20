@@ -31,13 +31,23 @@ Where a preparation was found: `source_id`, the source's own `entry` number,
 and the `line` it begins on. Every extracted claim carries one, so any output
 can be checked against the text by hand.
 
+`line` counts within the source body. The reader removes the Project Gutenberg
+licence header and footer before it counts. The number is therefore not the
+line number in the file on disk. For `escoffier-1907` that header is 24 lines,
+so body line 2114 is file line 2138.
+
+```console
+$ sed -n '2138p' corpus/escoffier-1907.txt
+64—BÉARNAISE TOMATÉE SAUCE OR CHORON SAUCE
+```
+
 ## `Preparation`
 
 One numbered entry. Carries its `title`, its `terms`, its unparsed `body`,
 its `ref`, and its `parent`.
 
-`parent` is `None` when the source states no base. That is "unresolved", not
-"has no base" — the distinction matters, and the parser never guesses across
+`parent` is `None` when the source states no mother. That is "unresolved", not
+"has no mother" — the distinction matters, and the parser never guesses across
 it.
 
 ## `Catalogue`

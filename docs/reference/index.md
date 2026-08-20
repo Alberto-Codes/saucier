@@ -8,5 +8,5 @@ rather than argue for it, and the reasoning lives in
 - [Data model](data-model.md) — the frozen entities and what each field means.
 - [Glossary](glossary.md) — one term per concept. This page is law for the
   whole repository.
-- [API](api/) — generated from the docstrings, so it cannot drift from the
-  code.
+- [API](api/index.md) — generated from the docstrings, so it cannot drift
+  from the code.

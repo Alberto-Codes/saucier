@@ -21,8 +21,8 @@ derived     64 linked to a mother
 unresolved  102 state no base in their prose
 ```
 
-The five base sauces were not supplied — Escoffier names them in his own text
-and the parser reads them out of it.
+The five mothers were not supplied. Escoffier names them in his own text, and
+the parser reads them out of it.
 
 ```console
 $ uv run saucier tree espagnole

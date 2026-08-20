@@ -7,7 +7,7 @@ reason is not cost.
 ## A parser establishes the bar
 
 Escoffier structured his own book. Every preparation is numbered, titled, and
-placed in a sequence, and he states his five base sauces in a sentence you can
+placed in a sequence, and he states his five mothers in a sentence you can
 point at. A regular expression recovers 166 sauce preparations and links 64 of
 them to a base.
 
