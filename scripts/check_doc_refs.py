@@ -3,15 +3,16 @@
 Refactors move modules — markdown and docstrings do not notice. This
 gate extracts every dotted ``saucier.…`` reference from the living docs
 AND the Python sources (docstring cross-references rot too) and verifies
-each resolves to an importable module or an attribute of one. Decks
-(``docs/decks/``) describe the present state, so the gate covers them.
+each resolves to an importable module or an attribute of one. The gate
+covers ``scripts/`` too, so its own prose cannot name a module that went
+away.
 
 Examples:
     Run against the default doc set:
 
     ```console
     $ uv run python scripts/check_doc_refs.py
-    checked 42 references
+    checked N references
     ```
 """
 
@@ -33,6 +34,7 @@ DEFAULT_DOC_GLOBS = (
     ".github/copilot-instructions.md",
     "src/**/*.py",
     "tests/**/*.py",
+    "scripts/**/*.py",
 )
 
 
@@ -40,8 +42,8 @@ def _resolves(ref: str) -> bool:
     """Report whether a dotted reference names a module or attribute.
 
     Args:
-        ref: Dotted path, e.g. ``saucier.domain.solver`` or
-            ``saucier.domain.solver.solve``.
+        ref: Dotted path, e.g. ``saucier.domain.models`` or
+            ``saucier.domain.models.Catalogue``.
 
     Returns:
         True when the path imports as a module, or its last component is

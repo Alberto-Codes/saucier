@@ -10,7 +10,7 @@ Examples:
 
     ```console
     $ uv run python scripts/check_loc.py src
-    checked 14 files
+    checked N files
     ```
 """
 
@@ -41,28 +41,26 @@ _SKIP_TOKENS = frozenset(
 def _docstring_lines(tree: ast.Module) -> set[int]:
     """Collect the line numbers occupied by docstrings.
 
+    Every bare string statement counts, so PEP 257 attribute docstrings are
+    excluded from the code count alongside module, class, and function
+    docstrings. Documenting a constant must never push a module toward a
+    split.
+
     Args:
         tree: Parsed module AST.
 
     Returns:
-        All 1-based line numbers inside module, class, or function
-        docstrings.
+        All 1-based line numbers inside a docstring.
     """
     lines: set[int] = set()
     for node in ast.walk(tree):
-        if not isinstance(
-            node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
-        ):
-            continue
-        body = node.body
         if (
-            body
-            and isinstance(body[0], ast.Expr)
-            and isinstance(body[0].value, ast.Constant)
-            and isinstance(body[0].value.value, str)
-            and body[0].end_lineno is not None
+            isinstance(node, ast.Expr)
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+            and node.end_lineno is not None
         ):
-            lines.update(range(body[0].lineno, body[0].end_lineno + 1))
+            lines.update(range(node.lineno, node.end_lineno + 1))
     return lines
 
 
