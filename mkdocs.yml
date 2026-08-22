@@ -130,6 +130,7 @@ nav:
       - ADR-0010 Fidelity is on the record: adr/0010-fidelity-is-a-property-of-the-record.md
       - ADR-0011 Normalisation wraps a source: adr/0011-normalisation-wraps-a-source.md
       - ADR-0012 A resolver may refuse: adr/0012-a-resolver-may-refuse-never-rank.md
+      - ADR-0013 Repair structure, not content: adr/0013-repair-structure-never-content.md
 
 markdown_extensions:
   - abbr

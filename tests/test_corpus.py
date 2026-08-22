@@ -13,8 +13,11 @@ The `escoffier` fixture is the 1909 revision, whose census two published
 posts quote. The `escoffier_1907` fixture is the scanned first printing.
 """
 
+import re
+
 import pytest
 
+from saucier.adapters.driven.normalised import normalise, repair_separator
 from saucier.domain.types import ConceptId
 from saucier.domain.witness import Fidelity
 from saucier.infrastructure.bootstrap import escoffier_sources
@@ -215,13 +218,17 @@ def test_the_scanned_witness_records_that_it_is_a_scan(escoffier_1907):
 
 @pytest.mark.corpus
 def test_the_normalised_scan_still_lands_every_line_reference():
-    """The wrapper maps one line to one line, so a citation is checkable."""
+    """The wrapper maps one line to one line, so a citation is checkable.
+
+    The separator on the page is an em dash or the hyphens a scanner left in
+    its place, so the check reads the number and accepts either.
+    """
     path = Paths.discover().escoffier_scan
     lines = path.read_text(encoding="utf-8").splitlines()
     catalogue = extract(escoffier_sources()[1])
     for preparation in catalogue.preparations:
         found = lines[preparation.ref.line - 1]
-        assert f"{preparation.ref.entry}—" in found, (
+        assert re.match(rf"\s*{preparation.ref.entry}\s*(—|-{{1,2}})", found), (
             f"entry {preparation.ref.entry} claims line {preparation.ref.line}, "
             f"which reads {found!r}"
         )
@@ -257,9 +264,10 @@ def test_entry_63_reads_whole_in_both_witnesses(escoffier, escoffier_1907):
 
 @pytest.mark.corpus
 def test_the_number_of_wrapped_headings_is_the_measured_one():
-    """Four in the proofread text, 41 in the scan, whose column is narrower.
+    """Four in the proofread text, 42 in the scan, whose column is narrower.
 
-    A rise here means the rule loosened and is absorbing something else.
+    A rise here means the rule loosened and is absorbing something else. One
+    of the 42 became visible only once its broken separator was repaired.
     """
     joined = []
     for source in escoffier_sources():
@@ -271,7 +279,7 @@ def test_the_number_of_wrapped_headings_is_the_measured_one():
                 if ENTRY.match(line) and continues_heading(lines, index + 1)
             )
         )
-    assert joined == [4, 41]
+    assert joined == [4, 42]
 
 
 @pytest.mark.corpus
@@ -283,3 +291,48 @@ def test_a_restored_heading_still_faces_the_dish_rule(escoffier_1907):
     """
     titles = {p.title for p in escoffier_1907.preparations}
     assert "FRESH-PORK CUTLETS WITH PIQUANTE OR ROBERT SAUCE" not in titles
+
+
+RECOVERED = {
+    25: "ORDINARY VELOUTE SAUCE",
+    36: "DEVILLED SAUCE",
+    37: '"ESCOFFIER" DEVILLED SAUCE',
+    69: "CARDINAL SAUCE",
+    79: "CREAM SAUCE",
+    85: "HUNQARIAN SAUCE",
+    102: "RAVIQOTTE SAUCE",
+    107: "VENETIAN SAUCE",
+    125: "QRIBICHE SAUCE",
+    126: "MAYONNAISE SAUCE",
+    135: "QLOUCESTER SAUCE",
+}
+"""Sauces the scan hides behind a broken entry separator, with their titles.
+
+Each one carries the spelling the scan has. A repaired separator recovers the
+record and never touches the word.
+"""
+
+
+@pytest.mark.corpus
+def test_every_sauce_behind_a_broken_separator_is_recovered(escoffier_1907):
+    found = {p.ref.entry: p.title for p in escoffier_1907.preparations}
+    assert {n: found.get(n) for n in RECOVERED} == RECOVERED
+
+
+@pytest.mark.corpus
+def test_mayonnaise_is_in_both_witnesses_and_was_never_added(escoffier, escoffier_1907):
+    """Entry 126 in both books. The diff called it an addition for a release."""
+    clean = escoffier.find(ConceptId("mayonnaise-sauce"))
+    scanned = escoffier_1907.find(ConceptId("mayonnaise-sauce"))
+    assert clean is not None
+    assert scanned is not None
+    assert (clean.ref.entry, scanned.ref.entry) == (126, 126)
+
+
+@pytest.mark.corpus
+def test_the_number_of_repaired_separators_is_the_measured_one():
+    """A rise here means the guard loosened and is admitting prose."""
+    path = Paths.discover().escoffier_scan
+    lines = path.read_text(encoding="utf-8").splitlines()
+    cleaned = (normalise(line) for line in lines)
+    assert sum(1 for line in cleaned if repair_separator(line) != line) == 41

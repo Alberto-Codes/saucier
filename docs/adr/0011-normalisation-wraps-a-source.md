@@ -75,6 +75,12 @@ rule that joins or drops lines does not belong here.
 space before punctuation. Restoring `velout^` to `velouté` would manufacture
 agreement between the exact two witnesses this release compares.
 
+*Amended by [ADR-0013](0013-repair-structure-never-content.md) in the same
+release.* The line belongs between structure and content rather than at the
+character. The scan also breaks the em dash between an entry number and its
+title. Refusing to mend that mark loses eleven sauces, and the mark never
+reaches a record.
+
 ## Consequences
 
 ### Positive
@@ -99,4 +105,5 @@ agreement between the exact two witnesses this release compares.
 
 - [ADR-0005: Four layers and no runtime dependencies](0005-hexagon-and-no-runtime-dependencies.md)
 - [ADR-0010: Fidelity is a property of the record](0010-fidelity-is-a-property-of-the-record.md)
+- [ADR-0013: Normalisation repairs structure, never content](0013-repair-structure-never-content.md)
 - [Add a source](../how-to/add-a-source.md)
