@@ -38,8 +38,10 @@ class SourceText(Protocol):
 
         ```python
         class Fixture:
-            witness = a_witness
             line_offset = 0
+
+            def __init__(self, witness: Witness) -> None:
+                self.witness = witness
 
             def lines(self) -> list[str]:
                 return ["22—BROWN SAUCE", "body"]
