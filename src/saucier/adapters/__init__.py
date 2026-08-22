@@ -15,8 +15,14 @@ Examples:
     from pathlib import Path
 
     from saucier.adapters.driven.gutenberg import GutenbergText
+    from saucier.domain.witness import Fidelity
 
-    source = GutenbergText(Path("corpus/escoffier-1907.txt"), "escoffier-1907")
+    source = GutenbergText(
+        path=Path("corpus/escoffier-1909.txt"),
+        work="escoffier",
+        origin="Project Gutenberg 71395",
+        fidelity=Fidelity.TRANSCRIPTION,
+    )
     ```
 
 See Also:

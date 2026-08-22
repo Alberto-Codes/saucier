@@ -58,7 +58,7 @@ commit messages, code comments. A misread here costs cycles:
    number instead.
 6. No semicolons. At most one em-dash per paragraph.
 7. Single verbs over phrasal verbs: "remove", not "take off".
-8. State numbers and units: "95 unresolved", not "many".
+8. State numbers and units: "74 unresolved", not "many".
 
 **Flavored mode** — explanation pages, discussions, PR descriptions. Keep the
 glossary discipline, active voice, and one-idea-per-sentence habit. Range,

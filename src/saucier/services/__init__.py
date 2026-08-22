@@ -8,6 +8,8 @@ that satisfies `SourceText`.
 Attributes:
     extraction: Deterministic extraction of preparations from a numbered
         source, with no model involved.
+    front_matter: Reading the edition a source states about itself.
+    comparison: Comparing two catalogues, with a cause on every row.
 
 Examples:
     Extract a catalogue from any source implementation:

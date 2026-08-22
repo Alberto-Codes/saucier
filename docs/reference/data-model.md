@@ -18,7 +18,8 @@ flowchart TD
         source calls basic sauces. sauce_chapters reads the chapter titles and
         returns the line spans of the chapters the source titles as sauces.
         iter_entries walks the same lines and yields one numbered entry at a
-        time. is_sauce tests each entry heading, keeps it when the heading
+        time, joining a heading that wraps onto a second line. is_sauce tests
+        each entry heading, keeps it when the heading
         itself says sauce, and otherwise keeps it only when the heading names a
         mother inside a sauce chapter. A rejected entry stays out of the
         catalogue. terms_in splits a kept heading into one language-tagged Term
@@ -51,7 +52,8 @@ flowchart TD
 2. `find_mothers` scans the whole body once. It returns the concepts the
    source itself calls basic sauces.
 3. `iter_entries` walks the same lines. It yields one numbered entry at a
-   time.
+   time. A heading that wraps onto a second line is read whole, so the two
+   witnesses do not disagree about a title the typesetter broke.
 4. `sauce_chapters` reads the chapter titles. It returns the line spans of
    the chapters the source titles as sauce chapters.
 5. `is_sauce` keeps a heading that says "sauce" before any "with". It

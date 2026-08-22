@@ -5,18 +5,18 @@ or picks an adapter. Everything above it receives its collaborators already
 constructed.
 
 Attributes:
-    config: `Paths` and the corpus constants, including the source URL the
-        committed text came from.
+    config: `Paths` and the corpus constants, including the URL and the
+        citable origin each committed witness came from.
     bootstrap: Factory functions returning adapters typed as their ports.
 
 Examples:
-    Wire the default adapters and run an extraction:
+    Wire the default adapters and extract every committed witness:
 
     ```python
-    from saucier.infrastructure.bootstrap import escoffier_source
+    from saucier.infrastructure.bootstrap import escoffier_sources
     from saucier.services.extraction import extract
 
-    catalogue = extract(escoffier_source())
+    catalogues = [extract(source) for source in escoffier_sources()]
     ```
 
 See Also:

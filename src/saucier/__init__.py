@@ -18,11 +18,12 @@ Examples:
     Extract a catalogue from the committed source:
 
     ```python
-    from saucier.infrastructure.bootstrap import escoffier_source
+    from saucier.infrastructure.bootstrap import escoffier_sources
     from saucier.services.extraction import extract
 
-    catalogue = extract(escoffier_source())
-    unresolved = len(catalogue.preparations) - catalogue.resolved
+    for source in escoffier_sources():
+        catalogue = extract(source)
+        print(catalogue.source_id, catalogue.unresolved)
     ```
 
 See Also:
