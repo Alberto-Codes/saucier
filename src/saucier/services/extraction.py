@@ -541,8 +541,10 @@ def extract(source: SourceText) -> Catalogue:
     Returns:
         The catalogue of preparations found, with parents resolved where the
         source states them plainly, and the source's own witness recorded on
-        it. A parent may be any preparation in the catalogue, so resolution
-        runs after every entry has been read.
+        it. It also records how many numbered entries the reader found, which
+        is what a later comparison needs to know its own blind spot. A parent
+        may be any preparation in the catalogue, so resolution runs after
+        every entry has been read.
 
     Raises:
         NoPreparationsFound: If the source yields no numbered entries at all,
@@ -571,6 +573,7 @@ def extract(source: SourceText) -> Catalogue:
         witness=witness,
         preparations=_derived(provisional),
         mothers=mothers,
+        entries_read=len(entries),
     )
 
 

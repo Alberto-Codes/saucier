@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 
 import pytest
 
@@ -181,3 +182,14 @@ def test_a_catalogue_filed_under_the_wrong_name_is_damage(tmp_path, catalogue):
     (tmp_path / f"{STORED}.json").rename(tmp_path / "fixture-1800.json")
     with pytest.raises(SourceUnreadable, match="says it is fixture-1909"):
         JsonCatalogueStore(directory=tmp_path).load("fixture-1800")
+
+
+@pytest.mark.unit
+def test_the_entry_count_survives_a_round_trip(tmp_path, catalogue):
+    """The blind spot is computed from it, so an unrecorded count is None."""
+    counted = replace(catalogue, entries_read=2679)
+    store = JsonCatalogueStore(directory=tmp_path)
+    store.save(counted)
+    assert store.load(STORED).entries_read == 2679
+    store.save(catalogue)
+    assert store.load(STORED).entries_read is None

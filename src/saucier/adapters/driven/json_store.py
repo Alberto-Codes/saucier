@@ -90,9 +90,9 @@ class JsonCatalogueStore:
     def save(self, catalogue: Catalogue) -> str:
         """Write a catalogue, replacing any previous one for its source.
 
-        The whole file is rendered every time, witness block included. One
-        added record rewrites every other record, which is the cost this
-        format pays and the reason the next one exists.
+        The whole file is rendered every time, witness block and entry count
+        included. One added record rewrites every other record, which is the
+        cost this format pays and the reason the next one exists.
 
         Writes a temporary file and renames it over the target, so an
         interrupted run leaves the previous catalogue intact rather than a
@@ -111,6 +111,7 @@ class JsonCatalogueStore:
         path = self.path_for(catalogue.source_id)
         payload = {
             "witness": _witness_dict(catalogue.witness),
+            "entries_read": catalogue.entries_read,
             "mothers": sorted(catalogue.mothers),
             "preparations": [_as_dict(p) for p in catalogue.preparations],
         }
@@ -131,7 +132,8 @@ class JsonCatalogueStore:
         A stored file that names no edition year, or an unknown fidelity, is
         damage rather than a catalogue. So is a file whose witness names a
         different source than the one asked for, because the id is recomputed
-        from the witness rather than read from the file.
+        from the witness rather than read from the file. An entry count of
+        `null` is not damage. It means no count was recorded.
 
         Args:
             source_id: Identifier of the source whose catalogue to load.
@@ -160,6 +162,7 @@ class JsonCatalogueStore:
                 witness=_witness_from_dict(payload["witness"]),
                 preparations=tuple(_from_dict(p) for p in payload["preparations"]),
                 mothers=frozenset(to_concept_id(m) for m in payload["mothers"]),
+                entries_read=_int_or_none(payload["entries_read"]),
             )
         except (
             json.JSONDecodeError,
@@ -215,6 +218,9 @@ def _witness_dict(witness: Witness) -> dict[str, Any]:
 def _witness_from_dict(payload: dict[str, Any]) -> Witness:
     """Rebuild a witness from its JSON representation.
 
+    An absent year stays absent. Reading it as a zero would let a text with
+    no stated identity acquire one on the way back in.
+
     Args:
         payload: A dictionary previously produced by `_witness_dict`.
 
@@ -228,9 +234,9 @@ def _witness_from_dict(payload: dict[str, Any]) -> Witness:
         fidelity=Fidelity(payload["fidelity"]),
         edition=Edition(
             statement=_text_or_none(edition["statement"]),
-            stated_year=_year_or_none(edition["stated_year"]),
+            stated_year=_int_or_none(edition["stated_year"]),
             impression=_text_or_none(edition["impression"]),
-            copyright_year=_year_or_none(edition["copyright_year"]),
+            copyright_year=_int_or_none(edition["copyright_year"]),
         ),
     )
 
@@ -247,14 +253,17 @@ def _text_or_none(value: Any) -> str | None:
     return None if value is None else str(value)
 
 
-def _year_or_none(value: Any) -> int | None:
-    """Read an optional year field, keeping `null` distinct from zero.
+def _int_or_none(value: Any) -> int | None:
+    """Read an optional whole number, keeping `null` distinct from zero.
+
+    A year the front matter never printed and a count nobody recorded are
+    both absences, and neither is a zero.
 
     Args:
         value: The stored value.
 
     Returns:
-        The value as a year, or None when the file stored `null`.
+        The value as a whole number, or None when the file stored `null`.
     """
     return None if value is None else int(value)
 

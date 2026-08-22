@@ -149,12 +149,20 @@ in the same change.
     witness holds, and the cause. Not "delta", "change", or "diff row".
 
 **Cause**
-:   Why two witnesses differ on one concept. Five values, and a row may carry
-    more than one. `added` and `removed` mean one witness holds the concept
-    and the other does not. `retitled` means one heading is the other plus
-    whole words. `parent-changed` means a preparation records a different
-    derivation in each witness. `ocr-suspected` means a scanned witness explains the row as
+:   Why two witnesses differ on one concept. Six values, and a row may carry
+    more than one. `unmatched` means one witness holds the concept and the
+    diff found no counterpart in the other. `added` and `removed` mean the
+    concept is in one book and not in the other. That is a stronger claim,
+    available only between two witnesses of equal fidelity.
+    `retitled` means one heading is the other plus whole words.
+    `parent-changed` means a preparation records a different derivation in
+    each witness. `ocr-suspected` means a scanned witness explains the row as
     well as a revision does. Not "reason", "kind", or "type".
+
+**Blind spot**
+:   Entries one witness yielded and the other did not. It measures what a
+    reader could not see, so it is what an `unmatched` row cannot look past.
+    Not "coverage" or "recall", which name a score rather than a gap.
 
 ## Names this project does not use
 

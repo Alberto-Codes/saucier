@@ -85,6 +85,11 @@ against `corpus/`.
 front matter, never taken from the filename. `escoffier-1907` was wrong for
 two releases because a filename was trusted. See ADR-0009.
 
+**A damaged witness cannot establish absence.** The scan has a 284-entry
+blind spot, so the diff reports `unmatched` rather than `added` or `removed`.
+Restoring the stronger claim means shrinking the blind spot first. See
+ADR-0014.
+
 **A parent resolver may refuse, never rank.** No parent is ever chosen by
 score. An abstention is the instrument that catches silent corruption, not a
 gap to close. See ADR-0012. The edition diff does rank name candidates, which

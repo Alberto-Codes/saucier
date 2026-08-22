@@ -180,6 +180,9 @@ class Catalogue:
             source presents them.
         mothers (frozenset[ConceptId]): Concepts the source itself names as
             base preparations.
+        entries_read (int | None): Numbered entries the reader found in this
+            source, which is not the number the source contains. `None` when
+            no count was recorded, never zero to mean unknown.
 
     Examples:
         Report how much of a source the parser could resolve:
@@ -192,6 +195,7 @@ class Catalogue:
     witness: Witness
     preparations: tuple[Preparation, ...] = field(default_factory=tuple)
     mothers: frozenset[ConceptId] = field(default_factory=frozenset)
+    entries_read: int | None = None
 
     def __post_init__(self) -> None:
         """Reject a catalogue whose records contradict its witness.

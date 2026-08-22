@@ -46,11 +46,21 @@ Every row carries a cause, and a row may carry two.
 
 | Cause | Meaning |
 | --- | --- |
-| `added` | The later witness holds it, and no name in the earlier one resembles it |
-| `removed` | The earlier witness holds it, and no name in the later one resembles it |
+| `unmatched` | One witness holds it and the diff found no counterpart in the other |
+| `added` | The later book has it and the earlier one does not |
+| `removed` | The earlier book has it and the later one does not |
 | `retitled` | One heading is the other plus whole words |
 | `parent-changed` | A preparation records a different derivation in each witness |
 | `ocr-suspected` | A scanned witness explains the row as well as a revision does |
+
+`added` and `removed` state what a book contains, so they need an instrument
+that can see everything in it. A scanned witness has a measured blind spot,
+so a comparison involving one reports `unmatched` instead. See
+[ADR-0014](../adr/0014-a-damaged-witness-cannot-establish-absence.md).
+
+The summary prints the blind spot beside the counts: entries read from each
+witness, and the gap between them. Against the committed corpus the gap is
+284 entries, which is what an `unmatched` row cannot look past.
 
 A scan can drop a heading's tail at a page break. So a `retitled` row also
 carries `ocr-suspected` when a scanned witness is in the comparison. That
