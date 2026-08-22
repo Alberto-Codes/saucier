@@ -19,17 +19,18 @@ That rule drew its line in the wrong place, and a second scan artefact showed
 where the line belongs.
 
 `ENTRY` requires an em dash between an entry number and its title. The scan
-does not always supply one:
+renders it as one hyphen, as two, or as an underscore:
 
 ```
 1907:  126-- MAYONNAISE  SAUCE
+1907:  57_VENISON  SAUCE
 1909:  126—MAYONNAISE SAUCE
 ```
 
-Forty-one headings are damaged that way, eleven of them sauces. The parser
-could not see them at all, so `saucier diff` reported them as sauces the 1909
-revision added. Mayonnaise was never added. It was in the reader's blind spot
-from the first release.
+Fifty-seven headings are damaged that way, thirteen of them sauces. The
+parser could not see them at all, so `saucier diff` reported them as sauces
+the 1909 revision added. Mayonnaise was never added. It was in the reader's
+blind spot from the first release.
 
 Repairing `126--` to `126—` repairs a character. Under ADR-0011 as written it
 is forbidden, and the eleven sauces stay lost.
@@ -55,15 +56,16 @@ entry pattern and never reaches a `Term`. `QRIBICHE SAUCE` is recorded as
 said, which ADR-0003 forbids.
 
 **A repair runs only where the line is unmistakably a record.** The guard is
-narrow on purpose: a number, one or two hyphens, and a title set entirely in
-upper case carrying more than three letters. The same book numbers its prose,
-and `1. Ordinary and clarified consommes.` must stay a sentence.
+a number, a broken separator, and a title opening in four capitals and
+carrying more than three letters. The same book numbers its prose, and `1.
+Ordinary and clarified consommes.` must stay a sentence.
 
-**Declining a repair is the safe direction.** The guard rejects seven
-hyphen-shaped lines in the scan. One of them is a genuine heading, `33-
-CHASSEUR SAUCE (Escoffier's Method)`, held out by a lower-case parenthetical.
-A twelfth sauce therefore stays invisible. Recovering it needs its own
-measurement rather than a looser guard applied on the way past.
+**The guard is measured, not chosen.** Requiring the whole title in capitals
+was tried first, and it held out two real headings. `33- CHASSEUR SAUCE
+(Escoffier's Method)` failed on a lower-case parenthetical. `684- VELOUTE DE
+HOMARD, otherwise CARDINAL` failed on a lower-case joining word. Four opening
+capitals admits 57 lines in the scan and every one is a heading. No line of
+prose in the book opens that way.
 
 **Matching against the other witness to decide what is a record is
 forbidden.** It would leak the comparand into the thing being compared. Every
@@ -74,10 +76,9 @@ matching.
 
 ### Positive
 
-- Eleven sauces enter the 1907 catalogue, and the count of sauces the
-  revision added falls from 20 to 10. Roughly half of that claim was the
-  scanner.
-- The 1907 census rises to 113 sauces, 35 derived, and 78 unresolved. The
+- Thirteen sauces enter the 1907 catalogue, and the count of sauces the
+  revision added falls from 20 to 8. Most of that claim was the scanner.
+- The 1907 census rises to 115 sauces, 36 derived, and 79 unresolved. The
   1909 census is untouched.
 - The recovered headings carry their OCR spellings, so `QRIBICHE SAUCE` pairs
   with `GRIBICHE SAUCE` as OCR-suspected rather than standing as a difference.
@@ -88,8 +89,9 @@ matching.
 
 - ADR-0011's closing sentence is amended by this record. A reader following
   the older wording will find the code doing what it said it would not.
-- One known sauce stays lost, and the diff still reports `CHASSEUR SAUCE` as
-  an addition. That row is wrong and this release knows it is wrong.
+- The guard reads four letters and no more. A line of prose opening in four
+  capitals would be admitted, and none exists in this book. A second scanned
+  source is where that assumption gets tested.
 - The wrapper now knows one thing about the document's structure: the shape
   of its own entry separator. A test asserts that a repaired line satisfies
   `extraction.ENTRY`, because nothing else couples the two.

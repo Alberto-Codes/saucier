@@ -155,7 +155,7 @@ def test_diff_reads_the_ocr_names_as_scan_artefacts_rather_than_removals(wired, 
     cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
     out = capsys.readouterr().out
     assert "qenevoise-sauce ~ genevoise-sauce" in out
-    assert "10 added, 1 removed, 18 parent-changed, 35 ocr-suspected" in out
+    assert "8 added, 1 removed, 18 parent-changed, 35 ocr-suspected" in out
 
 
 @pytest.mark.unit

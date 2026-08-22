@@ -118,3 +118,26 @@ def test_a_line_already_carrying_its_separator_is_left_alone():
 def test_the_repair_is_idempotent():
     once = repair_separator("126-- MAYONNAISE SAUCE")
     assert repair_separator(once) == once
+
+
+@pytest.mark.unit
+def test_an_underscore_separator_is_mended():
+    """`57_VENISON SAUCE` is entry 57, and the scan lost its dash entirely."""
+    assert repair_separator("57_VENISON SAUCE") == "57—VENISON SAUCE"
+
+
+@pytest.mark.unit
+def test_a_title_with_a_lower_case_parenthetical_is_still_a_heading():
+    """Requiring the whole title in capitals held out two real sauces."""
+    mended = repair_separator("33- CHASSEUR SAUCE (Escoffier's Method)")
+    assert mended == "33—CHASSEUR SAUCE (Escoffier's Method)"
+    assert ENTRY.match(mended)
+
+
+@pytest.mark.unit
+def test_a_title_that_does_not_open_in_capitals_is_prose():
+    for line in (
+        "12- The stock is then passed through a tammy.",
+        "45- Reduce THE WINE until it thickens.",
+    ):
+        assert repair_separator(line) == line

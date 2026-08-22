@@ -21,7 +21,7 @@ escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                113 sauces, 35 derived, 78 unresolved
+                115 sauces, 36 derived, 79 unresolved
 ```
 
 The five mothers were not supplied. Escoffier names them in his own text, and
@@ -65,7 +65,7 @@ scan, so every difference between them has two explanations.
 ```console
 $ uv run saucier diff escoffier-1907 escoffier-1909
 ...
-  10 added, 1 removed, 18 parent-changed, 35 ocr-suspected
+  8 added, 1 removed, 18 parent-changed, 35 ocr-suspected
 ```
 
 Seventeen names look removed and a scanner explains every one of them.
