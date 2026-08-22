@@ -16,7 +16,7 @@ and say why in the changelog. Two published posts quote them as well.
 """
 
 FIRST_PRINTING = SimpleNamespace(
-    source_id="escoffier-1907", sauces=113, derived=35, unresolved=78
+    source_id="escoffier-1907", sauces=115, derived=36, unresolved=79
 )
 """The 1907 witness, which is OCR. Published from release 0.3.0 onward."""
 
