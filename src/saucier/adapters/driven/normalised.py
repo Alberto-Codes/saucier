@@ -1,15 +1,24 @@
-"""Clean the whitespace a scanner leaves behind, without touching a letter.
+"""Repair what a scanner did to the page, never to the words on it.
 
 OCR of a printed page double-spaces words and puts a space before a colon.
 Neither is a comprehension problem, and both stop the extraction patterns
 matching: `CHAPTER  I ` fails the chapter test, and `basic  sauces :` fails
 the mothers test. Three rules fix both.
 
+It also breaks the em dash that separates an entry number from its title.
+`126-- MAYONNAISE SAUCE` is entry 126 of the same book, and a reader that
+requires U+2014 cannot see it at all. Forty-one headings are lost that way,
+eleven of them sauces, and a comparison then reports them as sauces the later
+edition added.
+
 This is an adapter that wraps another adapter, so the rules live outside
 every source and outside every service. ADR-0011 records why.
 
-Nothing here repairs a character. Turning `velout^` back into `velouté`
-would manufacture agreement between the two witnesses this corpus compares.
+Nothing here repairs a word. The separator is punctuation that delimits a
+record, and the licence to repair it comes from the same document: 2,622
+lines in it carry the undamaged shape. Turning `velout^` back into `velouté`
+is a different act, because the evidence for the missing letter is outside
+the witness. ADR-0013 draws that line.
 
 Examples:
     Wrap a scanned source before extracting from it:
@@ -40,6 +49,46 @@ RUNS = re.compile(r"[ \t]+")
 BEFORE_PUNCTUATION = re.compile(r"\s+([:;,.])")
 """A scan sets a space before a colon, which the mothers pattern will not match."""
 
+SEPARATOR = re.compile(r"^(\d{1,4})\s*-{1,2}\s*(.+)$")
+"""A number, one or two hyphens, and a title: an entry whose em dash broke."""
+
+ENTRY_DASH = "—"
+"""What the separator should have been. `extraction.ENTRY` requires it."""
+
+LETTERS = re.compile(r"[A-Za-z]")
+"""Letters only. A tail of digits and marks is not a title."""
+
+SHORTEST_TITLE = 3
+"""Letters a title must exceed. `1-^` is damage rather than a heading."""
+
+
+def repair_separator(line: str) -> str:
+    """Restore the em dash a scanner broke between a number and a title.
+
+    Only where the line is unmistakably a heading. The title has to be set
+    entirely in upper case and carry more than three letters, which is what
+    separates a heading from the numbered prose in the same book. `1.
+    Ordinary and clarified consommes.` is a sentence, and it stays one.
+
+    The repair consumes the separator and nothing else, so the title is the
+    same bytes either way. `QRIBICHE` stays `QRIBICHE`, and the comparison is
+    what notices it resembles `GRIBICHE`.
+
+    Args:
+        line: One line, its whitespace already regularised.
+
+    Returns:
+        The line with its separator restored, or unchanged when the line is
+        not unmistakably a heading.
+    """
+    match = SEPARATOR.match(line)
+    if not match:
+        return line
+    title = match.group(2)
+    if title != title.upper() or len(LETTERS.findall(title)) <= SHORTEST_TITLE:
+        return line
+    return f"{match.group(1)}{ENTRY_DASH}{title}"
+
 
 def normalise(line: str) -> str:
     """Clean one line of scanning artefacts.
@@ -62,8 +111,9 @@ class NormalisedText:
     """A source whose lines are cleaned before any extractor reads them.
 
     The wrapper delegates identity and offset to the source it wraps, and
-    maps every body line through `normalise`. Normalisation is idempotent, so
-    wrapping a clean source is safe and wrapping twice changes nothing.
+    maps every body line through `normalise` and then `repair_separator`.
+    Both are idempotent, so wrapping a clean source is safe and wrapping
+    twice changes nothing.
 
     Attributes:
         inner (SourceText): The source whose lines need cleaning.
@@ -98,10 +148,13 @@ class NormalisedText:
         return self.inner.line_offset
 
     def lines(self) -> list[str]:
-        """Return the wrapped body with every line cleaned.
+        """Return the wrapped body with every line cleaned and mended.
+
+        Whitespace is regularised first, so the separator rule sees single
+        spaces and can be written for one shape rather than several.
 
         Returns:
             Body lines in document order, one for each line the wrapped
             source yielded.
         """
-        return [normalise(line) for line in self.inner.lines()]
+        return [repair_separator(normalise(line)) for line in self.inner.lines()]

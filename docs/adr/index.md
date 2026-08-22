@@ -44,3 +44,6 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0012: A resolver may refuse, never
   rank](0012-a-resolver-may-refuse-never-rank.md). Why the unresolved count
   is an instrument, and what a model layer may not do to it.
+- [ADR-0013: Normalisation repairs structure, never
+  content](0013-repair-structure-never-content.md). Why a broken entry
+  separator may be mended and a broken word may not.
