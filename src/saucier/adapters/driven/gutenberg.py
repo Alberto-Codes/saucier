@@ -1,8 +1,12 @@
 """Read a Project Gutenberg plain-text ebook as a source document.
 
-The file is read once and held. Provenance needs two things from it: the
-body an extractor should see, and the count of licence-header lines removed
-before it, so a recorded line number names a line in the file on disk.
+The file is read once and held. Provenance needs three things from it: the
+body an extractor should see, the count of licence-header lines removed
+before it, and the edition the front matter states.
+
+The reader refuses a file carrying no Gutenberg markers. That refusal is the
+point of the adapter. A source in another format gets its own adapter rather
+than a looser marker test here.
 
 Examples:
     Open the committed corpus:
@@ -11,13 +15,21 @@ Examples:
     from pathlib import Path
 
     from saucier.adapters.driven.gutenberg import GutenbergText
+    from saucier.domain.witness import Fidelity
 
-    source = GutenbergText(Path("corpus/escoffier-1907.txt"), "escoffier-1907")
+    source = GutenbergText(
+        path=Path("corpus/escoffier-1909.txt"),
+        work="escoffier",
+        origin="Project Gutenberg 71395",
+        fidelity=Fidelity.TRANSCRIPTION,
+    )
     body = source.lines()
     ```
 
 See Also:
     - [saucier.ports.source][]: The contract this satisfies.
+    - [saucier.adapters.driven.plain_text][]: The reader for a file with no
+      wrapper to strip.
 """
 
 from __future__ import annotations
@@ -27,12 +39,14 @@ from functools import cached_property
 from pathlib import Path
 
 from saucier.domain.errors import SourceUnreadable
+from saucier.domain.witness import Fidelity, Witness
+from saucier.services.front_matter import read_edition
 
 START = "*** START OF THE PROJECT GUTENBERG EBOOK"
 END = "*** END OF THE PROJECT GUTENBERG EBOOK"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class GutenbergText:
     """A Gutenberg ebook on disk, with its licence wrapper stripped.
 
@@ -44,20 +58,23 @@ class GutenbergText:
 
     Attributes:
         path (Path): Location of the downloaded ebook.
-        source_id (str): Stable identifier used in every reference to this
-            source.
+        work (str): Name of the book across its editions. The edition year is
+            read from the text, so the two together give the source id.
+        origin (str): Where the text was obtained, citable by a reader.
+        fidelity (Fidelity): How the text was obtained.
 
     Examples:
         Read the body with the licence wrapper already removed:
 
         ```python
-        source = GutenbergText(Path("corpus/escoffier-1907.txt"), "escoffier-1907")
         assert not source.lines()[0].startswith("The Project Gutenberg")
         ```
     """
 
     path: Path
-    source_id: str
+    work: str
+    origin: str
+    fidelity: Fidelity
 
     @cached_property
     def _body(self) -> tuple[int, list[str]]:
@@ -89,6 +106,25 @@ class GutenbergText:
             msg = f"no Gutenberg end marker in {self.path}, so the file is truncated"
             raise SourceUnreadable(msg)
         return opening + 1, raw[opening + 1 : closing]
+
+    @cached_property
+    def witness(self) -> Witness:
+        """What this text is, read from its own front matter.
+
+        Returns:
+            The witness, whose source id derives from the stated edition.
+
+        Raises:
+            SourceUnreadable: If the file cannot be read.
+            EditionUnstated: If the front matter states no edition and no
+                copyright year.
+        """
+        return Witness(
+            work=self.work,
+            origin=self.origin,
+            fidelity=self.fidelity,
+            edition=read_edition(self.lines()),
+        )
 
     @property
     def line_offset(self) -> int:

@@ -1,8 +1,14 @@
 """Census gate: the published counts match what the parser prints.
 
 Four pages and one stylesheet quote the number of sauces, the number linked
-to a mother, and the number left unresolved. Those numbers are the project's
-headline claim, and nothing about a stale one looks wrong on the page.
+to a stated parent, and the number left unresolved. Those numbers are the
+project's headline claim, and nothing about a stale one looks wrong on the
+page.
+
+The corpus holds two witnesses, so the gate runs both. The 1909 revision is
+the one two published posts quote, and it carries the whole surface list.
+The 1907 first printing is quoted on fewer pages, and every page that quotes
+it is checked too.
 
 `tests/conftest.py` pins the counts, so a parser change fails the suite. It
 does not prove anybody then updated the prose. This gate runs the parser and
@@ -26,30 +32,43 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from saucier.infrastructure.bootstrap import escoffier_source  # noqa: E402
+from saucier.domain.models import Catalogue  # noqa: E402
+from saucier.infrastructure.bootstrap import escoffier_sources  # noqa: E402
 from saucier.services.extraction import extract  # noqa: E402
 
 
-def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, ...]]:
+def census_line(catalogue: Catalogue) -> str:
+    """Build the line `saucier parse` prints for one witness.
+
+    Args:
+        catalogue: The catalogue just extracted.
+
+    Returns:
+        The census exactly as the command reports it.
+    """
+    return (
+        f"{len(catalogue.preparations)} sauces, "
+        f"{catalogue.resolved} derived, {catalogue.unresolved} unresolved"
+    )
+
+
+def quoted(revision: Catalogue, first: Catalogue) -> dict[str, tuple[str, ...]]:
     """Build the strings each surface has to carry.
 
     Args:
-        sauces: Preparations in the catalogue.
-        derived: Preparations linked to a stated parent.
-        unresolved: Preparations stating no base.
+        revision: The 1909 revision, whose census the posts quote.
+        first: The 1907 first printing.
 
     Returns:
         A mapping from path to the strings that path must contain.
     """
-    census = (
-        f"sauces      {sauces}",
-        f"derived     {derived} linked to a stated parent",
-        f"unresolved  {unresolved} state no base in their prose",
-    )
+    sauces = len(revision.preparations)
+    derived, unresolved = revision.resolved, revision.unresolved
+    both = (census_line(revision), census_line(first))
     return {
-        "README.md": (*census, f"## The interesting number is {unresolved}"),
+        "README.md": (*both, f"## The interesting number is {unresolved}"),
         "docs/index.md": (
-            *census,
+            *both,
             f"<b>{sauces}</b> preparations",
             f"<b>{derived}</b> resolved",
             f"<b>{unresolved}</b> unresolved",
@@ -59,7 +78,7 @@ def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, .
             ),
         ),
         "docs/tutorial/first-run.md": (
-            *census,
+            *both,
             f"**{sauces} sauces**",
             f"**{unresolved} unresolved**",
         ),
@@ -68,6 +87,7 @@ def quoted(sauces: int, derived: int, unresolved: int) -> dict[str, tuple[str, .
             f"Catalogue of {sauces}",
             f"`Catalogue` of {sauces} preparations. {derived} resolve to a stated parent",
         ),
+        "docs/reference/cli.md": both,
         # The bar is drawn from flex ratios, so it lies silently when the
         # split moves and nobody redraws it.
         "docs/stylesheets/theme.css": (f"flex: {derived};", f"flex: {unresolved};"),
@@ -80,10 +100,8 @@ def main() -> int:
     Returns:
         Process exit code: 0 when every surface agrees, 1 otherwise.
     """
-    catalogue = extract(escoffier_source())
-    wanted = quoted(
-        len(catalogue.preparations), catalogue.resolved, catalogue.unresolved
-    )
+    revision, first = (extract(source) for source in escoffier_sources())
+    wanted = quoted(revision, first)
 
     failed = False
     checked = 0

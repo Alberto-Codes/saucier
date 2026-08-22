@@ -5,6 +5,11 @@ does not record what the parser wishes were true: an unresolved parent is
 `None`, never a guess. A recorded parent may name any preparation in the
 catalogue, under any of its names, and lookups resolve that identity.
 
+It also records what the source *is*. Every reference carries the fidelity of
+the text the claim came through, and a catalogue carries the witness it was
+read from. A proofread transcription and a raw scan are not equal evidence,
+so the record never leaves a reader to assume which one it holds.
+
 The entities refuse states a source could not produce. A concept is derived
 from its surface form rather than stored beside it, a reference has to name
 a line a reader can open, and an unresolved parent is stated at every
@@ -30,6 +35,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from saucier.domain.types import ConceptId, Language, to_concept_id
+from saucier.domain.witness import Fidelity, Witness
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,12 +84,20 @@ class SourceRef:
         entry (int): The source's own numbering for the entry, 1 or greater.
         line (int): Line number in the source file where the entry begins,
             1 or greater, for hand-checking.
+        fidelity (Fidelity): How the text this claim came through was
+            obtained. A citation a reader cannot grade is a citation the
+            reader has to grade twice.
 
     Examples:
         Every preparation can be checked against the source by hand:
 
         ```python
-        ref = SourceRef(source_id="escoffier-1907", entry=32, line=1680)
+        ref = SourceRef(
+            source_id="escoffier-1909",
+            entry=32,
+            line=1680,
+            fidelity=Fidelity.TRANSCRIPTION,
+        )
         print(ref.entry, ref.line)
         ```
     """
@@ -91,6 +105,7 @@ class SourceRef:
     source_id: str
     entry: int
     line: int
+    fidelity: Fidelity
 
     def __post_init__(self) -> None:
         """Reject a reference that cannot be checked against a source.
@@ -151,13 +166,16 @@ class Preparation:
         return self.terms[0].concept if self.terms else to_concept_id(self.title)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Catalogue:
-    """Every preparation read from one source, with the mothers named.
+    """Every preparation read from one witness, with the mothers named.
+
+    The witness travels with the catalogue, so a stored file states which
+    edition it holds and how that text was obtained. Each preparation states
+    its own fidelity as well, and the two may not disagree.
 
     Attributes:
-        source_id (str): Identifier of the source these preparations came
-            from.
+        witness (Witness): The text these preparations were read from.
         preparations (tuple[Preparation, ...]): Preparations in the order the
             source presents them.
         mothers (frozenset[ConceptId]): Concepts the source itself names as
@@ -171,9 +189,45 @@ class Catalogue:
         ```
     """
 
-    source_id: str
+    witness: Witness
     preparations: tuple[Preparation, ...] = field(default_factory=tuple)
     mothers: frozenset[ConceptId] = field(default_factory=frozenset)
+
+    def __post_init__(self) -> None:
+        """Reject a catalogue whose records contradict its witness.
+
+        Raises:
+            ValueError: If any preparation's reference names another source
+                or another fidelity. Fidelity is recorded in two places, so
+                the entity refuses the state where they disagree.
+        """
+        wanted = (self.witness.source_id, self.witness.fidelity)
+        for preparation in self.preparations:
+            ref = preparation.ref
+            if (ref.source_id, ref.fidelity) != wanted:
+                msg = (
+                    f"{preparation.title} cites {ref.source_id} at {ref.fidelity}, "
+                    f"in a catalogue of {wanted[0]} at {wanted[1]}"
+                )
+                raise ValueError(msg)
+
+    @property
+    def source_id(self) -> str:
+        """Identifier of the witness these preparations were read from.
+
+        Returns:
+            The witness's source id.
+        """
+        return self.witness.source_id
+
+    @property
+    def fidelity(self) -> Fidelity:
+        """How the text behind this catalogue was obtained.
+
+        Returns:
+            The witness's fidelity.
+        """
+        return self.witness.fidelity
 
     def by_concept(self) -> dict[ConceptId, Preparation]:
         """Index the preparations by every concept that names them.
