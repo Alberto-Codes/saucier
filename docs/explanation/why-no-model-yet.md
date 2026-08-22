@@ -50,9 +50,11 @@ and *velouté* in French because they are proper nouns for preparations. A
 pipeline that normalises everything to English destroys distinctions it will
 later need, and the further the corpus moves from Europe, the more it destroys.
 
-**Every claim carries a source reference.** `entry 32, line 1656` can be
-checked by hand. Once a model is producing claims, provenance stops being a
-nicety.
+**Every claim carries a source reference.** `entry 32, line 1680` can be
+checked by hand, and the reference says which text it points into. One of the
+two witnesses is a scan, so a claim from it is evidence about the scan rather
+than about the book. Once a model is producing claims, provenance stops being
+a nicety.
 
 **`None` means unresolved.** Not "no parent". A later stage may fill it; a
 stage that cannot distinguish "unknown" from "none" will fill it wrongly and

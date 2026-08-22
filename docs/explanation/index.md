@@ -7,6 +7,6 @@ them, so they carry more voice than the reference does.
   establishes that a model cannot, and why 74 unresolved preparations are the
   finding rather than the failure.
 - [Why the layers, on a project this small](hexagon.md) — what four layers buy
-  when the code is 900 lines, and what they cost.
+  when the code is 1,100 lines, and what they cost.
 
 Decisions with a date and a status live in [Decisions](../adr/index.md).

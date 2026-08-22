@@ -99,7 +99,7 @@ says so.
     docstrings.
 
 [Explanation](explanation/index.md)
-:   Why a parser comes before a model, why four layers on 900 lines, and what
+:   Why a parser comes before a model, why four layers on 1,100 lines, and what
     the unresolved count is for.
 
 [Decisions](adr/index.md)

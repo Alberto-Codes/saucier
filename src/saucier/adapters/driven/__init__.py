@@ -7,6 +7,9 @@ no service or domain code touched.
 Attributes:
     gutenberg: `GutenbergText`, reading a Project Gutenberg ebook with its
         licence wrapper stripped.
+    plain_text: `PlainText`, reading a file that carries no wrapper at all.
+    normalised: `NormalisedText`, wrapping any source to clean the whitespace
+        a scanner leaves behind.
     json_store: `JsonCatalogueStore`, persisting catalogues as JSON files.
 
 Examples:

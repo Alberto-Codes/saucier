@@ -8,7 +8,7 @@ claim came from. No model runs. Every output is traceable to the text.
 
 ## Try it
 
-No GPU, no API key, no database, no network. The source text is committed.
+No GPU, no API key, no database, no network. Both source texts are committed.
 
 ```console
 $ git clone https://github.com/Alberto-Codes/saucier
