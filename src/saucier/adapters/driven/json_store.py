@@ -1,7 +1,13 @@
 """Persist catalogues as JSON files.
 
 JSON while a human still checks the parser's work by eye. It stops being the
-right answer the moment appending one record means rewriting the file.
+right answer the moment appending one record means rewriting the file. The
+corpus now holds two witnesses, so appending the second one rewrites the
+first, and that is the break ADR-0006 waits for.
+
+A stored file states what it is. The witness block carries the work, the
+edition read from the front matter, the fidelity, and the origin, so a reader
+opening one file learns which printing it holds.
 
 A write goes to a temporary file and is renamed over the target, so an
 interrupted run leaves the previous catalogue intact. A damaged file is
@@ -33,9 +39,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from saucier.domain.errors import CatalogueUnwritable, SourceUnreadable
+from saucier.domain.errors import (
+    CatalogueUnwritable,
+    EditionUnstated,
+    SourceUnreadable,
+)
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
 from saucier.domain.types import ConceptId, Language, to_concept_id
+from saucier.domain.witness import Edition, Fidelity, Witness
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,7 +61,7 @@ class JsonCatalogueStore:
 
         ```python
         store = JsonCatalogueStore(Path("data"))
-        store.save(catalogue)  # writes data/escoffier-1907.json
+        store.save(catalogue)  # writes data/escoffier-1909.json
         ```
     """
 
@@ -77,6 +88,10 @@ class JsonCatalogueStore:
     def save(self, catalogue: Catalogue) -> str:
         """Write a catalogue, replacing any previous one for its source.
 
+        The whole file is rendered every time, witness block included. One
+        added record rewrites every other record, which is the cost this
+        format pays and the reason the next one exists.
+
         Writes a temporary file and renames it over the target, so an
         interrupted run leaves the previous catalogue intact rather than a
         half-written one.
@@ -93,7 +108,7 @@ class JsonCatalogueStore:
         """
         path = self.path_for(catalogue.source_id)
         payload = {
-            "source_id": catalogue.source_id,
+            "witness": _witness_dict(catalogue.witness),
             "mothers": sorted(catalogue.mothers),
             "preparations": [_as_dict(p) for p in catalogue.preparations],
         }
@@ -111,11 +126,15 @@ class JsonCatalogueStore:
     def load(self, source_id: str) -> Catalogue:
         """Read back a previously saved catalogue.
 
+        A stored file that names no edition year, or an unknown fidelity, is
+        damage rather than a catalogue. Both are reported the same way as a
+        truncated file.
+
         Args:
             source_id: Identifier of the source whose catalogue to load.
 
         Returns:
-            The stored catalogue.
+            The stored catalogue, witness included.
 
         Raises:
             SourceUnreadable: If no catalogue is stored for that source, or
@@ -135,15 +154,96 @@ class JsonCatalogueStore:
         try:
             payload = json.loads(text)
             return Catalogue(
-                source_id=payload["source_id"],
+                witness=_witness_from_dict(payload["witness"]),
                 preparations=tuple(_from_dict(p) for p in payload["preparations"]),
                 mothers=frozenset(to_concept_id(m) for m in payload["mothers"]),
             )
-        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+        except (
+            json.JSONDecodeError,
+            KeyError,
+            TypeError,
+            ValueError,
+            EditionUnstated,
+        ) as exc:
             msg = (
                 f"catalogue at {path} is damaged: {exc}. Run `saucier parse` to rebuild"
             )
             raise SourceUnreadable(msg) from exc
+
+
+def _witness_dict(witness: Witness) -> dict[str, Any]:
+    """Render a witness as JSON-safe primitives.
+
+    `source_id` is written for a reader's convenience. It derives from the
+    work and the edition year, so the loader recomputes it rather than
+    trusting the file.
+
+    Args:
+        witness: The witness to render.
+
+    Returns:
+        A dictionary of JSON-safe values.
+    """
+    edition = witness.edition
+    return {
+        "source_id": witness.source_id,
+        "work": witness.work,
+        "origin": witness.origin,
+        "fidelity": witness.fidelity.value,
+        "edition": {
+            "statement": edition.statement,
+            "stated_year": edition.stated_year,
+            "impression": edition.impression,
+            "copyright_year": edition.copyright_year,
+        },
+    }
+
+
+def _witness_from_dict(payload: dict[str, Any]) -> Witness:
+    """Rebuild a witness from its JSON representation.
+
+    Args:
+        payload: A dictionary previously produced by `_witness_dict`.
+
+    Returns:
+        The reconstructed witness.
+    """
+    edition = payload["edition"]
+    return Witness(
+        work=str(payload["work"]),
+        origin=str(payload["origin"]),
+        fidelity=Fidelity(payload["fidelity"]),
+        edition=Edition(
+            statement=_text_or_none(edition["statement"]),
+            stated_year=_year_or_none(edition["stated_year"]),
+            impression=_text_or_none(edition["impression"]),
+            copyright_year=_year_or_none(edition["copyright_year"]),
+        ),
+    )
+
+
+def _text_or_none(value: Any) -> str | None:
+    """Read an optional string field, keeping `null` distinct from empty.
+
+    Args:
+        value: The stored value.
+
+    Returns:
+        The value as text, or None when the file stored `null`.
+    """
+    return None if value is None else str(value)
+
+
+def _year_or_none(value: Any) -> int | None:
+    """Read an optional year field, keeping `null` distinct from zero.
+
+    Args:
+        value: The stored value.
+
+    Returns:
+        The value as a year, or None when the file stored `null`.
+    """
+    return None if value is None else int(value)
 
 
 def _as_dict(preparation: Preparation) -> dict[str, Any]:
@@ -151,6 +251,8 @@ def _as_dict(preparation: Preparation) -> dict[str, Any]:
 
     `concept` is written for a reader's convenience. It is derived from the
     surface forms, so the loader recomputes it rather than trusting the file.
+    The reference carries its fidelity, so one record lifted out of the file
+    still says which text its line number points into.
 
     Args:
         preparation: The preparation to render.
@@ -170,6 +272,7 @@ def _as_dict(preparation: Preparation) -> dict[str, Any]:
             "source_id": preparation.ref.source_id,
             "entry": preparation.ref.entry,
             "line": preparation.ref.line,
+            "fidelity": preparation.ref.fidelity.value,
         },
         "body": preparation.body,
     }
@@ -179,7 +282,8 @@ def _from_dict(payload: dict[str, Any]) -> Preparation:
     """Rebuild a preparation from its JSON representation.
 
     A `parent` of `null` is unresolved. Any other falsy value is malformed,
-    and raises rather than being read as an absence of evidence.
+    and raises rather than being read as an absence of evidence. An unknown
+    fidelity raises for the same reason.
 
     Args:
         payload: A dictionary previously produced by `_as_dict`.
@@ -200,6 +304,7 @@ def _from_dict(payload: dict[str, Any]) -> Preparation:
             source_id=str(ref["source_id"]),
             entry=int(ref["entry"]),
             line=int(ref["line"]),
+            fidelity=Fidelity(ref["fidelity"]),
         ),
         parent=None if parent is None else ConceptId(to_concept_id(str(parent))),
     )

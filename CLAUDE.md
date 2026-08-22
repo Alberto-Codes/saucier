@@ -5,9 +5,10 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## Project overview
 
 **saucier** extracts structured procedures from culinary sources. This release
-reads Escoffier's *A Guide to Modern Cookery* (1907) and produces a catalogue
-of sauce preparations with their derivations, language-tagged and traceable to
-a source line. Design rationale lives in `docs/explanation/`; the reader-facing
+reads two witnesses of Escoffier's *A Guide to Modern Cookery*, the 1909
+revision and the 1907 first printing, and produces one catalogue per witness:
+sauce preparations with their derivations, language-tagged and traceable to a
+source line. Design rationale lives in `docs/explanation/`; the reader-facing
 walkthrough is `docs/tutorial/first-run.md`.
 
 ## Rules that are enforced, not requested
@@ -76,8 +77,17 @@ treat it as evidence of absence.
 are preserved with a language tag and a concept id. Any change that
 normalises a term to English is wrong regardless of how convenient it is.
 
-**Every claim carries provenance.** A `SourceRef` with an entry and a line
-number, checkable by hand against `corpus/`.
+**Every claim carries provenance.** A `SourceRef` with an entry, a line
+number, and the fidelity of the text it came through, checkable by hand
+against `corpus/`.
+
+**A source states its own identity.** The `source_id` is read out of the
+front matter, never taken from the filename. `escoffier-1907` was wrong for
+two releases because a filename was trusted. See ADR-0009.
+
+**A resolver may refuse, never rank.** No code path scores candidates and
+takes the best. An abstention is the instrument that catches silent
+corruption, not a gap to close. See ADR-0012.
 
 **The parser does not guess.** When adding extraction rules, prefer a rule
 that resolves less and is right to one that resolves more and is sometimes

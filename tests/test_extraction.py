@@ -1,4 +1,5 @@
 import pytest
+from conftest import a_witness
 
 from saucier.domain.errors import NoPreparationsFound
 from saucier.domain.types import Language, to_concept_id
@@ -24,10 +25,10 @@ CANDIDATES = {m: Candidate(m, m, mother=True) for m in MOTHERS}
 class FakeSource:
     """A source of the smallest shape the port accepts."""
 
-    def __init__(self, lines, source_id="fixture", line_offset=0):
+    def __init__(self, lines, source_id="fixture-1900", line_offset=0):
         """Hold the lines a fake source hands back."""
         self._lines = lines
-        self.source_id = source_id
+        self.witness = a_witness(source_id)
         self.line_offset = line_offset
 
     def lines(self):

@@ -13,7 +13,7 @@ Examples:
     from saucier.domain.errors import SaucierError
 
     try:
-        catalogue = store.load("escoffier-1907")
+        catalogue = store.load("escoffier-1909")
     except SaucierError as exc:
         print(f"saucier: {exc}")
     ```
@@ -48,6 +48,21 @@ class SourceUnreadable(SaucierError):
 
         ```python
         source.lines()  # SourceUnreadable: cannot read source at ...
+        ```
+    """
+
+
+class EditionUnstated(SaucierError):
+    """A source's front matter names neither an edition nor a copyright year.
+
+    A document with no stated identity is a situation to report. Falling back
+    to the filename is what ADR-0009 exists to forbid.
+
+    Examples:
+        Raised when the head of a file carries no printing history:
+
+        ```python
+        read_edition(lines)  # EditionUnstated: no edition and no ...
         ```
     """
 

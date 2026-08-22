@@ -95,18 +95,53 @@ Folding resolves **orthographic** variation only. It does not resolve semantic
 equivalence across languages. Deciding that `salsa española` and `espagnole`
 denote one concept requires evidence, not string manipulation.
 
+## `Edition`
+
+What a title page states about which printing a text is. Four fields, kept
+apart because one string cannot carry four facts.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `statement` | `str \| None` | The edition line, verbatim. `None` when none is stated. |
+| `stated_year` | `int \| None` | Year of that statement. |
+| `impression` | `str \| None` | The last printing the history records. |
+| `copyright_year` | `int \| None` | Year on the copyright line. |
+| `year` | `int` | Derived: the stated year, falling back to the copyright year. |
+
+An edition naming neither year raises `EditionUnstated`. A text with no
+stated identity is reported, never named from its path.
+
+## `Witness`
+
+One text of one edition, and how this project came by it: the `work`, the
+`origin` it was fetched from, its `fidelity`, and its `edition`. The
+`source_id` is the work and the edition year, joined.
+
+| Witness | Edition | Fidelity |
+| --- | --- | --- |
+| `escoffier-1909` | New and Revised Edition, January 1909 | `transcription` |
+| `escoffier-1907` | no edition stated, copyright 1907 | `ocr` |
+
+## `Fidelity`
+
+How a witness was obtained. `transcription` is proofread by hand. `ocr` is
+machine-read from a scan. It is stated where the URL is recorded, never
+inferred from the characters. See
+[ADR-0010](../adr/0010-fidelity-is-a-property-of-the-record.md).
+
 ## `SourceRef`
 
-Where a preparation was found: `source_id`, the source's own `entry` number,
-and the `line` it begins on. Every extracted claim carries one, so any output
-can be checked against the text by hand.
+Where a preparation was found. It carries `source_id`, the source's own
+`entry` number, the `line` it begins on, and the `fidelity` of the text the
+claim came through. Every extracted claim carries one, so any output can be
+checked against the text by hand.
 
 `line` is the line number in the file on disk. The reader strips the Project
 Gutenberg licence header, then adds the stripped line count back. The number
 needs no adjustment:
 
 ```console
-$ sed -n '2138p' corpus/escoffier-1907.txt
+$ sed -n '2138p' corpus/escoffier-1909.txt
 64—BÉARNAISE TOMATÉE SAUCE OR CHORON SAUCE
 ```
 
@@ -114,10 +149,10 @@ $ sed -n '2138p' corpus/escoffier-1907.txt
 integers side by side invite a transposition, and a transposed citation
 points a reader at the wrong text while still type-checking.
 
-`escoffier-1907` is [*A Guide to Modern Cookery*](https://www.gutenberg.org/ebooks/71395)
-by A. Escoffier. The copy under `corpus/` is Project Gutenberg ebook 71395,
-released on 2023-08-12. A `source_id` names an edition, not a work, because
-two editions of one book number their entries differently.
+A `source_id` names an edition, not a work, because two editions of one book
+number their entries differently. It is read from the document rather than
+taken from the path. See
+[ADR-0009](../adr/0009-the-source-states-its-own-identity.md).
 
 ## `Preparation`
 
@@ -139,8 +174,10 @@ The source named both and chose neither, so the parser records no choice.
 
 ## `Catalogue`
 
-Everything read from one source, plus the `mothers` the source names for
-itself.
+Everything read from one witness, plus the `mothers` the source names for
+itself. The `witness` travels with the catalogue, so a stored file states
+which edition it holds. A catalogue refuses a record whose reference names
+another source or another fidelity.
 
 | Member | Returns |
 | --- | --- |

@@ -16,7 +16,7 @@ source line the claim came from. No model runs.
 <p class="sc-term"><span class="sc-term__surface">BÉARNAISE TOMATÉE SAUCE</span><span class="sc-term__lang">fr</span></p>
 <p class="sc-term"><span class="sc-term__surface">CHORON SAUCE</span><span class="sc-term__lang">en</span></p>
 <p class="sc-specimen__rel"><span class="sc-specimen__key">derives from</span><span class="sc-mother" data-mother="tomato">tomato</span></p>
-<p class="sc-specimen__ref"><span class="sc-specimen__key">source</span> escoffier-1907 &nbsp;·&nbsp; <span class="sc-specimen__key">entry</span> <b>64</b> &nbsp;·&nbsp; <span class="sc-specimen__key">line</span> <b>2138</b></p>
+<p class="sc-specimen__ref"><span class="sc-specimen__key">source</span> escoffier-1909 &nbsp;·&nbsp; <span class="sc-specimen__key">entry</span> <b>64</b> &nbsp;·&nbsp; <span class="sc-specimen__key">line</span> <b>2138</b> &nbsp;·&nbsp; <span class="sc-specimen__key">fidelity</span> transcription</p>
 </div>
 
 One preparation, two terms, two languages. Neither term is translated into the
@@ -25,7 +25,7 @@ other, and both are kept exactly as Escoffier set them. `BÉARNAISE` folds to
 the catalogue stores. The citation is the point: entry 64 at line 2138 is a
 line you can open in `corpus/` and read. The source is Escoffier's
 [*A Guide to Modern Cookery*](https://www.gutenberg.org/ebooks/71395), tracked
-here in full.
+here in full, in two printings.
 
 ## The five mothers
 
@@ -68,19 +68,26 @@ the parser declines too.
 
 ```console
 $ uv run saucier parse
-source      escoffier-1907
-mothers     bechamel, espagnole, hollandaise, tomato, veloute
-sauces      124
-derived     50 linked to a stated parent
-unresolved  74 state no base in their prose
+escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
+                transcription of Project Gutenberg 71395
+                mothers: bechamel, espagnole, hollandaise, tomato, veloute
+                124 sauces, 50 derived, 74 unresolved
+escoffier-1907  no edition stated, copyright 1907
+                ocr of Internet Archive cu31924000610117
+                mothers: bechamel, espagnole, hollandaise, tomato, veloute
+                102 sauces, 32 derived, 70 unresolved
 ```
+
+Two witnesses of one book, each naming itself from its own title page. The
+1907 text is a scan, so its numbers are read through OCR and every record
+says so.
 
 ## Where to go
 
 <div class="sc-pointers" markdown>
 
 [First run](tutorial/first-run.md)
-:   Clone the repository and print a derivation tree from a 1907 cookbook. No
+:   Clone the repository and print a derivation tree from a 1909 cookbook. No
     GPU, no key, no database, no network.
 
 [Add a source](how-to/add-a-source.md)

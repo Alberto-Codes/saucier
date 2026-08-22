@@ -4,6 +4,12 @@ Discovery walks up for a directory holding `corpus/`. It raises when it
 finds none, rather than falling back to the working directory and reporting
 a missing file under a path the caller never chose.
 
+A source id is not configured here. The work name is, because a title page
+names a book rather than a repository, and the edition year is read out of
+the document. A corpus filename that agrees with the resulting id is a
+convenience for a reader with a shell, and `tests/test_corpus.py` proves the
+agreement rather than assuming it.
+
 Examples:
     Locate the committed corpus from anywhere in the tree:
 
@@ -11,11 +17,12 @@ Examples:
     from saucier.infrastructure.config import Paths
 
     paths = Paths.discover()
-    assert paths.escoffier.name == "escoffier-1907.txt"
+    assert paths.escoffier_transcription.name == "escoffier-1909.txt"
     ```
 
 See Also:
     - [saucier.infrastructure.bootstrap][]: What consumes these paths.
+    - [saucier.domain.witness][]: What an id is built from.
 """
 
 from __future__ import annotations
@@ -25,16 +32,38 @@ from pathlib import Path
 
 from saucier.domain.errors import ProjectRootNotFound
 
-ESCOFFIER = "escoffier-1907"
-"""Source id for Escoffier's 'A Guide to Modern Cookery', Gutenberg 71395."""
+ESCOFFIER = "escoffier"
+"""Work name for Escoffier's 'A Guide to Modern Cookery'. The year is read."""
+
+GUTENBERG_ORIGIN = "Project Gutenberg 71395"
+"""Citable name of the proofread witness, recorded on every record it yields."""
 
 GUTENBERG_URL = "https://www.gutenberg.org/cache/epub/71395/pg71395.txt"
-"""Where the corpus came from, recorded so the provenance is checkable."""
+"""Where the proofread witness came from, so the provenance is checkable."""
+
+ARCHIVE_ITEM = "cu31924000610117"
+"""Internet Archive item for the Cornell University Library copy of 1907."""
+
+ARCHIVE_ORIGIN = f"Internet Archive {ARCHIVE_ITEM}"
+"""Citable name of the scanned witness, recorded on every record it yields."""
+
+ARCHIVE_URL = f"https://archive.org/download/{ARCHIVE_ITEM}/{ARCHIVE_ITEM}_djvu.txt"
+"""Where the scanned witness came from. Cornell records no US restrictions."""
+
+TRANSCRIPTION_FILE = "escoffier-1909.txt"
+"""Corpus file holding the proofread transcription of the 1909 revision."""
+
+SCAN_FILE = "escoffier-1907.txt"
+"""Corpus file holding the OCR of the 1907 first printing."""
 
 
 @dataclass(frozen=True, slots=True)
 class Paths:
     """Filesystem layout for a saucier working tree.
+
+    One property per committed witness, named for how the text was obtained
+    rather than for the edition it holds. The edition is read out of the
+    document, so a path may not claim to know it.
 
     Attributes:
         root (Path): Project root containing `corpus/` and `data/`.
@@ -83,6 +112,11 @@ class Paths:
         return self.root / "data"
 
     @property
-    def escoffier(self) -> Path:
-        """The Escoffier source text."""
-        return self.corpus / f"{ESCOFFIER}.txt"
+    def escoffier_transcription(self) -> Path:
+        """The Escoffier text proofread by the Distributed Proofreaders."""
+        return self.corpus / TRANSCRIPTION_FILE
+
+    @property
+    def escoffier_scan(self) -> Path:
+        """The Escoffier text machine-read from a library scan."""
+        return self.corpus / SCAN_FILE

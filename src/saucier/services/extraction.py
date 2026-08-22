@@ -466,8 +466,9 @@ def extract(source: SourceText) -> Catalogue:
 
     Returns:
         The catalogue of preparations found, with parents resolved where the
-        source states them plainly. A parent may be any preparation in the
-        catalogue, so resolution runs after every entry has been read.
+        source states them plainly, and the source's own witness recorded on
+        it. A parent may be any preparation in the catalogue, so resolution
+        runs after every entry has been read.
 
     Raises:
         NoPreparationsFound: If the source yields no numbered entries at all,
@@ -475,11 +476,12 @@ def extract(source: SourceText) -> Catalogue:
             patterns in this module do not fit this source.
     """
     lines = source.lines()
+    witness = source.witness
     mothers = find_mothers("\n".join(lines))
     spans = sauce_chapters(lines)
     entries = list(iter_entries(lines))
     if not entries:
-        msg = f"no numbered entries in {source.source_id}"
+        msg = f"no numbered entries in {witness.source_id}"
         raise NoPreparationsFound(msg)
 
     drafts = tuple(
@@ -488,13 +490,11 @@ def extract(source: SourceText) -> Catalogue:
         if is_sauce(entry[2], mothers, _within(entry[1], spans))
     )
     if not drafts:
-        msg = f"{len(entries)} entries in {source.source_id}, none of them a sauce"
+        msg = f"{len(entries)} entries in {witness.source_id}, none of them a sauce"
         raise NoPreparationsFound(msg)
-    provisional = Catalogue(
-        source_id=source.source_id, preparations=drafts, mothers=mothers
-    )
+    provisional = Catalogue(witness=witness, preparations=drafts, mothers=mothers)
     return Catalogue(
-        source_id=source.source_id,
+        witness=witness,
         preparations=_derived(provisional),
         mothers=mothers,
     )
@@ -560,6 +560,9 @@ def _within(index: int, spans: tuple[tuple[int, int], ...]) -> bool:
 def _preparation(source: SourceText, entry: tuple[int, int, str, str]) -> Preparation:
     """Build one preparation from a numbered entry, its parent unresolved.
 
+    The reference takes its source id and its fidelity from the witness, so a
+    record can never disagree with the catalogue holding it.
+
     Args:
         source: The document the entry came from.
         entry: Entry number, heading line index, title, and body prose.
@@ -569,14 +572,16 @@ def _preparation(source: SourceText, entry: tuple[int, int, str, str]) -> Prepar
         catalogue.
     """
     number, index, title, body = entry
+    witness = source.witness
     return Preparation(
         title=title,
         terms=terms_in(title),
         body=body,
         ref=SourceRef(
-            source_id=source.source_id,
+            source_id=witness.source_id,
             entry=number,
             line=source.line_offset + index + 1,
+            fidelity=witness.fidelity,
         ),
         parent=None,
     )
