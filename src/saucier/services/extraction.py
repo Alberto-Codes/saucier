@@ -10,6 +10,10 @@ every name the first pass produced, so a parent may be any catalogued
 preparation, and a chain of stated parents never cycles. A mother binds to
 the first preparation in source order that answers to its name.
 
+A heading is read whole. The typesetter wraps a long one onto a second line,
+and two printings wrap at different points, so a reader that stops at the
+newline records a title the author had no part in.
+
 Examples:
     Read a catalogue and report what stayed unresolved:
 
@@ -39,6 +43,16 @@ from saucier.ports.source import SourceText
 
 ENTRY = re.compile(r"^(\d{1,4})—(.+)$")
 """Escoffier numbers every preparation and joins it to its title with an em dash."""
+
+LETTERED = re.compile(r"[A-Za-z]")
+"""A line carrying no letter is page furniture rather than words."""
+
+PAGE_NUMBER = re.compile(r"\b\d{1,4}$")
+"""A running header ends in its page number, as in `LEADING SAUCES 17`.
+
+The boundary is what makes this safe. `CARD0N5, ETC.` is a heading whose
+letters a scanner mangled into digits, and it carries no standalone number.
+"""
 
 MOTHERS = re.compile(r"basic sauces?:\s*(.+?)\.", re.IGNORECASE | re.DOTALL)
 """The source names its own base preparations; it is not our place to guess them."""
@@ -173,8 +187,66 @@ def sauce_chapters(lines: list[str]) -> tuple[tuple[int, int], ...]:
     return tuple(spans)
 
 
+def continues_heading(lines: list[str], index: int) -> bool:
+    """Test whether a line carries the tail of the heading above it.
+
+    The typesetter wraps a long heading onto a second line, and two printings
+    of one book wrap at different points because their columns differ. A
+    reader that stops at the newline records a title the author had no part
+    in, and a comparison then blames the difference on the other witness.
+
+    Four tests, one per thing a line after a heading can be. A continuation
+    is set in the same upper case as the heading and carries a letter, so
+    body prose fails it, because Escoffier writes prose in sentences. It
+    starts no entry of its own, so an index of consecutive numbered titles
+    fails it. It ends in no standalone number, so a running page header fails
+    it. And the line after it is blank, because a heading block ends before
+    the prose starts, while a paragraph of prose runs on.
+
+    Args:
+        lines: The source body as lines.
+        index: Index of the line being tested.
+
+    Returns:
+        True if the line continues the heading above it.
+    """
+    if index >= len(lines):
+        return False
+    line = lines[index].strip()
+    if not line or ENTRY.match(line) or PAGE_NUMBER.search(line):
+        return False
+    if line != line.upper() or not LETTERED.search(line):
+        return False
+    following = lines[index + 1].strip() if index + 1 < len(lines) else ""
+    return not following
+
+
+def _heading(lines: list[str], index: int, stated: str) -> tuple[str, int]:
+    """Read one heading whole, joining the line it may wrap onto.
+
+    At most one line is joined. A heading wraps once at the column widths
+    both witnesses use, and the cap bounds what a wrong reading can absorb to
+    a single line.
+
+    Args:
+        lines: The source body as lines.
+        index: Index of the heading line.
+        stated: The heading text the entry pattern captured.
+
+    Returns:
+        The whole title, and the index the body starts at.
+    """
+    title = stated.strip()
+    tail = index + 1
+    if continues_heading(lines, tail):
+        return f"{title} {lines[tail].strip()}", tail + 1
+    return title, tail
+
+
 def iter_entries(lines: list[str]) -> Iterator[tuple[int, int, str, str]]:
     """Walk the source, yielding one numbered entry at a time.
+
+    A heading that wraps is read whole, and the body starts below it.
 
     Args:
         lines: The source body as lines.
@@ -184,6 +256,7 @@ def iter_entries(lines: list[str]) -> Iterator[tuple[int, int, str, str]]:
         and body prose.
     """
     start: int | None = None
+    opening = 0
     number = 0
     title = ""
     for index, line in enumerate(lines):
@@ -191,10 +264,11 @@ def iter_entries(lines: list[str]) -> Iterator[tuple[int, int, str, str]]:
         if not match:
             continue
         if start is not None:
-            yield number, start, title, "\n".join(lines[start + 1 : index]).strip()
-        number, title, start = int(match.group(1)), match.group(2).strip(), index
+            yield number, start, title, "\n".join(lines[opening:index]).strip()
+        number, start = int(match.group(1)), index
+        title, opening = _heading(lines, index, match.group(2))
     if start is not None:
-        yield number, start, title, "\n".join(lines[start + 1 :]).strip()
+        yield number, start, title, "\n".join(lines[opening:]).strip()
 
 
 def names_a_sauce(title: str) -> bool:

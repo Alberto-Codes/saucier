@@ -57,7 +57,7 @@ def test_a_name_only_the_earlier_witness_holds_is_removed():
 
 @pytest.mark.unit
 def test_a_name_mangled_inside_its_words_is_ocr_suspected_rather_than_removed():
-    """Fourteen of the fifteen 1907-only concepts are this shape."""
+    """All fourteen 1907-only concepts are this shape."""
     report = compare(
         catalogue(SCAN, [("QENEVOISE SAUCE", None)]),
         catalogue(CLEAN, [("GENEVOISE SAUCE", None)]),
@@ -81,8 +81,8 @@ def test_a_heading_that_gained_whole_words_is_a_retitle_between_clean_texts():
 
 
 @pytest.mark.unit
-def test_a_heading_that_gained_whole_words_against_a_scan_is_not_a_retitle():
-    """A scan breaks a heading across a line, and the rest of it is lost."""
+def test_a_gained_heading_against_a_scan_carries_both_causes_and_settles_none():
+    """A scan can drop a heading's tail, so neither reading is ruled out."""
     report = compare(
         catalogue(SCAN, [("BEARNAISE SAUCE WITH MEAT GLAZE", None)]),
         catalogue(
@@ -90,8 +90,8 @@ def test_a_heading_that_gained_whole_words_against_a_scan_is_not_a_retitle():
         ),
     )
     row = report.presence[0]
-    assert row.causes == (Cause.OCR_SUSPECTED,)
-    assert "a witness is ocr" in row.note
+    assert row.causes == (Cause.RETITLED, Cause.OCR_SUSPECTED)
+    assert "cannot say which" in row.note
 
 
 @pytest.mark.unit

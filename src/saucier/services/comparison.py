@@ -5,9 +5,13 @@ be right about everything. It has to be honest about which rows it is unsure
 of, and an OCR witness guarantees there will be many.
 
 Every row carries a cause rather than a bare delta. The naive comparison of
-the two Escoffier witnesses reports fifteen removals, and a scanner explains
-all fifteen. Reporting them as removals asserts a cause nobody established,
+the two Escoffier witnesses reports fourteen removals, and a scanner explains
+all fourteen. Reporting them as removals asserts a cause nobody established,
 and that is the failure this module exists to avoid.
+
+A cause is itself a claim and can itself be wrong. This module once blamed a
+scanner for a heading its own reader had truncated, which is the same failure
+one level up.
 
 No row is adjudicated. A parent disagreement is reported with both readings
 side by side, and the comparison never decides which witness is right.
@@ -43,9 +47,10 @@ RESEMBLANCE = 0.75
 """How alike two names must be before one may be read as a scan of the other.
 
 Measured against the corpus rather than chosen. The fourteen known character
-corruptions score 0.778 and above, and the highest scoring pair below this
-line is unrelated. Every pair is reported with its score, so a reader can
-disagree with the line.
+corruptions score 0.778 and above. The margin below is thin: an unrelated
+pair scores 0.756, and it stays out because both its names pair better with
+something else rather than because of this number. Every row prints its
+score, so a reader can disagree with the line.
 """
 
 
@@ -53,10 +58,9 @@ class Cause(StrEnum):
     """Why two catalogues differ on one concept.
 
     A row carries one or more. `OCR_SUSPECTED` can stand alone, when a name
-    in one witness reads as a scan of a name in the other, and it can qualify
-    another cause, when an OCR witness makes a parent disagreement
-    unattributable. `RETITLED` needs two proofread witnesses, because a scan
-    that drops the end of a heading looks exactly like a heading that grew.
+    in one witness reads as a scan of a name in the other. It can also
+    qualify another cause, when a scanned witness leaves a row
+    unattributable, and it decides nothing when it does.
 
     Examples:
         Members carry their printed value:
@@ -197,15 +201,15 @@ def _resembles(older: ConceptId, newer: ConceptId) -> float:
     return SequenceMatcher(None, older, newer).ratio()
 
 
-Pairing = dict[ConceptId, tuple[ConceptId, Cause, str]]
-"""Each paired older concept, its counterpart, the cause, and the evidence."""
+Pairing = dict[ConceptId, tuple[ConceptId, tuple[Cause, ...], str]]
+"""Each paired older concept, its counterpart, the causes, and the evidence."""
 
-Candidate = tuple[float, ConceptId, ConceptId, Cause, str]
-"""A pair a stated cause can explain: score, both names, the cause, the why."""
+Candidate = tuple[float, ConceptId, ConceptId, tuple[Cause, ...], str]
+"""A pair a stated cause can explain: score, both names, the causes, the why."""
 
 INSIDE_WORDS = "the two names differ inside words"
 WHOLE_WORDS = "one heading is the other plus whole words"
-SCANNED = "a witness is ocr, so this may be the scanner"
+SCANNED = "a witness is ocr, so the diff cannot say which"
 
 
 def _candidates(
@@ -213,14 +217,15 @@ def _candidates(
 ) -> list[Candidate]:
     """Collect every unshared pair some stated cause can explain.
 
-    Two hypotheses, and which one applies depends on the witnesses. A heading
-    that gained whole words, between two proofread texts, is a retitle. With
-    a scanned witness it is not, because a scan breaks a heading across a
-    line and loses the rest of it. `BEARNAISE SAUCE WITH MEAT GLAZE` reads as
-    a retitle by that test, and the two books print the same heading.
+    Two hypotheses, tested by different evidence. A heading that gained whole
+    words is a retitle, because a scanner damages characters rather than
+    inventing coherent words. A name differing inside its words is a scan
+    artefact, because two proofread texts do not disagree one character at a
+    time.
 
-    A name differing inside its words is only ever read as a scan artefact,
-    because two proofread texts do not disagree one character at a time.
+    A scanned witness does not overturn the first reading, and it does not
+    confirm it either. A scan can drop a heading's tail at a page break, so
+    the row carries both causes and decides nothing.
 
     Args:
         older: Concepts only the earlier witness holds.
@@ -228,23 +233,27 @@ def _candidates(
         scanned: Whether either witness is OCR.
 
     Returns:
-        Every candidate pair, each carrying the cause it would be read as.
+        Every candidate pair, each carrying the causes it would be read as.
     """
     found: list[Candidate] = []
     for one in older:
         for two in newer:
             score = _resembles(one, two)
             if _keeps_words_of(one, two):
-                cause = Cause.OCR_SUSPECTED if scanned else Cause.RETITLED
+                causes = (
+                    (Cause.RETITLED, Cause.OCR_SUSPECTED)
+                    if scanned
+                    else (Cause.RETITLED,)
+                )
                 why = f"{WHOLE_WORDS}, and {SCANNED}" if scanned else WHOLE_WORDS
-                found.append((score, one, two, cause, why))
+                found.append((score, one, two, causes, why))
             elif scanned and score >= RESEMBLANCE:
                 found.append(
                     (
                         score,
                         one,
                         two,
-                        Cause.OCR_SUSPECTED,
+                        (Cause.OCR_SUSPECTED,),
                         f"{INSIDE_WORDS}, and {SCANNED}",
                     )
                 )
@@ -255,7 +264,8 @@ def _pair(older: list[ConceptId], newer: list[ConceptId], scanned: bool) -> Pair
     """Match each unshared concept to a counterpart, and say why.
 
     Greedy and one to one, best score first, ties broken by concept id so the
-    result never depends on dictionary order.
+    result never depends on dictionary order. A name reaching two candidates
+    goes to the better one, which is what keeps the pair at 0.756 out.
 
     Args:
         older: Concepts only the earlier witness holds.
@@ -268,10 +278,10 @@ def _pair(older: list[ConceptId], newer: list[ConceptId], scanned: bool) -> Pair
     paired: Pairing = {}
     taken: set[ConceptId] = set()
     ranked = sorted(_candidates(older, newer, scanned), key=lambda c: (-c[0], c[1]))
-    for score, one, two, cause, why in ranked:
+    for score, one, two, causes, why in ranked:
         if one in paired or two in taken:
             continue
-        paired[one] = (two, cause, f"{why}, at {score:.2f}")
+        paired[one] = (two, causes, f"{why}, at {score:.2f}")
         taken.add(two)
     return paired
 
@@ -289,7 +299,8 @@ def _presence(
         scanned: Whether either witness is OCR.
 
     Returns:
-        Rows in concept order, paired names reported once.
+        Rows in concept order. A paired name is one row, not two, so an
+        attributed pair leaves the added and removed counts alone.
     """
     only_older = sorted(set(older) - set(newer))
     only_newer = sorted(set(newer) - set(older))
@@ -298,7 +309,7 @@ def _presence(
     unresembled = "no name in the other witness resembles it"
     rows = [
         Difference(
-            causes=(paired[c][1],),
+            causes=paired[c][1],
             concept=c,
             counterpart=paired[c][0],
             older=older[c].title,

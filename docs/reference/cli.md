@@ -47,13 +47,13 @@ Every row carries a cause, and a row may carry two.
 | --- | --- |
 | `added` | The later witness holds it, and no name in the earlier one resembles it |
 | `removed` | The earlier witness holds it, and no name in the later one resembles it |
-| `retitled` | One heading is the other plus whole words, between two proofread witnesses |
+| `retitled` | One heading is the other plus whole words |
 | `parent-changed` | A shared concept records a different derivation |
 | `ocr-suspected` | A scanned witness explains the row as well as a revision does |
 
-A scan that breaks a heading across a line looks exactly like a heading that
-grew, so `retitled` needs two proofread witnesses. Against a scan the same
-shape reads as `ocr-suspected`.
+A scan can drop a heading's tail at a page break. So a `retitled` row also
+carries `ocr-suspected` when a scanned witness is in the comparison. That
+says the two readings cannot be told apart, not that one is right.
 
 No row is adjudicated. `AURORE SAUCE` names two candidates in the proofread
 text and one in the scan, because OCR destroyed an accent and hid a

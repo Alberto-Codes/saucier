@@ -5,6 +5,7 @@ from saucier.domain.errors import NoPreparationsFound
 from saucier.domain.types import Language, to_concept_id
 from saucier.services.extraction import (
     Candidate,
+    continues_heading,
     extract,
     find_mothers,
     is_sauce,
@@ -155,6 +156,79 @@ def test_entries_split_on_the_numbered_heading():
         (22, 0, "BROWN SAUCE", "body one"),
         (23, 3, "HALF GLAZE", "body two"),
     ]
+
+
+@pytest.mark.unit
+def test_a_wrapped_heading_is_read_whole():
+    """The typesetter breaks a long heading. Escoffier did not write two."""
+    lines = [
+        "63—BEARNAISE SAUCE WITH MEAT GLAZE, OTHERWISE VALOIS SAUCE OR FOYOT",
+        "SAUCE",
+        "",
+        "Prepare it thus.",
+    ]
+    assert list(iter_entries(lines)) == [
+        (
+            63,
+            0,
+            "BEARNAISE SAUCE WITH MEAT GLAZE, OTHERWISE VALOIS SAUCE OR FOYOT SAUCE",
+            "Prepare it thus.",
+        )
+    ]
+
+
+@pytest.mark.unit
+def test_a_heading_followed_by_prose_does_not_absorb_it():
+    lines = ["22—BROWN SAUCE", "Reduce the wine until it thickens.", "", "More."]
+    entries = list(iter_entries(lines))
+    assert entries[0][2] == "BROWN SAUCE"
+    assert entries[0][3].startswith("Reduce the wine")
+
+
+@pytest.mark.unit
+def test_a_heading_followed_by_shouted_prose_does_not_absorb_it():
+    """Only the blank-line test stops this one. A paragraph runs on."""
+    lines = ["22—BROWN SAUCE", "REDUCE THE WINE", "until it thickens.", ""]
+    entries = list(iter_entries(lines))
+    assert entries[0][2] == "BROWN SAUCE"
+    assert entries[0][3].startswith("REDUCE THE WINE")
+
+
+@pytest.mark.unit
+def test_a_heading_followed_by_a_running_page_header_does_not_absorb_it():
+    """`LEADING SAUCES 17` is page furniture, and it ends in its page number."""
+    lines = ["22—BROWN SAUCE", "LEADING SAUCES 17", "", "Reduce the wine."]
+    assert next(iter(iter_entries(lines)))[2] == "BROWN SAUCE"
+
+
+@pytest.mark.unit
+def test_a_heading_followed_by_the_next_index_line_does_not_absorb_it():
+    """An index runs numbered titles together with no prose between them."""
+    lines = ["1383—FRESH LEG OF PORK", "1384—FRESH PORK FILLETS", ""]
+    assert [(n, title) for n, _, title, _ in iter_entries(lines)] == [
+        (1383, "FRESH LEG OF PORK"),
+        (1384, "FRESH PORK FILLETS"),
+    ]
+
+
+@pytest.mark.unit
+def test_only_one_line_is_ever_joined():
+    """A cap on what a wrong reading can absorb."""
+    lines = ["22—BROWN SAUCE OR", "ESPAGNOLE", "", "AND MORE", "", "Reduce it."]
+    _, _, title, body = next(iter(iter_entries(lines)))
+    assert title == "BROWN SAUCE OR ESPAGNOLE"
+    assert body.startswith("AND MORE")
+
+
+@pytest.mark.unit
+def test_a_line_carrying_no_letter_never_continues_a_heading():
+    assert not continues_heading(["22—BROWN SAUCE", "* * *", ""], 1)
+
+
+@pytest.mark.unit
+def test_a_scanned_heading_whose_letters_became_digits_still_continues():
+    """`CARD0N5, ETC.` carries no standalone number, so it is not furniture."""
+    assert continues_heading(["1274—BLANQUETTE", "CARD0N5, ETC.", ""], 1)
 
 
 @pytest.mark.unit
@@ -348,3 +422,8 @@ def test_a_source_with_no_numbered_entries_is_an_error():
 def test_a_source_whose_entries_are_never_sauces_is_an_error():
     with pytest.raises(NoPreparationsFound, match="none of them a sauce"):
         extract(FakeSource(["12—POTATOES BOILED", "in plain water"]))
+
+
+@pytest.mark.unit
+def test_a_heading_on_the_last_line_of_a_source_has_nothing_to_join():
+    assert not continues_heading(["22—BROWN SAUCE"], 1)
