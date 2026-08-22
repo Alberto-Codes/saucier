@@ -42,8 +42,14 @@ A model layer is coming, and it will arrive with a threshold.
 
 **A resolver returns a parent or refuses. It never returns a ranking.**
 
-**No code path scores candidates and takes the best.** Two stated candidates
-resolve to `None`, whatever the relative strength of the two statements.
+**No parent is ever chosen by score.** Two stated candidates resolve to
+`None`, whatever the relative strength of the two statements.
+
+**A ranking outside resolution is a different thing.** `saucier diff` scores
+name candidates against a threshold and takes the best, which is how it
+attributes a scanned name to its clean counterpart. That is allowed because
+it labels a row for a reader and never writes `parent`. The line this record
+draws is around the field, not around the arithmetic.
 
 **A proposal from a model is a witness, not a value.** When a model layer
 arrives it may record a proposed parent with the proposer named beside it. It
@@ -72,8 +78,12 @@ rule read which text, and the reading must be checkable by hand.
 - A model that could resolve a genuine derivation still cannot write it into
   `parent`. Recording the proposal beside the field costs a schema change
   that this release does not make.
-- The rule is easy to break by accident. Any `sorted(candidates)[0]` is a
-  ranking wearing the costume of determinism, and no gate detects one.
+- The rule is easy to break by accident. Any `sorted(candidates)[0]` that
+  reaches `parent` is a ranking wearing the costume of determinism, and no
+  gate detects one.
+- The line between a ranking that labels and a ranking that resolves is held
+  by reading rather than by a gate. A future stage that feeds a diff row back
+  into `parent` would cross it without failing anything.
 
 ## References
 

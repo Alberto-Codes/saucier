@@ -38,8 +38,9 @@ Compares two stored catalogues and prints what caused each difference. Run
 `parse` first, because it reads what is stored rather than the corpus.
 
 The output has two sections. `names` reports concepts one witness holds and
-the other does not. `parents` reports shared concepts whose recorded
-derivation disagrees.
+the other does not. `parents` reports preparations whose recorded derivation
+disagrees, whether the two witnesses call them by the same name or by two
+names the diff paired.
 
 Every row carries a cause, and a row may carry two.
 
@@ -48,7 +49,7 @@ Every row carries a cause, and a row may carry two.
 | `added` | The later witness holds it, and no name in the earlier one resembles it |
 | `removed` | The earlier witness holds it, and no name in the later one resembles it |
 | `retitled` | One heading is the other plus whole words |
-| `parent-changed` | A shared concept records a different derivation |
+| `parent-changed` | A preparation records a different derivation in each witness |
 | `ocr-suspected` | A scanned witness explains the row as well as a revision does |
 
 A scan can drop a heading's tail at a page break. So a `retitled` row also

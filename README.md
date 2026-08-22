@@ -65,7 +65,7 @@ scan, so every difference between them has two explanations.
 ```console
 $ uv run saucier diff escoffier-1907 escoffier-1909
 ...
-  20 added, 12 parent-changed, 26 ocr-suspected
+  20 added, 18 parent-changed, 32 ocr-suspected
 ```
 
 Fourteen names look removed and a scanner explains every one of them.
