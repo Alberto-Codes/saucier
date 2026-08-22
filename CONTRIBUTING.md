@@ -13,7 +13,7 @@ $ uv sync
 $ uv run pre-commit install --install-hooks -t pre-commit -t pre-push
 ```
 
-No GPU, no API key, no database, no network. The source text is committed.
+No GPU, no API key, no database, no network. Both source texts are committed.
 
 ## The development loop
 
@@ -85,6 +85,11 @@ the token condition that decides whether a tag reaches PyPI and Pages.
 material you may redistribute. United States public domain currently covers
 publication through 1930. Large or restrictively licensed sources get a fetch
 script and stay untracked.
+
+A new source declares its origin and its fidelity in
+`infrastructure/config.py`, and reads its own edition out of its front
+matter. Never name a source from its filename.
+[Add a source](docs/how-to/add-a-source.md) walks the whole path.
 
 ## Tags are immutable
 

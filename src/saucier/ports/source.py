@@ -1,5 +1,10 @@
 """Port for reading a source document.
 
+Two implementations satisfy it. `GutenbergText` strips a licence wrapper and
+refuses a file that carries no markers. `PlainText` reads a file that has no
+wrapper at all. `NormalisedText` satisfies the port and consumes it, wrapping
+either one to clean the whitespace a scanner leaves behind.
+
 Examples:
     Anything answering this shape can be extracted from:
 
@@ -17,21 +22,26 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from saucier.domain.witness import Witness
+
 
 class SourceText(Protocol):
     """A source document the extractor can read.
 
-    Implementations strip whatever packaging their format carries — licence
-    headers, front matter, page furniture — and return only the body an
-    extractor should see.
+    Implementations strip whatever packaging their format carries, such as a
+    licence header or page furniture, and return only the body an extractor
+    should see. Each one also reports the witness it is: which edition the
+    text states, and how the text was obtained.
 
     Examples:
         Any object of this shape satisfies the port:
 
         ```python
         class Fixture:
-            source_id = "fixture"
             line_offset = 0
+
+            def __init__(self, witness: Witness) -> None:
+                self.witness = witness
 
             def lines(self) -> list[str]:
                 return ["22—BROWN SAUCE", "body"]
@@ -39,8 +49,12 @@ class SourceText(Protocol):
     """
 
     @property
-    def source_id(self) -> str:
-        """Stable identifier for this source document."""
+    def witness(self) -> Witness:
+        """What this text is, and how this project came by it.
+
+        The `source_id` derives from the edition the document states, so a
+        filename that happens to agree is a coincidence rather than evidence.
+        """
         ...
 
     @property

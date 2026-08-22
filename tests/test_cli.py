@@ -1,14 +1,16 @@
 import os
 
 import pytest
+from conftest import FIRST_PRINTING, REVISION, a_witness
 
 from saucier.adapters.driven.json_store import JsonCatalogueStore
 from saucier.adapters.driving import cli
 from saucier.domain.errors import SourceUnreadable
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
 from saucier.domain.types import ConceptId, Language
-from saucier.infrastructure.bootstrap import escoffier_source
-from saucier.infrastructure.config import ESCOFFIER
+from saucier.infrastructure.bootstrap import escoffier_sources
+
+WITNESS = a_witness()
 
 
 @pytest.fixture
@@ -16,7 +18,7 @@ def wired(monkeypatch, tmp_path):
     """Point the CLI at a temp data directory but the real corpus."""
     store = JsonCatalogueStore(directory=tmp_path)
     monkeypatch.setattr(cli, "catalogue_store", lambda: store)
-    monkeypatch.setattr(cli, "escoffier_source", escoffier_source)
+    monkeypatch.setattr(cli, "escoffier_sources", escoffier_sources)
     return store
 
 
@@ -24,20 +26,35 @@ def wired(monkeypatch, tmp_path):
 def test_parse_prints_the_census_it_just_computed(wired, capsys, census):
     assert cli.main(["parse"]) == 0
     out = capsys.readouterr().out
-    assert f"sauces      {census.sauces}" in out
-    assert f"derived     {census.derived} linked to a stated parent" in out
-    assert f"unresolved  {census.unresolved} state no base in their prose" in out
-    assert "mothers     bechamel, espagnole, hollandaise, tomato, veloute" in out
+    assert (
+        f"{census.sauces} sauces, {census.derived} derived, "
+        f"{census.unresolved} unresolved"
+    ) in out
+    assert "mothers: bechamel, espagnole, hollandaise, tomato, veloute" in out
 
 
 @pytest.mark.corpus
-def test_parse_stores_what_it_printed(wired, capsys, census):
+def test_parse_reports_the_edition_each_source_states(wired, capsys):
+    assert cli.main(["parse"]) == 0
+    out = capsys.readouterr().out
+    assert (
+        "escoffier-1909  New and Revised Edition, January 1909 "
+        "(impression: January 1920)"
+    ) in out
+    assert "escoffier-1907  no edition stated, copyright 1907" in out
+    assert "transcription of Project Gutenberg 71395" in out
+    assert "ocr of Internet Archive cu31924000610117" in out
+
+
+@pytest.mark.corpus
+def test_parse_stores_every_witness_it_read(wired, capsys, first_printing_census):
     cli.main(["parse"])
-    written = os.path.relpath(wired.path_for(ESCOFFIER))
-    assert f"Wrote {written}" in capsys.readouterr().out
-    stored = wired.load(ESCOFFIER)
-    assert len(stored.preparations) == census.sauces
-    assert stored.unresolved == census.unresolved
+    out = capsys.readouterr().out
+    for source_id in (REVISION.source_id, FIRST_PRINTING.source_id):
+        assert f"Wrote {os.path.relpath(wired.path_for(source_id))}" in out
+    stored = wired.load(FIRST_PRINTING.source_id)
+    assert len(stored.preparations) == first_printing_census.sauces
+    assert stored.unresolved == first_printing_census.unresolved
 
 
 @pytest.mark.corpus
@@ -61,6 +78,15 @@ def test_tree_heads_the_tree_with_the_concept_it_walked(wired, capsys):
 
 
 @pytest.mark.corpus
+def test_a_lookup_reads_the_witness_it_is_pointed_at(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["show", "aurore", "--source", FIRST_PRINTING.source_id]) == 0
+    out = capsys.readouterr().out
+    assert f"ocr of {FIRST_PRINTING.source_id}" in out
+
+
+@pytest.mark.corpus
 def test_tree_of_an_unknown_concept_fails_loudly(wired, capsys):
     cli.main(["parse"])
     capsys.readouterr()
@@ -77,6 +103,7 @@ def test_show_prints_provenance_and_language(wired, capsys):
     assert out.startswith("SAUCE BORDELAISE")
     assert "[fr]" in out
     assert "(unresolved)" in out
+    assert "transcription of escoffier-1909" in out
 
 
 @pytest.mark.corpus
@@ -92,6 +119,67 @@ def test_show_of_an_unknown_concept_fails_loudly(wired, capsys):
     cli.main(["parse"])
     capsys.readouterr()
     assert cli.main(["show", "gravy-of-atlantis"]) == cli.NOT_FOUND
+
+
+@pytest.mark.corpus
+def test_diff_reports_a_cause_on_every_row(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id]) == 0
+    out = capsys.readouterr().out
+    assert "escoffier-1907  ->  escoffier-1909" in out
+    assert "ocr-suspected" in out
+    assert "No row is adjudicated" in out
+
+
+@pytest.mark.corpus
+def test_diff_marks_aurore_as_a_disagreement_it_does_not_settle(wired, capsys):
+    """The acceptance test: OCR removed a candidate and the refusal with it."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
+    rows = [
+        line
+        for line in capsys.readouterr().out.splitlines()
+        if line.strip().endswith("tomato / (none)") and " aurore-sauce " in line
+    ]
+    assert len(rows) == 1
+    assert "parent-changed, ocr-suspected" in rows[0]
+    assert "tomato / (none)" in rows[0]
+
+
+@pytest.mark.corpus
+def test_diff_reads_the_ocr_names_as_scan_artefacts_rather_than_removals(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
+    out = capsys.readouterr().out
+    assert "qenevoise-sauce ~ genevoise-sauce" in out
+    assert "9 unmatched, 18 parent-changed, 35 ocr-suspected" in out
+
+
+@pytest.mark.corpus
+def test_diff_prints_the_blind_spot_beside_the_counts(wired, capsys):
+    """A reader may not see the counts without seeing what was unread."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
+    out = capsys.readouterr().out
+    assert (
+        "entries read  2679 of escoffier-1907, 2963 of escoffier-1909, "
+        "a blind spot of 284"
+    ) in out
+    assert "never that the printing lacks one" in out
+
+
+@pytest.mark.corpus
+def test_diff_claims_no_addition_against_a_scanned_witness(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
+    out = capsys.readouterr().out
+    assert " added " not in out
+    assert " removed " not in out
 
 
 @pytest.mark.unit
@@ -142,13 +230,47 @@ def test_a_cycle_in_the_recorded_parents_cannot_recurse_without_end(capsys):
             title=title,
             terms=(Term(title, Language.ENGLISH),),
             body="",
-            ref=SourceRef(source_id="test", entry=entry, line=entry),
+            ref=SourceRef(
+                source_id=WITNESS.source_id,
+                entry=entry,
+                line=entry,
+                fidelity=WITNESS.fidelity,
+            ),
             parent=ConceptId(parent),
         )
 
     catalogue = Catalogue(
-        source_id="test",
+        witness=WITNESS,
         preparations=(cyclic("A", "b", 1), cyclic("B", "a", 2)),
     )
     cli._print_children(catalogue, ConceptId("a"), prefix="", seen={ConceptId("a")})
     assert capsys.readouterr().out.count("B") == 1
+
+
+@pytest.mark.unit
+def test_a_catalogue_with_no_entry_count_says_the_blind_spot_is_unknown(
+    monkeypatch, tmp_path, capsys
+):
+    """An older stored file recorded no count, and unknown is not zero."""
+    store = JsonCatalogueStore(directory=tmp_path)
+    monkeypatch.setattr(cli, "catalogue_store", lambda: store)
+    for witness in (a_witness("book-1907"), a_witness("book-1909")):
+        store.save(Catalogue(witness=witness))
+    assert cli.main(["diff", "book-1907", "book-1909"]) == 0
+    out = capsys.readouterr().out
+    assert "entries read  not recorded, so the blind spot is unknown" in out
+
+
+@pytest.mark.unit
+def test_two_proofread_witnesses_get_the_blind_spot_without_the_caveat(
+    monkeypatch, tmp_path, capsys
+):
+    """The caveat belongs to damage. The measurement belongs to every diff."""
+    store = JsonCatalogueStore(directory=tmp_path)
+    monkeypatch.setattr(cli, "catalogue_store", lambda: store)
+    for source_id, count in (("book-1907", 2900), ("book-1909", 2963)):
+        store.save(Catalogue(witness=a_witness(source_id), entries_read=count))
+    assert cli.main(["diff", "book-1907", "book-1909"]) == 0
+    out = capsys.readouterr().out
+    assert "a blind spot of 63" in out
+    assert "never that the printing lacks one" not in out

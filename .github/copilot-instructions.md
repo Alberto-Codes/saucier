@@ -1,7 +1,8 @@
 # Copilot instructions for saucier
 
 `saucier` extracts sauce preparations from public-domain cookbooks into a
-structured catalogue. It reads Escoffier's *A Guide to Modern Cookery* (1907),
+structured catalogue. It reads two witnesses of Escoffier's *A Guide to
+Modern Cookery*, the 1909 revision and the 1907 first printing. It
 records what each preparation is called, in which language, which mother it
 derives from, and the source line the claim came from. No model runs. It backs
 a blog series, and each published post corresponds to an immutable tag.
@@ -9,7 +10,7 @@ a blog series, and each published post corresponds to an immutable tag.
 ## Project stances (do not flag these as issues)
 
 - **`parent = None` means the source stated no mother.** It never means the
-  preparation has none. 95 of 124 preparations are unresolved and that number
+  preparation has none. 74 of 124 preparations are unresolved and that number
   is correct. Do not suggest heuristics, fuzzy matching, or a model to raise
   it. A rule that resolves less and is right beats one that resolves more and
   sometimes guesses. `tests/test_corpus.py` fails if everything resolves.
@@ -21,9 +22,25 @@ a blog series, and each published post corresponds to an immutable tag.
 - **Zero runtime dependencies is a rule.** The CLI uses `argparse` rather than
   Typer or Click, and storage uses `json` and later `sqlite3`. A reader clones
   and runs with nothing installed. Do not suggest a CLI framework. See ADR-0005.
-- **`corpus/` is committed on purpose.** A 2 MB public-domain text is tracked
+- **`corpus/` is committed on purpose.** Two public-domain texts are tracked
   so a clone runs offline and every reader parses identical bytes. `data/` is
   ignored because it is reproducible. See ADR-0004.
+- **A source states its own identity.** The `source_id` is read from the front
+  matter, never taken from the filename. Do not suggest hardcoding an edition
+  or deriving one from a path. See ADR-0009.
+- **Fidelity is recorded, not inferred.** `corpus/escoffier-1907.txt` is OCR
+  and `corpus/escoffier-1909.txt` is proofread. Do not suggest repairing the
+  OCR toward the clean text, and do not suggest counting accents to guess
+  fidelity. See ADR-0010.
+- **A damaged witness cannot establish absence.** The 1907 scan has a
+  284-entry blind spot, so `saucier diff` reports `unmatched` rather than
+  `added` or `removed`. Do not suggest restoring the stronger cause. See
+  ADR-0014.
+- **A parent resolver may refuse, never rank.** No parent is ever chosen by
+  score. Do not suggest a threshold, a similarity score, or a tie-break for
+  `parent`. See ADR-0012. `services/comparison.py` does rank name candidates
+  by similarity, and that is deliberate: it labels a diff row and never
+  writes `parent`.
 - **Four layers on a small codebase is deliberate.** `lint-imports` enforces
   domain, ports, services, adapters mechanically. Do not suggest flattening.
   See ADR-0005.
@@ -55,7 +72,7 @@ a blog series, and each published post corresponds to an immutable tag.
   of evidence as evidence of absence.
 - A term normalised, translated, or stripped of its language tag.
 - A claim in the docs that no longer matches `uv run saucier parse` output. The
-  counts 124, 29 and 95 appear in `README.md`, `docs/index.md`, and the
+  counts 124, 50 and 74 appear in `README.md`, `docs/index.md`, and the
   tutorial. `tests/conftest.py` pins them, so a parser change fails there
   first.
 - A new runtime dependency in `[project.dependencies]`.

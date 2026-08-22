@@ -124,6 +124,15 @@ nav:
       - ADR-0005 Layers and dependencies: adr/0005-hexagon-and-no-runtime-dependencies.md
       - ADR-0006 Storage in stages: adr/0006-storage-arrives-in-stages.md
       - ADR-0007 The source classifies itself: adr/0007-the-source-classifies-its-own-contents.md
+      - ADR-0008 Any parent may be catalogued:
+          adr/0008-a-parent-may-be-any-catalogued-preparation.md
+      - ADR-0009 The source states its identity: adr/0009-the-source-states-its-own-identity.md
+      - ADR-0010 Fidelity is on the record: adr/0010-fidelity-is-a-property-of-the-record.md
+      - ADR-0011 Normalisation wraps a source: adr/0011-normalisation-wraps-a-source.md
+      - ADR-0012 A resolver may refuse: adr/0012-a-resolver-may-refuse-never-rank.md
+      - ADR-0013 Repair structure, not content: adr/0013-repair-structure-never-content.md
+      - ADR-0014 A damaged witness and absence:
+          adr/0014-a-damaged-witness-cannot-establish-absence.md
 
 markdown_extensions:
   - abbr

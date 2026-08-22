@@ -7,9 +7,33 @@ in the same change.
 
 ## What a source yields
 
+**Work**
+:   The book itself, across every edition of it. Named by the first half of a
+    `source_id`, such as `escoffier`. Not "title" or "book".
+
+**Edition**
+:   A named revision of a work, as the work's own printing history states it.
+    `New and Revised Edition, January 1909`. Not "version" or "release".
+
+**Impression**
+:   One printing of an edition, from the same setting and with no revision.
+    `January 1920`. Not "edition" and not "reprint".
+
+**Witness**
+:   One text of one edition that this project can read: a transcription or a
+    scan. Each source is a witness. A witness is evidence of the work rather
+    than the work. Not "copy" or "version".
+
+**Fidelity**
+:   How a witness was obtained, and therefore how far its surface forms may
+    be trusted. Two values: `transcription`, proofread by hand, and `ocr`,
+    machine-read from a scan. Stated, never inferred. Not "quality" or
+    "confidence".
+
 **Source**
 :   One document the extractor reads, identified by a `source_id` such as
-    `escoffier-1907`. Not "book", "text", or "file".
+    `escoffier-1909`. One source is one witness. Not "book", "text", or
+    "file".
 
 **Corpus**
 :   The tracked collection of source material under `corpus/`. One corpus
@@ -117,6 +141,28 @@ in the same change.
 :   A chapter the source itself titles as sauces. Escoffier has three. An
     entry that does not say "sauce" in its own heading qualifies only inside
     one. Not "section" or "sauce section".
+
+## Comparison
+
+**Difference**
+:   One row of a comparison between two witnesses: a concept, what each
+    witness holds, and the cause. Not "delta", "change", or "diff row".
+
+**Cause**
+:   Why two witnesses differ on one concept. Six values, and a row may carry
+    more than one. `unmatched` means one witness holds the concept and the
+    diff found no counterpart in the other. `added` and `removed` mean the
+    concept is in one book and not in the other. That is a stronger claim,
+    available only between two witnesses of equal fidelity.
+    `retitled` means one heading is the other plus whole words.
+    `parent-changed` means a preparation records a different derivation in
+    each witness. `ocr-suspected` means a scanned witness explains the row as
+    well as a revision does. Not "reason", "kind", or "type".
+
+**Blind spot**
+:   Entries one witness yielded and the other did not. It measures what a
+    reader could not see, so it is what an `unmatched` row cannot look past.
+    Not "coverage" or "recall", which name a score rather than a gap.
 
 ## Names this project does not use
 

@@ -32,3 +32,21 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0008: A parent may be any catalogued
   preparation](0008-a-parent-may-be-any-catalogued-preparation.md). Why
   derived rose from 29 to 50, and which runs of words count as statements.
+- [ADR-0009: The source states its own
+  identity](0009-the-source-states-its-own-identity.md). Why `escoffier-1907`
+  named the wrong edition for two releases, and what replaced the filename.
+- [ADR-0010: Fidelity is a property of the
+  record](0010-fidelity-is-a-property-of-the-record.md). Why a transcription
+  and a scan are not equal evidence, and where that is recorded.
+- [ADR-0011: Normalisation is an adapter that wraps a
+  source](0011-normalisation-wraps-a-source.md). Where three lines of
+  whitespace handling live, and the three places they do not.
+- [ADR-0012: A resolver may refuse, never
+  rank](0012-a-resolver-may-refuse-never-rank.md). Why the unresolved count
+  is an instrument, and what a model layer may not do to it.
+- [ADR-0013: Normalisation repairs structure, never
+  content](0013-repair-structure-never-content.md). Why a broken entry
+  separator may be mended and a broken word may not.
+- [ADR-0014: A damaged witness cannot establish
+  absence](0014-a-damaged-witness-cannot-establish-absence.md). Why the diff
+  reports no additions, and what has to shrink before it can.
