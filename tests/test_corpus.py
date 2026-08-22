@@ -19,7 +19,7 @@ from saucier.domain.types import ConceptId
 from saucier.domain.witness import Fidelity
 from saucier.infrastructure.bootstrap import escoffier_sources
 from saucier.infrastructure.config import Paths
-from saucier.services.extraction import extract
+from saucier.services.extraction import ENTRY, continues_heading, extract
 
 
 @pytest.mark.corpus
@@ -239,15 +239,47 @@ def test_the_ocr_witness_answers_where_the_clean_one_refuses(escoffier, escoffie
 
 
 @pytest.mark.corpus
-def test_the_one_apparent_retitle_is_a_line_break_in_the_scan():
-    """Checked by eye against both files. Entry 63 prints the same heading.
+def test_entry_63_reads_whole_in_both_witnesses(escoffier, escoffier_1907):
+    """The heading wraps in both printings, at different points.
 
-    The scan breaks it after `MEAT GLAZE,` and the rest lands on the next
-    line, so the extractor reads a shorter title. That looks like a heading
-    the revision grew, and it is not one.
+    A reader that stopped at the newline recorded two different titles, and
+    the diff then blamed the difference on the scanned witness.
     """
-    paths = Paths.discover()
-    scan = paths.escoffier_scan.read_text(encoding="utf-8").splitlines()
-    clean = paths.escoffier_transcription.read_text(encoding="utf-8").splitlines()
-    assert "OTHERWISE VALOIS SAUCE" in " ".join(scan[2541:2543]).replace("  ", " ")
-    assert "OTHERWISE VALOIS SAUCE" in clean[2129]
+    whole = "SAUCE WITH MEAT GLAZE, OTHERWISE VALOIS SAUCE OR FOYOT SAUCE"
+    clean = escoffier.find(ConceptId("bearnaise-sauce-with-meat-glaze"))
+    scanned = escoffier_1907.find(ConceptId("bearnaise-sauce-with-meat-glaze"))
+    assert clean is not None
+    assert scanned is not None
+    assert clean.title == f"BÉARNAISE {whole}"
+    assert scanned.title == f"BEARNAISE {whole}"
+    assert clean.concept == scanned.concept
+
+
+@pytest.mark.corpus
+def test_the_number_of_wrapped_headings_is_the_measured_one():
+    """Four in the proofread text, 41 in the scan, whose column is narrower.
+
+    A rise here means the rule loosened and is absorbing something else.
+    """
+    joined = []
+    for source in escoffier_sources():
+        lines = source.lines()
+        joined.append(
+            sum(
+                1
+                for index, line in enumerate(lines)
+                if ENTRY.match(line) and continues_heading(lines, index + 1)
+            )
+        )
+    assert joined == [4, 41]
+
+
+@pytest.mark.corpus
+def test_a_restored_heading_still_faces_the_dish_rule(escoffier_1907):
+    """Entry 1396 gains `OR ROBERT SAUCE` and is still a dish.
+
+    Its `WITH` precedes its `SAUCE`, which is ADR-0007's test, and the test
+    runs against the whole title rather than the truncated one.
+    """
+    titles = {p.title for p in escoffier_1907.preparations}
+    assert "FRESH-PORK CUTLETS WITH PIQUANTE OR ROBERT SAUCE" not in titles

@@ -65,10 +65,10 @@ scan, so every difference between them has two explanations.
 ```console
 $ uv run saucier diff escoffier-1907 escoffier-1909
 ...
-  20 added, 12 parent-changed, 27 ocr-suspected
+  20 added, 12 parent-changed, 26 ocr-suspected
 ```
 
-Fifteen names look removed and a scanner explains every one of them.
+Fourteen names look removed and a scanner explains every one of them.
 `QENEVOISE SAUCE` is `GENEVOISE SAUCE` with one letter misread. The diff
 says so rather than reporting a removal it cannot support. It never decides
 which witness is right.

@@ -152,10 +152,9 @@ in the same change.
 :   Why two witnesses differ on one concept. Five values, and a row may carry
     more than one. `added` and `removed` mean one witness holds the concept
     and the other does not. `retitled` means one heading is the other plus
-    whole words, and it needs two proofread witnesses. `parent-changed` means
-    a shared concept records a different derivation. `ocr-suspected` means a
-    scanned witness explains the row as well as a revision does. Not
-    "reason", "kind", or "type".
+    whole words. `parent-changed` means a shared concept records a different
+    derivation. `ocr-suspected` means a scanned witness explains the row as
+    well as a revision does. Not "reason", "kind", or "type".
 
 ## Names this project does not use
 
