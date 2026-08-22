@@ -32,6 +32,10 @@ a blog series, and each published post corresponds to an immutable tag.
   and `corpus/escoffier-1909.txt` is proofread. Do not suggest repairing the
   OCR toward the clean text, and do not suggest counting accents to guess
   fidelity. See ADR-0010.
+- **A damaged witness cannot establish absence.** The 1907 scan has a
+  284-entry blind spot, so `saucier diff` reports `unmatched` rather than
+  `added` or `removed`. Do not suggest restoring the stronger cause. See
+  ADR-0014.
 - **A parent resolver may refuse, never rank.** No parent is ever chosen by
   score. Do not suggest a threshold, a similarity score, or a tie-break for
   `parent`. See ADR-0012. `services/comparison.py` does rank name candidates

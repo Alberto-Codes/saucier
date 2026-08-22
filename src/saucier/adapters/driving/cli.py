@@ -17,6 +17,10 @@ Examples:
     assert main(["tree", "espagnole"]) == 0
     ```
 
+The `diff` command prints how much of each witness the reader could see,
+beside the counts rather than below them, because a count read without its
+blind spot is a stronger claim than the evidence carries.
+
 See Also:
     - [saucier.services.extraction][]: What these commands call into.
     - [saucier.services.comparison][]: What `diff` calls into.
@@ -91,6 +95,9 @@ def _parse(_: argparse.Namespace) -> int:
 def _diff(args: argparse.Namespace) -> int:
     """Compare two stored catalogues and print what caused each difference.
 
+    The summary carries the tally, the blind spot, and what neither of them
+    settles.
+
     Args:
         args: Parsed arguments carrying the two source ids.
 
@@ -104,9 +111,33 @@ def _diff(args: argparse.Namespace) -> int:
     _print_rows(report, "parents", report.parents)
     print()
     print("  " + ", ".join(f"{n} {c.value}" for c, n in report.tally().items()))
+    _print_reach(report)
     print("  No row is adjudicated. An ocr-suspected row is a suspicion, and")
     print("  separating a scan artefact from a revision needs both lines read.")
     return 0
+
+
+def _print_reach(report: Report) -> None:
+    """Print how much of each witness the reader could see.
+
+    The blind spot sits beside the counts rather than in a note, because a
+    reader who sees how many rows the diff found has to see how much of the
+    source it could not read. ADR-0014 records why.
+
+    Args:
+        report: The comparison being printed.
+    """
+    older, newer = report.entries_read
+    if older is None or newer is None:
+        print("  entries read  not recorded, so the blind spot is unknown")
+        return
+    print(
+        f"  entries read  {older} of {report.older}, {newer} of {report.newer}, "
+        f"a blind spot of {report.blind_spot}"
+    )
+    if report.scanned:
+        print("  A witness is ocr. An unmatched row says the diff found no")
+        print("  counterpart, never that the printing lacks one.")
 
 
 def _print_rows(report: Report, heading: str, rows: Sequence[Difference]) -> None:

@@ -18,6 +18,11 @@ both witnesses spell the same way.
 No row is adjudicated. A parent disagreement is reported with both readings
 side by side, and the comparison never decides which witness is right.
 
+Nor is absence. A scanned witness has a measured blind spot, so a concept
+found in one witness and not the other is reported as unmatched rather than
+as added or removed. ADR-0014 records why, and the summary prints the blind
+spot beside the counts.
+
 Examples:
     Compare two stored catalogues:
 
@@ -64,6 +69,11 @@ class Cause(StrEnum):
     qualify another cause, when a scanned witness leaves a row
     unattributable, and it decides nothing when it does.
 
+    `ADDED` and `REMOVED` state what a book contains, so they are available
+    only between two witnesses of equal fidelity. Against a scanned witness
+    the same row is `UNMATCHED`, which states what the comparison found and
+    nothing about the book. ADR-0014 records why.
+
     Examples:
         Members carry their printed value:
 
@@ -74,6 +84,7 @@ class Cause(StrEnum):
 
     ADDED = "added"
     REMOVED = "removed"
+    UNMATCHED = "unmatched"
     RETITLED = "retitled"
     PARENT_CHANGED = "parent-changed"
     OCR_SUSPECTED = "ocr-suspected"
@@ -117,6 +128,9 @@ class Report:
         newer (str): Source id of the later witness.
         scanned (bool): Whether either witness is OCR, which is what makes a
             difference unattributable.
+        entries_read (tuple[int | None, int | None]): Numbered entries each
+            witness yielded. The gap between them is the blind spot, and it
+            is what an unmatched row cannot see past.
         presence (tuple[Difference, ...]): Concepts one witness holds and the
             other does not.
         parents (tuple[Difference, ...]): Shared concepts whose recorded
@@ -126,15 +140,29 @@ class Report:
         Count the rows by cause:
 
         ```python
-        assert report.tally()[Cause.ADDED] >= 0
+        assert report.tally()[Cause.UNMATCHED] >= 0
         ```
     """
 
     older: str
     newer: str
     scanned: bool
+    entries_read: tuple[int | None, int | None] = (None, None)
     presence: tuple[Difference, ...] = field(default_factory=tuple)
     parents: tuple[Difference, ...] = field(default_factory=tuple)
+
+    @property
+    def blind_spot(self) -> int | None:
+        """Entries one witness yielded and the other did not.
+
+        Returns:
+            The gap between the two entry counts, or None when either
+            catalogue recorded no count.
+        """
+        older, newer = self.entries_read
+        if older is None or newer is None:
+            return None
+        return abs(newer - older)
 
     def tally(self) -> dict[Cause, int]:
         """Count how many rows carry each cause.
@@ -314,6 +342,25 @@ def _unpaired_note(concept: ConceptId, others: list[ConceptId], scanned: bool) -
     return f"{closest} resembles it at {score:.2f}, and pairs better elsewhere"
 
 
+def _unshared_causes(scanned: bool) -> tuple[Cause, Cause]:
+    """Choose what a concept held by one witness alone may be called.
+
+    A scanned witness has a measured blind spot, so the diff knows it did not
+    find a counterpart and does not know the book lacks one. Between two
+    proofread texts there is no such gap, and the stronger reading stands.
+
+    Args:
+        scanned: Whether either witness is OCR.
+
+    Returns:
+        The cause for a concept only the earlier witness holds, and the cause
+        for one only the later witness holds.
+    """
+    if scanned:
+        return Cause.UNMATCHED, Cause.UNMATCHED
+    return Cause.REMOVED, Cause.ADDED
+
+
 def _presence(
     older: dict[ConceptId, Preparation],
     newer: dict[ConceptId, Preparation],
@@ -330,11 +377,12 @@ def _presence(
 
     Returns:
         Rows in concept order. A paired name is one row, not two, so an
-        attributed pair leaves the added and removed counts alone.
+        attributed pair leaves the unshared counts alone.
     """
     only_older = sorted(set(older) - set(newer))
     only_newer = sorted(set(newer) - set(older))
     matched = {counterpart for counterpart, _, _ in paired.values()}
+    gone, arrived = _unshared_causes(scanned)
     rows = [
         Difference(
             causes=paired[c][1],
@@ -346,7 +394,7 @@ def _presence(
         )
         if c in paired
         else Difference(
-            causes=(Cause.REMOVED,),
+            causes=(gone,),
             concept=c,
             older=older[c].title,
             note=_unpaired_note(c, only_newer, scanned),
@@ -355,7 +403,7 @@ def _presence(
     ]
     rows.extend(
         Difference(
-            causes=(Cause.ADDED,),
+            causes=(arrived,),
             concept=c,
             newer=newer[c].title,
             note=_unpaired_note(c, only_older, scanned),
@@ -447,7 +495,8 @@ def compare(older: Catalogue, newer: Catalogue) -> Report:
 
     Names are paired once, and both sections read that pairing. So a scanned
     name reported in `names` has its derivation compared in `parents` too,
-    under the same two ids.
+    under the same two ids. The entry counts travel with the report, because
+    what a witness did not yield bounds what the report may claim.
 
     Args:
         older: The earlier witness.
@@ -463,6 +512,7 @@ def compare(older: Catalogue, newer: Catalogue) -> Report:
         older=older.source_id,
         newer=newer.source_id,
         scanned=scanned,
+        entries_read=(older.entries_read, newer.entries_read),
         presence=_presence(a, b, paired, scanned),
         parents=_parents(a, b, paired, scanned),
     )

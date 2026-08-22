@@ -155,7 +155,31 @@ def test_diff_reads_the_ocr_names_as_scan_artefacts_rather_than_removals(wired, 
     cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
     out = capsys.readouterr().out
     assert "qenevoise-sauce ~ genevoise-sauce" in out
-    assert "8 added, 1 removed, 18 parent-changed, 35 ocr-suspected" in out
+    assert "9 unmatched, 18 parent-changed, 35 ocr-suspected" in out
+
+
+@pytest.mark.corpus
+def test_diff_prints_the_blind_spot_beside_the_counts(wired, capsys):
+    """A reader may not see the counts without seeing what was unread."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
+    out = capsys.readouterr().out
+    assert (
+        "entries read  2679 of escoffier-1907, 2963 of escoffier-1909, "
+        "a blind spot of 284"
+    ) in out
+    assert "never that the printing lacks one" in out
+
+
+@pytest.mark.corpus
+def test_diff_claims_no_addition_against_a_scanned_witness(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
+    out = capsys.readouterr().out
+    assert " added " not in out
+    assert " removed " not in out
 
 
 @pytest.mark.unit
@@ -221,3 +245,32 @@ def test_a_cycle_in_the_recorded_parents_cannot_recurse_without_end(capsys):
     )
     cli._print_children(catalogue, ConceptId("a"), prefix="", seen={ConceptId("a")})
     assert capsys.readouterr().out.count("B") == 1
+
+
+@pytest.mark.unit
+def test_a_catalogue_with_no_entry_count_says_the_blind_spot_is_unknown(
+    monkeypatch, tmp_path, capsys
+):
+    """An older stored file recorded no count, and unknown is not zero."""
+    store = JsonCatalogueStore(directory=tmp_path)
+    monkeypatch.setattr(cli, "catalogue_store", lambda: store)
+    for witness in (a_witness("book-1907"), a_witness("book-1909")):
+        store.save(Catalogue(witness=witness))
+    assert cli.main(["diff", "book-1907", "book-1909"]) == 0
+    out = capsys.readouterr().out
+    assert "entries read  not recorded, so the blind spot is unknown" in out
+
+
+@pytest.mark.unit
+def test_two_proofread_witnesses_get_the_blind_spot_without_the_caveat(
+    monkeypatch, tmp_path, capsys
+):
+    """The caveat belongs to damage. The measurement belongs to every diff."""
+    store = JsonCatalogueStore(directory=tmp_path)
+    monkeypatch.setattr(cli, "catalogue_store", lambda: store)
+    for source_id, count in (("book-1907", 2900), ("book-1909", 2963)):
+        store.save(Catalogue(witness=a_witness(source_id), entries_read=count))
+    assert cli.main(["diff", "book-1907", "book-1909"]) == 0
+    out = capsys.readouterr().out
+    assert "a blind spot of 63" in out
+    assert "never that the printing lacks one" not in out

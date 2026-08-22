@@ -65,13 +65,18 @@ scan, so every difference between them has two explanations.
 ```console
 $ uv run saucier diff escoffier-1907 escoffier-1909
 ...
-  8 added, 1 removed, 18 parent-changed, 35 ocr-suspected
+  9 unmatched, 18 parent-changed, 35 ocr-suspected
+  entries read  2679 of escoffier-1907, 2963 of escoffier-1909, a blind spot of 284
 ```
 
-Seventeen names look removed and a scanner explains every one of them.
-`QENEVOISE SAUCE` is `GENEVOISE SAUCE` with one letter misread. The diff
-says so rather than reporting a removal it cannot support. It never decides
-which witness is right.
+`QENEVOISE SAUCE` is `GENEVOISE SAUCE` with one letter misread, and the diff
+says so rather than reporting a removal it cannot support.
+
+It reports no additions at all. The 1907 witness is a scan and 284 of its
+entries are unread. So a concept found in one witness and not the other is
+`unmatched` rather than added. **No editorial difference between the two
+printings has been confirmed.** Every candidate so far has been the scanner
+or the reader.
 
 ## Documentation
 
@@ -82,7 +87,7 @@ reference is generated from the docstrings, so it cannot drift from the code.
 - [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
 - [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
 - [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
-- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the twelve records, and what each one accepted
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the fourteen records, and what each one accepted
 
 ## Licence
 

@@ -47,3 +47,6 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0013: Normalisation repairs structure, never
   content](0013-repair-structure-never-content.md). Why a broken entry
   separator may be mended and a broken word may not.
+- [ADR-0014: A damaged witness cannot establish
+  absence](0014-a-damaged-witness-cannot-establish-absence.md). Why the diff
+  reports no additions, and what has to shrink before it can.

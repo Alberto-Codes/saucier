@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 from conftest import a_witness
 
@@ -38,21 +40,53 @@ def causes_for(report, concept):
 
 
 @pytest.mark.unit
-def test_a_name_only_the_later_witness_holds_is_added():
+def test_two_proofread_witnesses_may_still_report_an_addition():
+    """The rule is about damage, not about diffing."""
+    other = a_witness("book-1912", Fidelity.TRANSCRIPTION)
     report = compare(
-        catalogue(SCAN, [("BROWN SAUCE", None)]),
-        catalogue(CLEAN, [("BROWN SAUCE", None), ("APPLE SAUCE", None)]),
+        catalogue(CLEAN, [("BROWN SAUCE", None)]),
+        catalogue(other, [("BROWN SAUCE", None), ("APPLE SAUCE", None)]),
     )
     assert causes_for(report, "apple-sauce") == (Cause.ADDED,)
 
 
 @pytest.mark.unit
-def test_a_name_only_the_earlier_witness_holds_is_removed():
+def test_two_proofread_witnesses_may_still_report_a_removal():
+    other = a_witness("book-1912", Fidelity.TRANSCRIPTION)
+    report = compare(
+        catalogue(CLEAN, [("BROWN SAUCE", None), ("LOST SAUCE", None)]),
+        catalogue(other, [("BROWN SAUCE", None)]),
+    )
+    assert causes_for(report, "lost-sauce") == (Cause.REMOVED,)
+
+
+@pytest.mark.unit
+def test_a_scanned_witness_never_establishes_an_addition():
+    """It has a blind spot, so it cannot see that a book lacks something."""
+    report = compare(
+        catalogue(SCAN, [("BROWN SAUCE", None)]),
+        catalogue(CLEAN, [("BROWN SAUCE", None), ("APPLE SAUCE", None)]),
+    )
+    assert causes_for(report, "apple-sauce") == (Cause.UNMATCHED,)
+
+
+@pytest.mark.unit
+def test_a_scanned_witness_never_establishes_a_removal():
     report = compare(
         catalogue(SCAN, [("BROWN SAUCE", None), ("LOST SAUCE", None)]),
         catalogue(CLEAN, [("BROWN SAUCE", None)]),
     )
-    assert causes_for(report, "lost-sauce") == (Cause.REMOVED,)
+    assert causes_for(report, "lost-sauce") == (Cause.UNMATCHED,)
+
+
+@pytest.mark.unit
+def test_no_row_of_a_scanned_comparison_claims_a_book_lacks_something():
+    report = compare(
+        catalogue(SCAN, [("QENEVOISE SAUCE", None), ("LOST SAUCE", None)]),
+        catalogue(CLEAN, [("GENEVOISE SAUCE", None), ("APPLE SAUCE", None)]),
+    )
+    stated = {c for row in (*report.presence, *report.parents) for c in row.causes}
+    assert not stated & {Cause.ADDED, Cause.REMOVED}
 
 
 @pytest.mark.unit
@@ -101,8 +135,7 @@ def test_a_short_run_inside_a_long_name_is_not_read_as_a_retitle():
         catalogue(CLEAN, [("A VERY LONG AND PLAIN SAUCE OF SOME KIND", None)]),
     )
     assert {row.causes for row in report.presence} == {
-        (Cause.ADDED,),
-        (Cause.REMOVED,),
+        (Cause.UNMATCHED,),
     }
 
 
@@ -203,6 +236,26 @@ def test_a_name_that_lost_a_pairing_reports_the_resemblance_it_had():
         catalogue(SCAN, [("QENEVOISE SAUCE", None)]),
         catalogue(CLEAN, [("GENEVOISE SAUCE", None), ("GENEVOISF SAUCE", None)]),
     )
-    lost = [row for row in report.presence if row.causes == (Cause.ADDED,)]
+    lost = [row for row in report.presence if row.newer and not row.older]
     assert len(lost) == 1
     assert "pairs better elsewhere" in lost[0].note
+
+
+@pytest.mark.unit
+def test_the_blind_spot_is_the_gap_between_what_each_witness_yielded():
+    report = compare(
+        replace(catalogue(SCAN, [("BROWN SAUCE", None)]), entries_read=2679),
+        replace(catalogue(CLEAN, [("BROWN SAUCE", None)]), entries_read=2963),
+    )
+    assert report.entries_read == (2679, 2963)
+    assert report.blind_spot == 284
+
+
+@pytest.mark.unit
+def test_an_unrecorded_entry_count_leaves_the_blind_spot_unknown():
+    """Unknown is not zero. A zero would read as a witness read in full."""
+    report = compare(
+        catalogue(SCAN, [("BROWN SAUCE", None)]),
+        replace(catalogue(CLEAN, [("BROWN SAUCE", None)]), entries_read=2963),
+    )
+    assert report.blind_spot is None
