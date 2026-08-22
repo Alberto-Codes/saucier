@@ -172,3 +172,12 @@ def test_an_unstated_edition_in_a_stored_file_is_damage(tmp_path, catalogue):
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(SourceUnreadable, match="damaged"):
         JsonCatalogueStore(directory=tmp_path).load(STORED)
+
+
+@pytest.mark.unit
+def test_a_catalogue_filed_under_the_wrong_name_is_damage(tmp_path, catalogue):
+    """The id is recomputed from the witness, so the file cannot rename it."""
+    JsonCatalogueStore(directory=tmp_path).save(catalogue)
+    (tmp_path / f"{STORED}.json").rename(tmp_path / "fixture-1800.json")
+    with pytest.raises(SourceUnreadable, match="says it is fixture-1909"):
+        JsonCatalogueStore(directory=tmp_path).load("fixture-1800")

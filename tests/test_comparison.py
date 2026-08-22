@@ -160,3 +160,49 @@ def test_the_tally_counts_a_row_under_each_cause_it_carries():
         catalogue(CLEAN, [("AURORE SAUCE", None), ("TOMATO SAUCE", None)]),
     )
     assert report.tally() == {Cause.PARENT_CHANGED: 1, Cause.OCR_SUSPECTED: 1}
+
+
+@pytest.mark.unit
+def test_a_paired_name_still_has_its_derivation_compared():
+    """Pairing must not hide a parent disagreement it created the names for."""
+    report = compare(
+        catalogue(SCAN, [("QENEVOISE SAUCE", None)]),
+        catalogue(CLEAN, [("GENEVOISE SAUCE", "espagnole")]),
+    )
+    row = report.parents[0]
+    assert row.concept == "qenevoise-sauce"
+    assert row.counterpart == "genevoise-sauce"
+    assert (row.older, row.newer) == (None, "espagnole")
+
+
+@pytest.mark.unit
+def test_a_parent_named_under_two_spellings_is_not_a_change():
+    """The pairing may not manufacture a finding out of its own matching."""
+    report = compare(
+        catalogue(SCAN, [("RAVIQOTE SAUCE", None), ("CHILD SAUCE", "raviqote-sauce")]),
+        catalogue(CLEAN, [("RAVIGOTE SAUCE", None), ("CHILD SAUCE", "ravigote-sauce")]),
+    )
+    assert report.parents == ()
+
+
+@pytest.mark.unit
+def test_an_unpaired_row_never_claims_a_test_that_was_not_run():
+    """Two proofread witnesses are never scored against each other."""
+    other = a_witness("book-1912", Fidelity.TRANSCRIPTION)
+    report = compare(
+        catalogue(CLEAN, [("GENEVOISE SAUCE", None)]),
+        catalogue(other, [("GENEVOIZE SAUCE", None)]),
+    )
+    assert all("no witness is ocr" in row.note for row in report.presence)
+
+
+@pytest.mark.unit
+def test_a_name_that_lost_a_pairing_reports_the_resemblance_it_had():
+    """It resembles something. Saying otherwise is a false claim."""
+    report = compare(
+        catalogue(SCAN, [("QENEVOISE SAUCE", None)]),
+        catalogue(CLEAN, [("GENEVOISE SAUCE", None), ("GENEVOISF SAUCE", None)]),
+    )
+    lost = [row for row in report.presence if row.causes == (Cause.ADDED,)]
+    assert len(lost) == 1
+    assert "pairs better elsewhere" in lost[0].note

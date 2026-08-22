@@ -85,9 +85,10 @@ against `corpus/`.
 front matter, never taken from the filename. `escoffier-1907` was wrong for
 two releases because a filename was trusted. See ADR-0009.
 
-**A resolver may refuse, never rank.** No code path scores candidates and
-takes the best. An abstention is the instrument that catches silent
-corruption, not a gap to close. See ADR-0012.
+**A parent resolver may refuse, never rank.** No parent is ever chosen by
+score. An abstention is the instrument that catches silent corruption, not a
+gap to close. See ADR-0012. The edition diff does rank name candidates, which
+is allowed because it labels a row and never writes `parent`.
 
 **The parser does not guess.** When adding extraction rules, prefer a rule
 that resolves less and is right to one that resolves more and is sometimes

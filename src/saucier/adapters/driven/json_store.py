@@ -7,7 +7,9 @@ first, and that is the break ADR-0006 waits for.
 
 A stored file states what it is. The witness block carries the work, the
 edition read from the front matter, the fidelity, and the origin, so a reader
-opening one file learns which printing it holds.
+opening one file learns which printing it holds. The id is recomputed from
+that block on the way back in, so a file that has been renamed is reported
+rather than answered with.
 
 A write goes to a temporary file and is renamed over the target, so an
 interrupted run leaves the previous catalogue intact. A damaged file is
@@ -127,8 +129,9 @@ class JsonCatalogueStore:
         """Read back a previously saved catalogue.
 
         A stored file that names no edition year, or an unknown fidelity, is
-        damage rather than a catalogue. Both are reported the same way as a
-        truncated file.
+        damage rather than a catalogue. So is a file whose witness names a
+        different source than the one asked for, because the id is recomputed
+        from the witness rather than read from the file.
 
         Args:
             source_id: Identifier of the source whose catalogue to load.
@@ -153,7 +156,7 @@ class JsonCatalogueStore:
 
         try:
             payload = json.loads(text)
-            return Catalogue(
+            catalogue = Catalogue(
                 witness=_witness_from_dict(payload["witness"]),
                 preparations=tuple(_from_dict(p) for p in payload["preparations"]),
                 mothers=frozenset(to_concept_id(m) for m in payload["mothers"]),
@@ -169,6 +172,16 @@ class JsonCatalogueStore:
                 f"catalogue at {path} is damaged: {exc}. Run `saucier parse` to rebuild"
             )
             raise SourceUnreadable(msg) from exc
+
+        if catalogue.source_id != source_id:
+            # The id is recomputed from the witness rather than trusted, so a
+            # file under the wrong name would otherwise answer to it.
+            msg = (
+                f"catalogue at {path} says it is {catalogue.source_id}, "
+                f"not {source_id}. Run `saucier parse` to rebuild"
+            )
+            raise SourceUnreadable(msg)
+        return catalogue
 
 
 def _witness_dict(witness: Witness) -> dict[str, Any]:

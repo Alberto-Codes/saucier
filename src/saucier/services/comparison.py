@@ -11,7 +11,9 @@ and that is the failure this module exists to avoid.
 
 A cause is itself a claim and can itself be wrong. This module once blamed a
 scanner for a heading its own reader had truncated, which is the same failure
-one level up.
+one level up. A row that says nothing resembles it has to have looked, and a
+derivation is compared for every preparation rather than only for the ones
+both witnesses spell the same way.
 
 No row is adjudicated. A parent disagreement is reported with both readings
 side by side, and the comparison never decides which witness is right.
@@ -286,9 +288,36 @@ def _pair(older: list[ConceptId], newer: list[ConceptId], scanned: bool) -> Pair
     return paired
 
 
+def _unpaired_note(concept: ConceptId, others: list[ConceptId], scanned: bool) -> str:
+    """Say what was actually looked for, and what was found.
+
+    A row that claims nothing resembles it has to have looked. Between two
+    proofread witnesses nothing is looked for at all, and a name that lost a
+    greedy contest does have a resemblance worth printing.
+
+    Args:
+        concept: The unshared concept this row is about.
+        others: Every concept only the other witness holds.
+        scanned: Whether either witness is OCR.
+
+    Returns:
+        The evidence for reading this row as an addition or a removal.
+    """
+    if not scanned:
+        return "no witness is ocr, so no name was tested against it"
+    scored = [(_resembles(concept, other), other) for other in others]
+    if not scored:
+        return "the other witness holds no unshared name"
+    score, closest = max(scored)
+    if score < RESEMBLANCE:
+        return f"the closest unshared name is {closest}, at {score:.2f}"
+    return f"{closest} resembles it at {score:.2f}, and pairs better elsewhere"
+
+
 def _presence(
     older: dict[ConceptId, Preparation],
     newer: dict[ConceptId, Preparation],
+    paired: Pairing,
     scanned: bool,
 ) -> tuple[Difference, ...]:
     """Report every concept one witness holds and the other does not.
@@ -296,6 +325,7 @@ def _presence(
     Args:
         older: The earlier witness, indexed by concept.
         newer: The later witness, indexed by concept.
+        paired: Unshared names matched across the two witnesses.
         scanned: Whether either witness is OCR.
 
     Returns:
@@ -304,9 +334,7 @@ def _presence(
     """
     only_older = sorted(set(older) - set(newer))
     only_newer = sorted(set(newer) - set(older))
-    paired = _pair(only_older, only_newer, scanned)
     matched = {counterpart for counterpart, _, _ in paired.values()}
-    unresembled = "no name in the other witness resembles it"
     rows = [
         Difference(
             causes=paired[c][1],
@@ -321,7 +349,7 @@ def _presence(
             causes=(Cause.REMOVED,),
             concept=c,
             older=older[c].title,
-            note=unresembled,
+            note=_unpaired_note(c, only_newer, scanned),
         )
         for c in only_older
     ]
@@ -330,7 +358,7 @@ def _presence(
             causes=(Cause.ADDED,),
             concept=c,
             newer=newer[c].title,
-            note=unresembled,
+            note=_unpaired_note(c, only_older, scanned),
         )
         for c in only_newer
         if c not in matched
@@ -338,12 +366,42 @@ def _presence(
     return tuple(sorted(rows, key=lambda row: (row.causes[0].value, row.concept)))
 
 
+def _one_preparation(
+    older: ConceptId | None, newer: ConceptId | None, paired: Pairing
+) -> bool:
+    """Test whether two recorded parents reach the same preparation.
+
+    A parent named under a scanned spelling in one witness and a clean one in
+    the other is one derivation, not two. Reading it as a change would let
+    this module's own pairing manufacture a finding.
+
+    Args:
+        older: What the earlier witness recorded, or None.
+        newer: What the later witness recorded, or None.
+        paired: Unshared names matched across the two witnesses.
+
+    Returns:
+        True if both witnesses recorded the same derivation.
+    """
+    if older == newer:
+        return True
+    if older is None or newer is None:
+        return False
+    return paired.get(older, (None,))[0] == newer
+
+
 def _parents(
     older: dict[ConceptId, Preparation],
     newer: dict[ConceptId, Preparation],
+    paired: Pairing,
     scanned: bool,
 ) -> tuple[Difference, ...]:
-    """Report every shared concept whose recorded parent disagrees.
+    """Report every preparation whose recorded parent disagrees.
+
+    A preparation reaches this comparison two ways. It carries the same
+    concept in both witnesses, or its two names were paired above. Comparing
+    only the first would drop the derivations of every scanned name, which is
+    a third of them on the committed corpus.
 
     Nothing is adjudicated here. With an OCR witness in the comparison, a
     lost candidate explains a disagreement as well as a revision does, and
@@ -352,6 +410,7 @@ def _parents(
     Args:
         older: The earlier witness, indexed by concept.
         newer: The later witness, indexed by concept.
+        paired: Unshared names matched across the two witnesses.
         scanned: Whether either witness is OCR.
 
     Returns:
@@ -367,21 +426,28 @@ def _parents(
         if scanned
         else "both witnesses are proofread"
     )
+    couples = [(concept, concept) for concept in set(older) & set(newer)]
+    couples += [(one, two) for one, (two, _, _) in paired.items()]
     return tuple(
         Difference(
             causes=causes,
-            concept=concept,
-            older=older[concept].parent,
-            newer=newer[concept].parent,
+            concept=one,
+            counterpart=None if one == two else two,
+            older=older[one].parent,
+            newer=newer[two].parent,
             note=note,
         )
-        for concept in sorted(set(older) & set(newer))
-        if older[concept].parent != newer[concept].parent
+        for one, two in sorted(couples)
+        if not _one_preparation(older[one].parent, newer[two].parent, paired)
     )
 
 
 def compare(older: Catalogue, newer: Catalogue) -> Report:
     """Compare two catalogues of one work.
+
+    Names are paired once, and both sections read that pairing. So a scanned
+    name reported in `names` has its derivation compared in `parents` too,
+    under the same two ids.
 
     Args:
         older: The earlier witness.
@@ -391,11 +457,12 @@ def compare(older: Catalogue, newer: Catalogue) -> Report:
         Every difference found, each row carrying the cause it was read as.
     """
     scanned = Fidelity.OCR in {older.fidelity, newer.fidelity}
-    indexed = (_index(older), _index(newer))
+    a, b = _index(older), _index(newer)
+    paired = _pair(sorted(set(a) - set(b)), sorted(set(b) - set(a)), scanned)
     return Report(
         older=older.source_id,
         newer=newer.source_id,
         scanned=scanned,
-        presence=_presence(*indexed, scanned),
-        parents=_parents(*indexed, scanned),
+        presence=_presence(a, b, paired, scanned),
+        parents=_parents(a, b, paired, scanned),
     )

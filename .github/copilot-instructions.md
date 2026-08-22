@@ -32,9 +32,11 @@ a blog series, and each published post corresponds to an immutable tag.
   and `corpus/escoffier-1909.txt` is proofread. Do not suggest repairing the
   OCR toward the clean text, and do not suggest counting accents to guess
   fidelity. See ADR-0010.
-- **A resolver may refuse, never rank.** No code path scores candidates and
-  takes the best. Do not suggest a threshold, a similarity score, or a
-  tie-break. See ADR-0012.
+- **A parent resolver may refuse, never rank.** No parent is ever chosen by
+  score. Do not suggest a threshold, a similarity score, or a tie-break for
+  `parent`. See ADR-0012. `services/comparison.py` does rank name candidates
+  by similarity, and that is deliberate: it labels a diff row and never
+  writes `parent`.
 - **Four layers on a small codebase is deliberate.** `lint-imports` enforces
   domain, ports, services, adapters mechanically. Do not suggest flattening.
   See ADR-0005.
