@@ -505,6 +505,43 @@ working. Recovering these means reading the verb a name sits in.
 
 
 @pytest.mark.corpus
+def test_every_unresolved_preparation_states_none_or_more_than_one(
+    escoffier, escoffier_1907
+):
+    """An unresolved parent has one of two reasons, and both are visible.
+
+    A preparation with exactly one stated candidate and no parent would mean
+    the bookkeeping discarded a resolution, which the 1907 scan's entry 138
+    once caused. No cycle exists in either witness to clear one.
+    """
+    for catalogue in (escoffier, escoffier_1907):
+        candidates = parent_candidates(catalogue)
+        for preparation in catalogue.preparations:
+            if preparation.parent is not None:
+                continue
+            stated = stated_candidates(
+                preparation.body, own_names(preparation), candidates
+            )
+            assert len(stated) != 1, (catalogue.source_id, preparation.title)
+
+
+@pytest.mark.corpus
+def test_the_scan_reads_whisked_mayonnaise_under_horse_radish_own_number(
+    escoffier_1907,
+):
+    """Entry 128 reads as 138 in the scan, which is also HORSE-RADISH SAUCE.
+
+    Both are catalogued under 138, at lines 3423 and 3550. Each keeps the
+    parent its own paragraph states, because a preparation is identified by
+    its line. The number stays as the scan reads it: ADR-0013.
+    """
+    at_138 = [p for p in escoffier_1907.preparations if p.ref.entry == 138]
+    assert [p.title for p in at_138] == ["WHISKED MAYONNAISE", "HORSE-RADISH SAUCE"]
+    assert [p.ref.line for p in at_138] == [3423, 3550]
+    assert [p.parent for p in at_138] == ["horse-radish", None]
+
+
+@pytest.mark.corpus
 def test_every_entry_the_chapter_admits_is_catalogued(escoffier):
     found = {p.ref.entry: p.title for p in escoffier.preparations}
     assert {n: found.get(n) for n in ADMITTED} == ADMITTED

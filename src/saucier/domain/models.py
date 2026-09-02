@@ -258,7 +258,9 @@ class Catalogue:
         `SAUCE BORDELAISE` but never `bordelaise-butter`. A mother is
         ordered by the order the source presents its hits, because the
         source states a base before its derivatives. Any other concept
-        prefers the least qualified name, then source order.
+        prefers the least qualified name, then source order. Source order is
+        read from the heading line, which is unique where an entry number
+        in a scan may not be.
 
         Args:
             concept: The concept to look for.
@@ -270,12 +272,12 @@ class Catalogue:
         if concept in index:
             return (index[concept],)
         wanted = concept.split("-")
-        order = {p.ref.entry: n for n, p in enumerate(self.preparations)}
+        order = {p.ref.line: n for n, p in enumerate(self.preparations)}
         hits = []
         for name, found in index.items():
             parts = name.split("-")
             if _contains_run(parts, wanted):
-                hits.append((len(parts), order[found.ref.entry], found))
+                hits.append((len(parts), order[found.ref.line], found))
         ranked = (
             sorted(hits, key=lambda h: h[1])
             if concept in self.mothers
