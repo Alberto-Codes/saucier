@@ -133,6 +133,7 @@ nav:
       - ADR-0013 Repair structure, not content: adr/0013-repair-structure-never-content.md
       - ADR-0014 A damaged witness and absence:
           adr/0014-a-damaged-witness-cannot-establish-absence.md
+      - ADR-0015 The chapter decides: adr/0015-the-chapter-decides.md
 
 markdown_extensions:
   - abbr
