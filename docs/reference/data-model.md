@@ -19,24 +19,24 @@ flowchart TD
         returns the line spans of the chapters the source titles as sauces.
         iter_entries walks the same lines and yields one numbered entry at a
         time, joining a heading that wraps onto a second line. is_sauce tests
-        each entry heading, keeps it when the heading
-        itself says sauce, and otherwise keeps it only when the heading names a
-        mother inside a sauce chapter. A rejected entry stays out of the
-        catalogue. terms_in splits a kept heading into one language-tagged Term
-        per alternative name. parent_candidates collects every name of every
+        each entry, keeps it when the heading itself says sauce, and
+        otherwise keeps it only when the source filed the entry in a sauce
+        chapter. A rejected entry stays out of the catalogue. terms_in
+        splits a kept heading into one language-tagged Term per alternative
+        name. parent_candidates collects every name of every
         kept preparation, plus the mothers. resolve_parent reads the opening
         paragraph only, and sets the parent to the single candidate that
         paragraph states, or to None when it states none or states more than
         one. A cycle of stated parents is cleared. The result is a
-        Catalogue of 124 preparations, 50 resolved and 74 unresolved.
+        Catalogue of 151 preparations, 57 resolved and 94 unresolved.
     }
 
     lines(["source.lines()"]) --> entries["iter_entries<br/>one numbered entry"]
-    entries --> sauce{"is_sauce<br/>heading says sauce,<br/>or names a mother<br/>in a sauce chapter?"}
+    entries --> sauce{"is_sauce<br/>heading says sauce,<br/>or filed in<br/>a sauce chapter?"}
     sauce -->|yes| terms["terms_in<br/>one Term per name"]
     terms --> names["parent_candidates<br/>every kept name"]
     names --> parent["resolve_parent<br/>opening paragraph only,<br/>one candidate or none"]
-    parent --> cat(["Catalogue<br/>124 preparations<br/>74 unresolved"])
+    parent --> cat(["Catalogue<br/>151 preparations<br/>94 unresolved"])
     sauce -->|no| drop(["stays out of the catalogue"])
     lines --> mothers["find_mothers<br/>whole body, once"]
     lines --> chapters["sauce_chapters<br/>chapter titles"]
@@ -57,8 +57,8 @@ flowchart TD
 4. `sauce_chapters` reads the chapter titles. It returns the line spans of
    the chapters the source titles as sauce chapters.
 5. `is_sauce` keeps a heading that says "sauce" before any "with". It
-   otherwise keeps a heading only when the heading names a mother and the
-   entry sits inside a sauce chapter.
+   otherwise keeps an entry only when the source filed it in a sauce
+   chapter. The chapter decides, and the heading does not overrule it.
 6. A rejected entry stays out of the catalogue.
 7. `terms_in` splits a kept heading into one `Term` per alternative name, each
    tagged with its language.
@@ -69,8 +69,8 @@ flowchart TD
    paragraph states none, and also when it states more than one.
 10. A cycle of stated parents is cleared, so no preparation is its own
     ancestor.
-11. The result is a `Catalogue` of 124 preparations. 50 resolve to a stated parent
-    and 74 are unresolved.
+11. The result is a `Catalogue` of 151 preparations. 57 resolve to a stated parent
+    and 94 are unresolved.
 
 </details>
 
@@ -163,8 +163,9 @@ its `ref`, and its `parent`.
 
 `parent` may name a mother or any catalogued preparation. When the opening
 paragraph states a mother, the mother concept is recorded. Otherwise the
-parent preparation's own concept is. Chains never cycle, because the
-extractor clears every derivation on a cycle.
+parent preparation's own concept is. A mother may carry a parent of its own,
+so Espagnole records brown roux. Chains never cycle, because the extractor
+clears every derivation on a cycle.
 
 `parent` is `None` when the source states no base. That is "unresolved", not
 "has no parent". The distinction matters, and the parser never guesses across

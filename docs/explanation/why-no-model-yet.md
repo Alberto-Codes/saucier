@@ -8,10 +8,10 @@ reason is not cost.
 
 Escoffier structured his own book. Every preparation is numbered, titled, and
 placed in a sequence, and he states his five mothers in a sentence you can
-point at. A regular expression recovers 124 sauce preparations and links 50 of
+point at. A regular expression recovers 151 sauce preparations and links 57 of
 them to a base.
 
-That number is the bar. Any model applied to this source has to beat 50, and
+That number is the bar. Any model applied to this source has to beat 57, and
 until a parser has been run, nobody knows what "beating it" would mean. A
 model that recovers 35 looks impressive in isolation and is nearly worthless
 next to free.
@@ -22,20 +22,24 @@ adding anything.
 ## Errors that look like successes
 
 A schema validates shape, not truth. A model asked for JSON will return
-well-formed JSON, with a plausible parent for every preparation, including the
-74 where the source states none. Those outputs pass validation, read
-correctly, and are wrong.
+well-formed JSON, with a plausible parent for every preparation, including
+the 94 where the source states none, or states two. Those outputs pass
+validation, read correctly, and are wrong.
 
 The parser cannot produce that failure. It resolves a parent only where the
-opening paragraph names exactly one, so `parent` is `None` on 74 entries.
+opening paragraph names exactly one, so `parent` is `None` on 94 entries.
 Unresolved is a visible, countable state. Confidently wrong is not.
 
 ## The unresolved entries are the finding
 
-74 of 124 preparations do not state a base in their opening paragraph. That
-is not parser weakness — it is what the source is like. Escoffier assumed a
-reader who already knew that a Bordelaise is built on a reduction and finished
-with an Espagnole, so he did not write it down.
+94 of 151 preparations do not state a base in their opening paragraph, or
+state two names and mark neither as the base. That is not parser weakness —
+it is what the source is like. Cardinal says "Boil one pint of Béchamel" and
+then "finish ... with lobster butter". Escoffier assumed a reader who already
+knew which of those is the base and which is the finish, so he did not write
+it down. Ten sauces are unresolved for exactly that reason, and every one of
+them was resolved before the butters were catalogued. Widening what the
+parser can see lowered its score, and the lower score is the honest one.
 
 Recovering knowledge an author assumed is exactly the work a model can do and
 a parser cannot. That is the case for adding one — and it is a case that can

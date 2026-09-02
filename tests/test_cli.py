@@ -102,8 +102,55 @@ def test_show_prints_provenance_and_language(wired, capsys):
     out = capsys.readouterr().out
     assert out.startswith("SAUCE BORDELAISE")
     assert "[fr]" in out
-    assert "(unresolved)" in out
+    assert "parent  half-glaze" in out
     assert "transcription of escoffier-1909" in out
+
+
+@pytest.mark.corpus
+def test_show_names_the_candidates_an_unresolved_parent_states(wired, capsys):
+    """The acceptance test for ADR-0015's loss. Cardinal states both names."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["show", "cardinal-sauce"]) == 0
+    out = capsys.readouterr().out
+    assert "  parent  (unresolved)\n  stated  bechamel, lobster-butter\n" in out
+    assert cli.main(["show", "aurore-sauce"]) == 0
+    out = capsys.readouterr().out
+    assert "  parent  (unresolved)\n  stated  veloute, tomato\n" in out
+
+
+@pytest.mark.corpus
+def test_show_says_when_an_unresolved_parent_states_no_candidate(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["show", "brown-roux"]) == 0
+    out = capsys.readouterr().out
+    assert "  parent  (unresolved)\n  stated  no candidate\n" in out
+
+
+@pytest.mark.corpus
+def test_tree_prints_half_glaze_between_espagnole_and_robert(wired, capsys):
+    """The three-link chain the book wrote, with the roux above it."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["tree", "espagnole"]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == (
+        "BROWN SAUCE OR ESPAGNOLE  [espagnole]  derives from brown-roux"
+    )
+    assert lines[1] == "├── HALF GLAZE  (en)"
+    assert "│   └── ROBERT SAUCE  (en)" in lines
+    assert lines.index("│   └── ROBERT SAUCE  (en)") > lines.index(
+        "├── HALF GLAZE  (en)"
+    )
+
+
+@pytest.mark.corpus
+def test_tree_of_a_root_with_no_parent_keeps_the_bare_heading(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["tree", "brown-roux"]) == 0
+    assert capsys.readouterr().out.splitlines()[0] == "BROWN ROUX  [brown-roux]"
 
 
 @pytest.mark.corpus
@@ -155,7 +202,7 @@ def test_diff_reads_the_ocr_names_as_scan_artefacts_rather_than_removals(wired, 
     cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id])
     out = capsys.readouterr().out
     assert "qenevoise-sauce ~ genevoise-sauce" in out
-    assert "9 unmatched, 18 parent-changed, 35 ocr-suspected" in out
+    assert "11 unmatched, 20 parent-changed, 37 ocr-suspected" in out
 
 
 @pytest.mark.corpus

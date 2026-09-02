@@ -306,7 +306,7 @@
 }
 
 /* The census --------------------------------------------------------------- */
-/* 124 preparations, split 50 to 74. The unresolved share is hatched rather
+/* 151 preparations, split 57 to 94. The unresolved share is hatched rather
    than left empty, because the source stating no mother is a reading, not a
    hole. An empty bar would argue the opposite of what this project holds. */
 .sc-census {
@@ -320,12 +320,12 @@
 }
 
 .sc-census__seg--resolved {
-  flex: 50;
+  flex: 57;
   background: var(--sc-accent);
 }
 
 .sc-census__seg--unresolved {
-  flex: 74;
+  flex: 94;
   border-left: 1px solid var(--sc-rule-strong);
   background: repeating-linear-gradient(
     -45deg,
