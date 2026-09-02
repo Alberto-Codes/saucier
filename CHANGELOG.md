@@ -3,6 +3,33 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.3.0](https://github.com/Alberto-Codes/saucier/compare/v0.2.0...v0.3.0) (2026-09-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **source:** `escoffier-1907` now names the 1907 first printing. The catalogue the previous releases published is `escoffier-1909`. `SourceRef` gains a required `fidelity`, `Catalogue` takes a `witness` in place of a `source_id`, `SourceText` reports a `witness` in place of a `source_id`, and `escoffier_source` becomes `escoffier_sources`.
+
+### Features
+
+* **source:** read the edition, add the 1907 witness, and diff the two ([84eb851](https://github.com/Alberto-Codes/saucier/commit/84eb85148554b8a0c0df5749f7112d6427f25ddb))
+
+
+### Fixes
+
+* **adapters:** mend the entry separator a scanner broke ([2abc8d2](https://github.com/Alberto-Codes/saucier/commit/2abc8d2702aeb92b1b89903f9a0c8b8e87b25a8b))
+* **adapters:** mend two more separator shapes the scan uses ([387123d](https://github.com/Alberto-Codes/saucier/commit/387123d5eb3f23ec5f8417aa335b4742eae08af7))
+* **extraction:** read a wrapped heading whole ([5811100](https://github.com/Alberto-Codes/saucier/commit/581110097bf3fd51dd7d4d89fc695d96c52927f0))
+* **services:** compare the derivations pairing hid ([c0f6e81](https://github.com/Alberto-Codes/saucier/commit/c0f6e81bf6883d2458de63bab0152698a2cb3f71))
+* **services:** stop claiming a book lacks what the scan hid ([d78614d](https://github.com/Alberto-Codes/saucier/commit/d78614de08f063912a60e7829fc751164f284e3e))
+
+
+### Documentation
+
+* **adr:** record the four decisions this release makes ([8fcfdd0](https://github.com/Alberto-Codes/saucier/commit/8fcfdd0336efdf7033c859a5e47eeb9c49241319))
+* make every surface describe the two-witness catalogue ([75defb6](https://github.com/Alberto-Codes/saucier/commit/75defb6236e2832accaac250c1f15f972f45e1db))
+* **ports:** show a witness, not a function, in the example ([64d9ebe](https://github.com/Alberto-Codes/saucier/commit/64d9ebeeeb60c657319db8dcc0fb6fd3311c91cd))
+
 ## [0.2.0](https://github.com/Alberto-Codes/saucier/compare/v0.1.0...v0.2.0) (2026-08-20)
 
 
