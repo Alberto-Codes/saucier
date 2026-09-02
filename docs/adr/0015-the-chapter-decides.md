@@ -63,6 +63,14 @@ not change. Espagnole now states brown roux, and Velouté states pale roux.
 Both stop being roots of the tree, and `saucier tree` says so on its heading
 line.
 
+**A preparation is identified by the line its heading sits on.** The scan
+reads the number of `WHISKED MAYONNAISE` as `138`, which is also the number
+of `HORSE-RADISH SAUCE`. Candidate keys, own names, the parent bookkeeping,
+and the cycle walk used the entry number as identity. The later
+preparation's result overwrote the earlier one. They now use the heading
+line, which is unique in both witnesses and is the field a reader checks by
+hand. The number stays as the scan reads it, and ADR-0013 still governs it.
+
 **`saucier show` prints what an unresolved parent states.** The command
 names the candidates the opening paragraph states beside an unresolved
 parent. A reader sees why the resolver refused, in the order the paragraph
@@ -74,7 +82,7 @@ states the names.
 
 - The 1909 census moves from 124 sauces, 50 derived, 74 unresolved to 151
   sauces, 57 derived, 94 unresolved. 27 entries enter.
-- The 1907 census moves from 115, 36, 79 to 140, 49, 91. 25 entries enter.
+- The 1907 census moves from 115, 36, 79 to 140, 50, 90. 25 entries enter.
   `MONTPELLIER BUTTER` and `HAZEL-NUT BUTTER` do not, because the scan reads
   their numbers as `IS3` and `15s`, and the entry pattern never matches. A
   corrupted number is structure, and ADR-0013 leaves its repair to a separate
@@ -117,15 +125,12 @@ states the names.
   name of entry 151. Both are the name rule working as written. Whether
   either statement is a derivation is a question for the verb reader, and
   this record leaves both as findings.
-- The 1907 scan reads the number of `WHISKED MAYONNAISE` as `138`, which is
-  also the number of `HORSE-RADISH SAUCE`. The resolver keys its bookkeeping
-  on the entry number, so the later preparation's result overwrites the
-  first. Whisked mayonnaise resolves to horse-radish on its own and records
-  unresolved, and `saucier show` prints one stated candidate beside it. The
-  same mechanism can write the later preparation's parent onto the earlier
-  one, which no witness does today. Entry 63 already shared a number at
-  v0.3.0 with no visible effect. This is a corrupted number, and this record
-  leaves it where ADR-0013 left it.
+- Two preparations in the 1907 catalogue carry entry 138, and two carry 63.
+  Each keeps the parent its own paragraph states. Before identity moved to
+  the line, whisked mayonnaise recorded unresolved with one stated candidate
+  beside it. The same mechanism could have written a later preparation's
+  parent onto an earlier one. A test now fails if any unresolved preparation
+  states exactly one candidate.
 - The scan reads `CHIVRY SAUCE` as `CH5VRY SAUCE`, so the word `chivry` is
   no longer the entry's own subject. `CHIVRY OR RAVIGOTE BUTTER` lends the
   bare name `chivry`, the sentence "Chivry Sauce is admirably suited" states

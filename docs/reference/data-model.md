@@ -147,6 +147,10 @@ $ sed -n '2138p' corpus/escoffier-1909.txt
 64—BÉARNAISE TOMATÉE SAUCE OR CHORON SAUCE
 ```
 
+Within one catalogue the `line` identifies a preparation, because a scan can
+read two headings as one entry number. The 1907 witness carries two
+preparations at entry 138 and two at 63.
+
 `entry` and `line` are keyword-only, and both must be 1 or greater. Two
 integers side by side invite a transposition, and a transposed citation
 points a reader at the wrong text while still type-checking.

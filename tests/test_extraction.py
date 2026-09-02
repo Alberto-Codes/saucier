@@ -399,8 +399,9 @@ def test_candidates_come_from_the_catalogue_and_the_mothers():
         ]
     )
     candidates = parent_candidates(extract(source))
+    # The key is the heading's line, 5, not the entry number, 23.
     assert candidates[to_concept_id("madeira-sauce")] == Candidate(
-        23, to_concept_id("madeira-sauce"), False
+        5, to_concept_id("madeira-sauce"), False
     )
     assert candidates[to_concept_id("espagnole")].mother is True
 
@@ -506,6 +507,28 @@ def test_the_chapter_admits_and_the_heading_admits_and_nothing_else_does():
     brown_sauce = catalogue.find(to_concept_id("brown-sauce"))
     assert brown_sauce is not None
     assert brown_sauce.parent == "brown-roux"
+
+
+@pytest.mark.unit
+def test_two_entries_the_scan_reads_as_one_number_keep_their_own_parents():
+    """A scan can read `128` as `138`. The line, not the number, is identity."""
+    source = FakeSource(
+        [
+            "22—BROWN SAUCE",
+            "Reduce the wine.",
+            "",
+            "138—ONION SAUCE",
+            "Add the brown sauce.",
+            "",
+            "138—CAPER SAUCE",
+            "Pound the capers.",
+        ]
+    )
+    brown, onion, caper = extract(source).preparations
+    assert (onion.ref.entry, caper.ref.entry) == (138, 138)
+    assert brown.parent is None
+    assert onion.parent == "brown-sauce"
+    assert caper.parent is None
 
 
 @pytest.mark.unit

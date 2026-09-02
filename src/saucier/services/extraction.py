@@ -324,9 +324,10 @@ class Candidate(NamedTuple):
 
     Attributes:
         key (int | ConceptId): Identity of the preparation the name reaches.
-            The entry number when the name reaches a catalogued preparation,
-            or the mother concept when the source declares a mother the
-            catalogue cannot reach.
+            The source line of its heading when the name reaches a catalogued
+            preparation, or the mother concept when the source declares a
+            mother the catalogue cannot reach. The line, not the entry
+            number, because a scan can read two headings as one number.
         records (ConceptId): The concept written into `parent` when this
             name decides the resolution.
         mother (bool): True when the name is a mother the source declares.
@@ -343,7 +344,9 @@ def parent_candidates(catalogue: Catalogue) -> dict[ConceptId, Candidate]:
     Every name comes from the source. The catalogue contributes each name of
     each preparation, and the source's own list of mothers contributes the
     mother concepts. Two names that reach one preparation share one key, so
-    an opening naming both states one parent, not two.
+    an opening naming both states one parent, not two. The key is the line
+    of the preparation's heading, because a scan can read two headings as
+    one entry number.
 
     Args:
         catalogue: The catalogue whose preparations are the candidates.
@@ -352,12 +355,12 @@ def parent_candidates(catalogue: Catalogue) -> dict[ConceptId, Candidate]:
         A mapping from each name to the candidate it states.
     """
     candidates = {
-        name: Candidate(found.ref.entry, found.concept, mother=False)
+        name: Candidate(found.ref.line, found.concept, mother=False)
         for name, found in catalogue.by_concept().items()
     }
     for declared in catalogue.mothers:
         found = catalogue.find(declared)
-        key = found.ref.entry if found else declared
+        key = found.ref.line if found else declared
         candidates[declared] = Candidate(key, declared, mother=True)
     return candidates
 
@@ -555,8 +558,8 @@ def _without_cycles(
     and the chain beneath them now terminates.
 
     Args:
-        parents: Resolved parent per entry number, `None` where unresolved.
-        successor: Entry number each recorded concept resolves to.
+        parents: Resolved parent per heading line, `None` where unresolved.
+        successor: Heading line each recorded concept resolves to.
 
     Returns:
         The same mapping, with every derivation on a cycle cleared.
@@ -632,6 +635,10 @@ def _derived(catalogue: Catalogue) -> tuple[Preparation, ...]:
     resolved against them in a second pass. Each draft's own names are held
     out of its candidates, so a preparation never states itself.
 
+    A draft is identified by the line its heading sits on. The 1907 scan
+    reads two headings as entry 138, and a result keyed on the number would
+    let the later one overwrite the earlier.
+
     Args:
         catalogue: The catalogue with every parent still unresolved.
 
@@ -646,12 +653,12 @@ def _derived(catalogue: Catalogue) -> tuple[Preparation, ...]:
         if isinstance(candidate.key, int)
     }
     parents = {
-        draft.ref.entry: resolve_parent(draft.body, own_names(draft), candidates)
+        draft.ref.line: resolve_parent(draft.body, own_names(draft), candidates)
         for draft in catalogue.preparations
     }
     parents = _without_cycles(parents, successor)
     return tuple(
-        replace(draft, parent=parents[draft.ref.entry])
+        replace(draft, parent=parents[draft.ref.line])
         for draft in catalogue.preparations
     )
 
@@ -663,12 +670,12 @@ def own_names(preparation: Preparation) -> frozenset[int | ConceptId]:
         preparation: The preparation being resolved.
 
     Returns:
-        The entry number, every term concept, and the folded title.
+        The heading line, every term concept, and the folded title.
     """
     names: frozenset[int | ConceptId] = frozenset(
         term.concept for term in preparation.terms
     )
-    return names | {preparation.ref.entry, to_concept_id(preparation.title)}
+    return names | {preparation.ref.line, to_concept_id(preparation.title)}
 
 
 def _within(index: int, spans: tuple[tuple[int, int], ...]) -> bool:

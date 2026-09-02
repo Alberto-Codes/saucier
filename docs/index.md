@@ -80,7 +80,7 @@ escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                140 sauces, 49 derived, 91 unresolved
+                140 sauces, 50 derived, 90 unresolved
 ```
 
 Two witnesses of one book, each naming itself from its own title page. The
