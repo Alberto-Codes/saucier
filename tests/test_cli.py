@@ -9,6 +9,7 @@ from saucier.domain.errors import SourceUnreadable
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
 from saucier.domain.types import ConceptId, Language
 from saucier.infrastructure.bootstrap import escoffier_sources
+from saucier.services.extraction import extract
 
 WITNESS = a_witness()
 
@@ -139,10 +140,10 @@ def test_tree_prints_half_glaze_between_espagnole_and_robert(wired, capsys):
         "BROWN SAUCE OR ESPAGNOLE  [espagnole]  derives from brown-roux"
     )
     assert lines[1] == "├── HALF GLAZE  (en)"
-    assert "│   └── ROBERT SAUCE  (en)" in lines
-    assert lines.index("│   └── ROBERT SAUCE  (en)") > lines.index(
-        "├── HALF GLAZE  (en)"
-    )
+    robert = [n for n, line in enumerate(lines) if line.endswith("ROBERT SAUCE  (en)")]
+    assert len(robert) == 1
+    assert lines[robert[0]].startswith("│   ")
+    assert robert[0] > 1
 
 
 @pytest.mark.corpus
@@ -268,6 +269,96 @@ def test_show_prints_the_whole_prose_when_it_fits(wired, capsys):
     out = capsys.readouterr()
     assert "more characters" not in out.out
     assert "Also matching" not in out.err
+
+
+def a_stored_catalogue(store):
+    """Extract a four-entry source into a store, so the CLI reads it back.
+
+    A sauce chapter with a roux, a mother that states the roux, a sauce that
+    states the mother and a butter, and a butter. The declared mother
+    `tomato` has no entry of its own.
+    """
+
+    class Source:
+        line_offset = 0
+
+        def __init__(self):
+            self.witness = a_witness("book-1909")
+
+        def lines(self):
+            return [
+                "The basic sauces: Espagnole and Tomato.",
+                "CHAPTER II",
+                "",
+                "THE LEADING WARM SAUCES",
+                "",
+                "19—BROWN ROUX",
+                "Cook the flour in butter.",
+                "",
+                "22—ESPAGNOLE",
+                "One lb. of brown roux in stock.",
+                "",
+                "69—CARDINAL SAUCE",
+                "Boil the espagnole. Finish with lobster butter.",
+                "",
+                "149—LOBSTER BUTTER",
+                "Pound the shells.",
+            ]
+
+    store.save(extract(Source()))
+    return store
+
+
+@pytest.fixture
+def small(monkeypatch, tmp_path):
+    """The CLI wired to a four-entry catalogue, with no corpus read."""
+    store = a_stored_catalogue(JsonCatalogueStore(directory=tmp_path))
+    monkeypatch.setattr(cli, "catalogue_store", lambda: store)
+    monkeypatch.setattr(cli, "default_source_id", lambda: "book-1909")
+    return store
+
+
+@pytest.mark.unit
+def test_show_prints_every_stated_candidate_in_statement_order(small, capsys):
+    assert cli.main(["show", "cardinal-sauce"]) == 0
+    assert "  parent  (unresolved)\n  stated  espagnole, lobster-butter\n" in (
+        capsys.readouterr().out
+    )
+
+
+@pytest.mark.unit
+def test_show_prints_no_candidate_when_the_paragraph_states_none(small, capsys):
+    assert cli.main(["show", "brown-roux"]) == 0
+    assert "  parent  (unresolved)\n  stated  no candidate\n" in capsys.readouterr().out
+
+
+@pytest.mark.unit
+def test_show_prints_a_resolved_parent_with_no_stated_line(small, capsys):
+    assert cli.main(["show", "espagnole"]) == 0
+    out = capsys.readouterr().out
+    assert "  parent  brown-roux\n" in out
+    assert "stated" not in out
+
+
+@pytest.mark.unit
+def test_tree_heading_names_the_root_own_parent(small, capsys):
+    assert cli.main(["tree", "espagnole"]) == 0
+    # Cardinal states two candidates, so nothing hangs beneath Espagnole.
+    lines = capsys.readouterr().out.splitlines()
+    assert lines == ["ESPAGNOLE  [espagnole]  derives from brown-roux"]
+
+
+@pytest.mark.unit
+def test_tree_heading_of_a_root_with_no_parent_is_bare(small, capsys):
+    assert cli.main(["tree", "brown-roux"]) == 0
+    assert capsys.readouterr().out.splitlines()[0] == "BROWN ROUX  [brown-roux]"
+
+
+@pytest.mark.unit
+def test_tree_of_a_declared_mother_with_no_entry_prints_the_concept(small, capsys):
+    """`tomato` is a mother the source names and never numbers."""
+    assert cli.main(["tree", "tomato"]) == 0
+    assert capsys.readouterr().out.splitlines()[0] == "tomato  [tomato]"
 
 
 @pytest.mark.unit

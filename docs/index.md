@@ -51,8 +51,8 @@ them out of that sentence. Nobody supplied the list.
 </ul>
 </div>
 
-94 preparations state no base in their prose, or state two. The parser
-records those as unresolved and does not guess at them. The hatched share is what the source
+94 preparations state no base in their prose, or state more than one. The
+parser records those as unresolved and does not guess at them. The hatched share is what the source
 declined to say, not what the extraction failed to find. Lowering that count
 by guessing would be the one unrecoverable mistake here, so the number is
 published rather than hidden.
@@ -67,8 +67,9 @@ An entry that states two candidates counts as unresolved. `CARDINAL SAUCE`
 says "Boil one pint of Béchamel" and then "finish ... with lobster butter".
 The source stated one base and one finish. The parser reads names and cannot
 tell which is which, so it declines, and `saucier show` prints both names.
-Ten sauces that were resolved at v0.3.0 are unresolved for that reason, and
-[ADR-0015](adr/0015-the-chapter-decides.md) names them.
+Seven sauces that were resolved at v0.3.0 are unresolved for that reason,
+and three more because half glaze now sits beside their old parent.
+[ADR-0015](adr/0015-the-chapter-decides.md) names all ten.
 
 ```console
 $ uv run saucier parse

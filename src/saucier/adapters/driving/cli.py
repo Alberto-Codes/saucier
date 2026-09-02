@@ -7,6 +7,15 @@ installed.
 Three exit codes. Zero on success, `NOT_FOUND` when a lookup matches no
 preparation, and `FAILED` when a source or a store could not be read.
 
+The `diff` command prints how much of each witness the reader could see,
+beside the counts rather than below them, because a count read without its
+blind spot is a stronger claim than the evidence carries.
+
+The `show` command prints the candidates an unresolved parent states, so a
+refusal is readable beside the sentence that caused it. The `tree` command
+names the root's own parent on its heading line, because a mother that states
+a roux is not a root.
+
 Examples:
     Drive the interface in process:
 
@@ -16,15 +25,6 @@ Examples:
     assert main(["parse"]) == 0
     assert main(["tree", "espagnole"]) == 0
     ```
-
-The `diff` command prints how much of each witness the reader could see,
-beside the counts rather than below them, because a count read without its
-blind spot is a stronger claim than the evidence carries.
-
-The `show` command prints the candidates an unresolved parent states, so a
-refusal is readable beside the sentence that caused it. The `tree` command
-names the root's own parent on its heading line, because a mother that states
-a roux is not a root.
 
 See Also:
     - [saucier.services.extraction][]: What these commands call into.
@@ -240,8 +240,8 @@ def _print_children(
 def _show(args: argparse.Namespace) -> int:
     """Print one preparation in full.
 
-    An unresolved parent is printed with the candidates the opening
-    paragraph states, so a reader sees why the resolver refused. `CARDINAL
+    Beside an unresolved parent the command prints the candidates the
+    opening paragraph states, so a reader sees why the resolver refused. `CARDINAL
     SAUCE` states Béchamel and lobster butter, and the line says so.
 
     Args:

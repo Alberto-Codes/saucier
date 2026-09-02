@@ -453,8 +453,8 @@ lobster method the source numbered on its own, and it enters because the
 source numbered it. ADR-0015 records the rule.
 """
 
-UNREAD_IN_THE_SCAN = {153: "IS3", 155: "15s"}
-"""Two of the 27 the 1907 scan cannot read, with the number as the scan has it.
+UNREAD_IN_THE_SCAN = {153: "IS3— MONTPELLIER  BUTTER", 155: "15s— HAZEL-NUT  BUTTER"}
+"""Two of the 27 the 1907 scan cannot read, with the heading as the scan has it.
 
 `MONTPELLIER BUTTER` and `HAZEL-NUT BUTTER` are on the page. The scanner
 read their entry numbers as letters, so the entry pattern never matches.
@@ -495,9 +495,11 @@ LOST = {
 }
 """The ten sauces that lost a parent, each with what it now states.
 
-Every one was resolved at v0.3.0 to the first name in its tuple. Admitting
-the butters and half glaze put a second catalogued name in the opening
-paragraph, and a resolver may refuse, never rank. The loss is ADR-0012
+Seven were resolved at v0.3.0 to the first name in their tuple, and lost it
+to a butter. Three were resolved to the second name and lost it to half
+glaze, which was not catalogued then: PÉRIGUEUX, REFORM, and CHASSEUR.
+Admitting the butters and half glaze put another catalogued name in the
+opening paragraph, and a resolver may refuse, never rank. The loss is ADR-0012
 working. Recovering these means reading the verb a name sits in.
 """
 
@@ -518,6 +520,9 @@ def test_the_scan_reads_the_butter_headings_it_can(escoffier_1907):
     readable.discard(128)
     assert readable <= found
     assert not set(UNREAD_IN_THE_SCAN) & found
+    scan = Paths.discover().escoffier_scan.read_text(encoding="utf-8")
+    for heading in UNREAD_IN_THE_SCAN.values():
+        assert heading in scan
     titles = {p.title for p in escoffier_1907.preparations}
     assert "WHISKED MAYONNAISE" in titles
     assert "MONTPELLIER BUTTER" not in titles
@@ -533,8 +538,8 @@ def test_the_twelve_gained_parents_are_the_ones_escoffier_wrote(escoffier):
 
 
 @pytest.mark.corpus
-def test_the_ten_lost_parents_each_state_two_candidates(escoffier):
-    """Each refusal is checkable: the paragraph names both, in this order."""
+def test_the_ten_lost_parents_each_state_more_than_one_candidate(escoffier):
+    """Each refusal is checkable: the paragraph names every one, in this order."""
     candidates = parent_candidates(escoffier)
     for concept, stated in LOST.items():
         found = escoffier.find(ConceptId(concept))
@@ -547,8 +552,9 @@ def test_the_ten_lost_parents_each_state_two_candidates(escoffier):
 def test_the_census_moved_by_the_three_numbers_the_docs_name(escoffier, census):
     """The seven is not one number.
 
-    Derived is 50 plus twelve gained, minus ten lost, plus five admitted
-    entries that state a parent.
+    50 is the v0.3.0 derived count, a literal because that tag is immutable.
+    The measured quantities are the catalogue's own count, the five admitted
+    entries that state a parent, and the two tables above.
     """
     admitted_resolved = [
         p
@@ -556,4 +562,5 @@ def test_the_census_moved_by_the_three_numbers_the_docs_name(escoffier, census):
         if p.ref.entry in ADMITTED and p.parent is not None
     ]
     assert len(admitted_resolved) == 5
-    assert census.derived == 50 + len(GAINED) - len(LOST) + len(admitted_resolved)
+    assert escoffier.resolved == census.derived
+    assert escoffier.resolved == 50 + len(GAINED) - len(LOST) + len(admitted_resolved)

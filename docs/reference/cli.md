@@ -109,7 +109,7 @@ line. It then lists every term with its language and concept id, the resolved
 parent, and the opening of the prose.
 
 An unresolved parent is followed by a `stated` line. It names every
-catalogued candidate the opening paragraph states, in the order the paragraph
+candidate the opening paragraph states, in the order the paragraph
 states them, or says `no candidate`.
 
 ```console

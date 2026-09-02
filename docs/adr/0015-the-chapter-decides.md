@@ -31,7 +31,7 @@ its own entry, whisked mayonnaise, and various cullises. The remaining 18 are
 compound butters, in a chapter titled `COLD SAUCES AND COMPOUND BUTTERS`.
 
 The veto had a cost the census did not show. Eleven sauces state half glaze
-as their base. Five entries state a roux. The book writes the chain from
+in their opening paragraph. Five entries state a roux. The book writes the chain from
 brown roux to Espagnole, from Espagnole to half glaze, and from half glaze to
 Robert. The catalogue dropped the middle link.
 
@@ -40,7 +40,7 @@ Robert. The catalogue dropped the middle link.
 **An entry inside a sauce chapter qualifies on the chapter. An entry outside
 one qualifies on its heading alone.**
 
-**The source's classification is not second-guessed.** When the source has
+**The parser does not second-guess the source's classification.** When the source has
 already classified an entry, a second test is a veto, not a check. The mother
 clause is removed. `is_sauce` reads the heading, then the chapter, and
 nothing else.
@@ -49,8 +49,8 @@ nothing else.
 chapter it changes nothing. Outside one it is the only evidence, which is how
 the sweet sauces in the entremets chapter enter.
 
-**Chapter I stays out.** `FONDS DE CUISINE` holds stocks, essences, and
-glazes, entries 7 to 18. Escoffier does not title it as sauces. Espagnole
+**Chapter I stays out.** `FONDS DE CUISINE` holds consommés, stocks,
+essences, and glazes, entries 1 to 18. Escoffier does not title it as sauces. Espagnole
 names brown stock and the catalogue cannot see it. That is a later record.
 
 **Nothing is hand-excluded.** `SECOND METHOD (WITH COOKED LOBSTER)` is entry
@@ -63,7 +63,7 @@ not change. Espagnole now states brown roux, and Velouté states pale roux.
 Both stop being roots of the tree, and `saucier tree` says so on its heading
 line.
 
-**An unresolved parent is printed with what it states.** `saucier show`
+**`saucier show` prints what an unresolved parent states.** The command
 names the candidates the opening paragraph states beside an unresolved
 parent. A reader sees why the resolver refused, in the order the paragraph
 states the names.
@@ -87,9 +87,8 @@ states the names.
 - Five of the 27 admitted entries state a parent. Half glaze resolves to
   Espagnole, pale roux to brown roux, white roux to pale roux, `VEAL GRAVY
   TOMATÉ` to tomato, and `WHISKED MAYONNAISE` to horse-radish.
-- The chain above Robert is three links long, and four with the roux. Robert
-  states half glaze, half glaze states Espagnole, and Espagnole states brown
-  roux. No chain cycles. Brown roux states nothing, pale roux states brown,
+- The chain above Robert is three links long. Robert states half glaze, half
+  glaze states Espagnole, and Espagnole states brown roux. No chain cycles. Brown roux states nothing, pale roux states brown,
   and white roux states pale.
 
 ### Negative
@@ -98,7 +97,8 @@ states the names.
   parent to a compound butter: `CARDINAL SAUCE`, `NANTUA SAUCE`, `NOISETTE
   SAUCE`, `DIPLOMATE SAUCE`, `JOINVILLE SAUCE`, `HERB SAUCE`, and `RAVIGOTE
   SAUCE`. Three lose it to half glaze: `PÉRIGUEUX SAUCE`, `REFORM SAUCE`, and
-  `CHASSEUR SAUCE`. Each now states a second catalogued candidate.
+  `CHASSEUR SAUCE`. Each now states at least one more catalogued candidate,
+  and `JOINVILLE SAUCE` states three.
 - Cardinal is the shape of the loss. It says "Boil one pint of Béchamel" and
   then "finish the sauce ... with three oz. of very red lobster butter". The
   source stated one base and one finish. The resolver reads names and cannot
@@ -121,9 +121,17 @@ states the names.
   also the number of `HORSE-RADISH SAUCE`. The resolver keys its bookkeeping
   on the entry number, so the later preparation's result overwrites the
   first. Whisked mayonnaise resolves to horse-radish on its own and records
-  unresolved. Entry 63 already shared a number at v0.3.0 with no visible
-  effect. This is a corrupted number, and this record leaves it where
-  ADR-0013 left it.
+  unresolved, and `saucier show` prints one stated candidate beside it. The
+  same mechanism can write the later preparation's parent onto the earlier
+  one, which no witness does today. Entry 63 already shared a number at
+  v0.3.0 with no visible effect. This is a corrupted number, and this record
+  leaves it where ADR-0013 left it.
+- The scan reads `CHIVRY SAUCE` as `CH5VRY SAUCE`, so the word `chivry` is
+  no longer the entry's own subject. `CHIVRY OR RAVIGOTE BUTTER` lends the
+  bare name `chivry`, the sentence "Chivry Sauce is admirably suited" states
+  it, and the scan records the butter as the parent. The proofread text
+  withholds the name as the subject and records velouté. The subject rule
+  and a misread title interact, and the diff reports the row as suspected.
 - Three parents now differ between the witnesses for one reason. `HERB
   SAUCE`, `RAVIGOTE SAUCE`, and `PÉRIGUEUX SAUCE` state two candidates in the
   proofread text and refuse. The scan hides one candidate in each, so the

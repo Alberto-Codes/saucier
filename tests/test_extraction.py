@@ -273,6 +273,27 @@ def test_the_stated_candidates_are_named_in_the_order_the_paragraph_states_them(
         "lobster-butter",
     )
     assert resolve_parent(body, frozenset(), candidates) is None
+    # The later-declared candidate stated first comes first. Declaration
+    # order is not statement order.
+    reversed_body = "Melt three oz. of lobster butter. Add one pint of Béchamel."
+    assert stated_candidates(reversed_body, frozenset(), candidates) == (
+        "lobster-butter",
+        "bechamel",
+    )
+
+
+@pytest.mark.unit
+def test_a_mother_stated_after_its_entry_name_still_records_the_mother():
+    """The mother concept wins however late the paragraph states it."""
+    candidates = dict(CANDIDATES)
+    candidates[to_concept_id("bechamel")] = Candidate(
+        28, to_concept_id("bechamel"), mother=True
+    )
+    candidates[to_concept_id("white-sauce")] = Candidate(
+        28, to_concept_id("white-sauce"), False
+    )
+    body = "Reduce the white sauce, then add more Béchamel."
+    assert stated_candidates(body, frozenset(), candidates) == ("bechamel",)
 
 
 @pytest.mark.unit
@@ -448,6 +469,43 @@ def test_extract_records_the_file_line_of_every_heading():
     assert second.ref.line == 29
     assert second.parent == "espagnole"
     assert first.parent is None
+
+
+@pytest.mark.unit
+def test_the_chapter_admits_and_the_heading_admits_and_nothing_else_does():
+    """One sauce chapter and one soup chapter, read end to end."""
+    source = FakeSource(
+        [
+            "CHAPTER II",
+            "",
+            "THE LEADING WARM SAUCES",
+            "",
+            "19—BROWN ROUX",
+            "Cook the flour in butter.",
+            "",
+            "22—BROWN SAUCE",
+            "One lb. of brown roux in six quarts of stock.",
+            "",
+            "CHAPTER III",
+            "",
+            "SOUPS",
+            "",
+            "40—BROWN STOCK",
+            "Bones and water.",
+            "",
+            "41—ONION SAUCE",
+            "Mince the onion.",
+        ]
+    )
+    catalogue = extract(source)
+    assert [p.title for p in catalogue.preparations] == [
+        "BROWN ROUX",
+        "BROWN SAUCE",
+        "ONION SAUCE",
+    ]
+    brown_sauce = catalogue.find(to_concept_id("brown-sauce"))
+    assert brown_sauce is not None
+    assert brown_sauce.parent == "brown-roux"
 
 
 @pytest.mark.unit
