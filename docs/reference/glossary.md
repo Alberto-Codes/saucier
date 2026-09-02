@@ -80,7 +80,8 @@ in the same change.
 
 **Mother**
 :   A preparation the source itself names as foundational. Escoffier names
-    five. Not "base sauce" in prose (use "mother"), not "root" or "parent
+    five. A mother may state a parent of its own, so a mother is not always
+    a root. Not "base sauce" in prose (use "mother"), not "root" or "parent
     sauce".
 
 **Derivation**
@@ -139,8 +140,8 @@ in the same change.
 
 **Sauce chapter**
 :   A chapter the source itself titles as sauces. Escoffier has three. An
-    entry that does not say "sauce" in its own heading qualifies only inside
-    one. Not "section" or "sauce section".
+    entry inside one qualifies on the chapter. An entry outside one qualifies
+    only when its own heading says "sauce". Not "section" or "sauce section".
 
 ## Comparison
 

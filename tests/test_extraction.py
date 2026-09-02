@@ -14,6 +14,7 @@ from saucier.services.extraction import (
     parent_candidates,
     resolve_parent,
     sauce_chapters,
+    stated_candidates,
     terms_in,
 )
 
@@ -116,19 +117,23 @@ def test_a_heading_that_calls_itself_a_sauce(title, says_sauce):
     ("title", "in_chapter", "keep"),
     [
         ("MADEIRA SAUCE", False, True),
-        # A mother in the heading counts only inside a sauce chapter.
+        # Inside a sauce chapter the chapter decides. The heading need not
+        # name a mother, and need not say "sauce".
         ("LENTEN ESPAGNOLE", True, True),
+        ("HALF GLAZE", True, True),
+        ("BROWN ROUX", True, True),
+        ("LOBSTER BUTTER", True, True),
+        # Outside one, only the heading counts.
         ("LENTEN ESPAGNOLE", False, False),
+        ("HALF GLAZE", False, False),
         ("TOMATO SALAD", False, False),
-        # Substring matching used to admit these; word matching does not.
-        ("GRILLED TOMATOES", True, False),
+        ("GRILLED TOMATOES", False, False),
         ("VELOUTÉ AGNÈS SOREL", False, False),
-        ("BROWN STOCK", True, False),
+        ("BROWN STOCK", False, False),
     ],
 )
-def test_only_the_source_own_evidence_admits_an_entry(title, in_chapter, keep):
-    mothers = MOTHERS | {to_concept_id("tomato")}
-    assert is_sauce(title, mothers, in_chapter) is keep
+def test_the_heading_or_the_chapter_admits_an_entry(title, in_chapter, keep):
+    assert is_sauce(title, in_chapter) is keep
 
 
 @pytest.mark.unit
@@ -253,6 +258,39 @@ def test_a_base_named_in_the_opening_paragraph_resolves():
 def test_two_bases_in_one_paragraph_resolve_to_nothing():
     body = "Boil one pint of fish velouté or, failing this, Béchamel sauce."
     assert resolve_parent(body, frozenset(), CANDIDATES) is None
+
+
+@pytest.mark.unit
+def test_the_stated_candidates_are_named_in_the_order_the_paragraph_states_them():
+    """`CARDINAL SAUCE` states Béchamel, then lobster butter. Neither wins."""
+    candidates = dict(CANDIDATES)
+    candidates[to_concept_id("lobster-butter")] = Candidate(
+        149, to_concept_id("lobster-butter"), False
+    )
+    body = "Boil one pint of Béchamel. Finish it with three oz. of lobster butter."
+    assert stated_candidates(body, frozenset(), candidates) == (
+        "bechamel",
+        "lobster-butter",
+    )
+    assert resolve_parent(body, frozenset(), candidates) is None
+
+
+@pytest.mark.unit
+def test_two_names_reaching_one_preparation_are_one_stated_candidate():
+    candidates = dict(CANDIDATES)
+    candidates[to_concept_id("bechamel")] = Candidate(
+        28, to_concept_id("bechamel"), mother=True
+    )
+    candidates[to_concept_id("bechamel-sauce")] = Candidate(
+        28, to_concept_id("bechamel-sauce"), False
+    )
+    body = "Reduce the Béchamel sauce, then add more Béchamel."
+    assert stated_candidates(body, frozenset(), candidates) == ("bechamel",)
+
+
+@pytest.mark.unit
+def test_a_paragraph_stating_nothing_has_no_stated_candidates():
+    assert stated_candidates("Melt the butter.", frozenset(), CANDIDATES) == ()
 
 
 @pytest.mark.unit

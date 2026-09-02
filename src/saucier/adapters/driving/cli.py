@@ -21,6 +21,11 @@ The `diff` command prints how much of each witness the reader could see,
 beside the counts rather than below them, because a count read without its
 blind spot is a stronger claim than the evidence carries.
 
+The `show` command prints the candidates an unresolved parent states, so a
+refusal is readable beside the sentence that caused it. The `tree` command
+names the root's own parent on its heading line, because a mother that states
+a roux is not a root.
+
 See Also:
     - [saucier.services.extraction][]: What these commands call into.
     - [saucier.services.comparison][]: What `diff` calls into.
@@ -34,7 +39,7 @@ import sys
 from collections.abc import Sequence
 
 from saucier.domain.errors import SaucierError
-from saucier.domain.models import Catalogue
+from saucier.domain.models import Catalogue, Preparation
 from saucier.domain.types import ConceptId, to_concept_id
 from saucier.infrastructure.bootstrap import (
     catalogue_store,
@@ -42,7 +47,12 @@ from saucier.infrastructure.bootstrap import (
     escoffier_sources,
 )
 from saucier.services.comparison import Difference, Report, compare
-from saucier.services.extraction import extract
+from saucier.services.extraction import (
+    extract,
+    own_names,
+    parent_candidates,
+    stated_candidates,
+)
 
 BRANCH, LAST, PIPE, GAP = "├── ", "└── ", "│   ", "    "
 
@@ -173,6 +183,10 @@ def _side(value: str | None) -> str:
 def _tree(args: argparse.Namespace) -> int:
     """Print the derivation tree beneath one concept.
 
+    The heading names the root, and the root's own parent when it has one.
+    `tree espagnole` says `derives from brown-roux`, because Escoffier opens
+    Espagnole with brown roux and the tree beneath it is not the whole chain.
+
     Args:
         args: Parsed arguments carrying the root concept and the source.
 
@@ -187,8 +201,12 @@ def _tree(args: argparse.Namespace) -> int:
         return NOT_FOUND
 
     # The bracket names the concept whose children follow, so a heading
-    # drawn from a near match cannot pass itself off as the root.
-    print(f"{found.title if found else args.concept}  [{root}]")
+    # drawn from a near match cannot pass itself off as the root. A root
+    # that states its own parent says so, because a mother is not a root.
+    heading = f"{found.title if found else args.concept}  [{root}]"
+    if found is not None and found.parent is not None:
+        heading += f"  derives from {found.parent}"
+    print(heading)
     _print_children(catalogue, root, prefix="", seen={root})
     return 0
 
@@ -222,6 +240,10 @@ def _print_children(
 def _show(args: argparse.Namespace) -> int:
     """Print one preparation in full.
 
+    An unresolved parent is printed with the candidates the opening
+    paragraph states, so a reader sees why the resolver refused. `CARDINAL
+    SAUCE` states Béchamel and lobster butter, and the line says so.
+
     Args:
         args: Parsed arguments carrying the concept to show and the source.
 
@@ -229,8 +251,8 @@ def _show(args: argparse.Namespace) -> int:
         Zero, or `NOT_FOUND` when nothing answers to the concept.
     """
     concept = to_concept_id(args.concept)
-    store = catalogue_store()
-    matches = store.load(args.source or default_source_id()).matches(concept)
+    catalogue = catalogue_store().load(args.source or default_source_id())
+    matches = catalogue.matches(concept)
     if not matches:
         print(f"no preparation named {args.concept!r}", file=sys.stderr)
         return NOT_FOUND
@@ -243,15 +265,34 @@ def _show(args: argparse.Namespace) -> int:
     )
     for term in preparation.terms:
         print(f"  term  {term.surface}  [{term.language.value}]  {term.concept}")
-    print(
-        f"  parent  {'(unresolved)' if preparation.parent is None else preparation.parent}"
-    )
+    if preparation.parent is None:
+        print("  parent  (unresolved)")
+        print(f"  stated  {_stated(catalogue, preparation)}")
+    else:
+        print(f"  parent  {preparation.parent}")
     print()
     print(_prose(preparation.body, args.chars))
     if len(matches) > 1:
         others = ", ".join(p.title for p in matches[1:])
         print(f"\nAlso matching {args.concept!r}: {others}", file=sys.stderr)
     return 0
+
+
+def _stated(catalogue: Catalogue, preparation: Preparation) -> str:
+    """Name the candidates an unresolved preparation states.
+
+    Args:
+        catalogue: The catalogue the preparation was read from.
+        preparation: The preparation whose parent is unresolved.
+
+    Returns:
+        The stated candidates in the order the paragraph states them, or
+        `no candidate` when the opening paragraph states none.
+    """
+    stated = stated_candidates(
+        preparation.body, own_names(preparation), parent_candidates(catalogue)
+    )
+    return ", ".join(stated) if stated else "no candidate"
 
 
 def _prose(body: str, limit: int) -> str:

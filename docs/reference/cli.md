@@ -12,11 +12,11 @@ $ uv run saucier parse
 escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
                 transcription of Project Gutenberg 71395
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                124 sauces, 50 derived, 74 unresolved
+                151 sauces, 57 derived, 94 unresolved
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                115 sauces, 36 derived, 79 unresolved
+                140 sauces, 49 derived, 91 unresolved
 ```
 
 | Line | Meaning |
@@ -81,12 +81,20 @@ show the language that title is written in.
 $ uv run saucier tree hollandaise
 HOLLANDAISE SAUCE  [hollandaise]
 ├── MALTESE SAUCE  (en)
-├── MOUSSELINE SAUCE  (en)
-└── NOISETTE SAUCE  (en)
+└── MOUSSELINE SAUCE  (en)
 ```
 
 The bracket names the concept whose derivations follow, so the heading can
 never caption a tree it does not belong to.
+
+A root that states a parent of its own says so on the heading line. A mother
+is what the source names as foundational, not a root of the tree.
+
+```console
+$ uv run saucier tree bordelaise
+SAUCE BORDELAISE  [bordelaise]  derives from half-glaze
+└── MARROW SAUCE  (en)
+```
 
 `--source` chooses the witness to read. It defaults to the revision, which is
 `escoffier-1909`.
@@ -99,6 +107,23 @@ stored catalogue cannot be read.
 Prints one preparation. The output carries its title and its source entry and
 line. It then lists every term with its language and concept id, the resolved
 parent, and the opening of the prose.
+
+An unresolved parent is followed by a `stated` line. It names every
+catalogued candidate the opening paragraph states, in the order the paragraph
+states them, or says `no candidate`.
+
+```console
+$ uv run saucier show cardinal-sauce
+CARDINAL SAUCE
+entry 69, line 2192, transcription of escoffier-1909
+  term  CARDINAL SAUCE  [en]  cardinal-sauce
+  parent  (unresolved)
+  stated  bechamel, lobster-butter
+```
+
+Cardinal states one base and one finish. The resolver reads names and cannot
+tell them apart, so it refuses and prints what it saw. See
+[ADR-0012](../adr/0012-a-resolver-may-refuse-never-rank.md).
 
 `--chars` sets how much prose to print. Default `600`. Prose that was cut
 says so, and reports how much was left out.

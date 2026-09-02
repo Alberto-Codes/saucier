@@ -5,10 +5,12 @@ in the source, which is the point: it establishes how much structure the
 source already carries, and therefore the bar any later model has to clear.
 
 Extraction runs in two passes. The first reads the mothers, the sauce
-chapters, and every kept entry. The second resolves each parent against
-every name the first pass produced, so a parent may be any catalogued
-preparation, and a chain of stated parents never cycles. A mother binds to
-the first preparation in source order that answers to its name.
+chapters, and every kept entry. An entry inside a sauce chapter is kept on
+the chapter, and an entry outside one is kept on its heading. The second
+pass resolves each parent against every name the first pass produced, so a
+parent may be any catalogued preparation, and a chain of stated parents
+never cycles. A mother binds to the first preparation in source order that
+answers to its name, and a mother may itself state a parent.
 
 A heading is read whole. The typesetter wraps a long one onto a second line,
 and two printings wrap at different points, so a reader that stops at the
@@ -292,29 +294,30 @@ def names_a_sauce(title: str) -> bool:
     return served is None or match.start() < served.start()
 
 
-def is_sauce(title: str, mothers: frozenset[ConceptId], in_sauce_chapter: bool) -> bool:
+def is_sauce(title: str, in_sauce_chapter: bool) -> bool:
     """Decide whether an entry is a sauce this catalogue should carry.
 
     Two kinds of evidence qualify an entry, and nothing else does. The
-    heading says "sauce". Or the heading names one of the mothers *and* the
-    source filed the entry in a sauce chapter, which catches derivatives such
-    as `LENTEN ESPAGNOLE` that never use the word. The chapter test is what
-    keeps `TOMATO SALAD` and the velouté soups out.
+    heading says "sauce", which is how the sweet sauces in the entremets
+    chapter enter. Or the source filed the entry in a chapter it titles as
+    sauces, which is how `HALF GLAZE`, the three roux, and the compound
+    butters enter. The chapter test is what keeps `TOMATO SALAD` and the
+    velouté soups out.
+
+    The chapter is not second-guessed. An earlier rule also required a
+    heading inside a sauce chapter to name a mother, and that second test
+    vetoed 27 entries the source had already classified. ADR-0015 records
+    what the veto cost.
 
     Args:
         title: The entry heading.
-        mothers: Concepts the source names as base preparations.
         in_sauce_chapter: Whether the source filed this entry in a chapter it
             titles as sauces.
 
     Returns:
         True if the entry belongs in a sauce catalogue.
     """
-    if names_a_sauce(title):
-        return True
-    if not in_sauce_chapter:
-        return False
-    return bool(mothers.intersection(to_concept_id(title).split("-")))
+    return names_a_sauce(title) or in_sauce_chapter
 
 
 class Candidate(NamedTuple):
@@ -360,24 +363,18 @@ def parent_candidates(catalogue: Catalogue) -> dict[ConceptId, Candidate]:
     return candidates
 
 
-def resolve_parent(
+def stated_candidates(
     body: str,
     own: frozenset[int | ConceptId],
     candidates: dict[ConceptId, Candidate],
-) -> ConceptId | None:
-    """Find the catalogued preparation an entry's prose derives it from.
+) -> tuple[ConceptId, ...]:
+    """Read every candidate an entry's opening paragraph states.
 
     Only the opening paragraph counts. Escoffier states an ingredient list
     first, so a base named there is being used; a base named eight paragraphs
     later is usually being compared against, not built on. A name has to
     appear as a whole run of words inside one sentence, so `tomatoes` is not
     `tomato` and a name split across a full stop is not a statement.
-
-    An entry naming no candidate resolves to `None`. So does an entry naming
-    two: `SHRIMP SAUCE` says "fish velouté or, failing this, Béchamel", and
-    picking one of those is a guess the source did not make. When the one
-    stated parent was named as a mother, the mother concept is recorded, and
-    otherwise the parent preparation's own concept is.
 
     Two further runs of words are not statements. A catalogued name inside
     the entry's own name states the subject, so `HORSE-RADISH SAUCE` naming
@@ -387,6 +384,10 @@ def resolve_parent(
     inside a longer stated name of another preparation, is part of that
     statement, so `Lenten Espagnole` does not also state Espagnole.
 
+    Two names that reach one preparation are one candidate. It is recorded
+    under the mother concept when a mother name reached it, and under the
+    first stated name otherwise.
+
     Args:
         body: The entry's prose.
         own: Keys and names that denote the entry itself, which cannot be
@@ -394,8 +395,8 @@ def resolve_parent(
         candidates: Every name a stated parent may use.
 
     Returns:
-        The parent concept, or None when the opening paragraph states no
-        candidate or states more than one.
+        One concept per preparation the paragraph states, in the order the
+        paragraph first states them. Empty when it states none.
     """
     segments = _folded_segments(body.split("\n\n", 1)[0])
     own_names = tuple(str(key).split("-") for key in own if not isinstance(key, int))
@@ -408,13 +409,55 @@ def resolve_parent(
         spans = _spans(words, segments)
         if spans:
             found[name] = spans
-    hits = [
-        candidates[name] for name in found if not _shadowed(name, found, candidates)
-    ]
-    if len({hit.key for hit in hits}) != 1:
-        return None
-    stated_mothers = sorted(hit.records for hit in hits if hit.mother)
-    return stated_mothers[0] if stated_mothers else hits[0].records
+    stated = sorted(
+        (name for name in found if not _shadowed(name, found, candidates)),
+        key=lambda name: min(found[name]),
+    )
+    reached: dict[int | ConceptId, list[Candidate]] = {}
+    for name in stated:
+        reached.setdefault(candidates[name].key, []).append(candidates[name])
+    return tuple(_recorded(hits) for hits in reached.values())
+
+
+def _recorded(hits: list[Candidate]) -> ConceptId:
+    """Choose the concept a statement records for one preparation.
+
+    Args:
+        hits: Every stated candidate reaching one preparation, in the order
+            the paragraph stated them.
+
+    Returns:
+        The mother concept when any of the names is a mother, otherwise the
+        concept of the first stated name.
+    """
+    mothers = sorted(hit.records for hit in hits if hit.mother)
+    return mothers[0] if mothers else hits[0].records
+
+
+def resolve_parent(
+    body: str,
+    own: frozenset[int | ConceptId],
+    candidates: dict[ConceptId, Candidate],
+) -> ConceptId | None:
+    """Find the catalogued preparation an entry's prose derives it from.
+
+    An entry naming no candidate resolves to `None`. So does an entry naming
+    two: `SHRIMP SAUCE` says "fish velouté or, failing this, Béchamel", and
+    picking one of those is a guess the source did not make. A resolver may
+    refuse, never rank, which ADR-0012 records.
+
+    Args:
+        body: The entry's prose.
+        own: Keys and names that denote the entry itself, which cannot be
+            its parent.
+        candidates: Every name a stated parent may use.
+
+    Returns:
+        The parent concept, or None when the opening paragraph states no
+        candidate or states more than one.
+    """
+    stated = stated_candidates(body, own, candidates)
+    return stated[0] if len(stated) == 1 else None
 
 
 def _folded_segments(opening: str) -> tuple[list[str], ...]:
@@ -535,6 +578,10 @@ def _without_cycles(
 def extract(source: SourceText) -> Catalogue:
     """Read every sauce preparation a source states.
 
+    An entry is kept on its heading, or on the chapter the source filed it
+    in. The mothers are read for the catalogue and for resolution, and they
+    take no part in admission.
+
     Args:
         source: The document to read.
 
@@ -563,7 +610,7 @@ def extract(source: SourceText) -> Catalogue:
     drafts = tuple(
         _preparation(source, entry)
         for entry in entries
-        if is_sauce(entry[2], mothers, _within(entry[1], spans))
+        if is_sauce(entry[2], _within(entry[1], spans))
     )
     if not drafts:
         msg = f"{len(entries)} entries in {witness.source_id}, none of them a sauce"
@@ -582,7 +629,8 @@ def _derived(catalogue: Catalogue) -> tuple[Preparation, ...]:
 
     Resolution needs the whole catalogue, because a parent may be any
     preparation in it. So the drafts are read first, and every parent is
-    resolved against them in a second pass.
+    resolved against them in a second pass. Each draft's own names are held
+    out of its candidates, so a preparation never states itself.
 
     Args:
         catalogue: The catalogue with every parent still unresolved.
@@ -598,7 +646,7 @@ def _derived(catalogue: Catalogue) -> tuple[Preparation, ...]:
         if isinstance(candidate.key, int)
     }
     parents = {
-        draft.ref.entry: resolve_parent(draft.body, _own(draft), candidates)
+        draft.ref.entry: resolve_parent(draft.body, own_names(draft), candidates)
         for draft in catalogue.preparations
     }
     parents = _without_cycles(parents, successor)
@@ -608,17 +656,19 @@ def _derived(catalogue: Catalogue) -> tuple[Preparation, ...]:
     )
 
 
-def _own(draft: Preparation) -> frozenset[int | ConceptId]:
+def own_names(preparation: Preparation) -> frozenset[int | ConceptId]:
     """Collect the keys and names that denote a preparation itself.
 
     Args:
-        draft: The preparation being resolved.
+        preparation: The preparation being resolved.
 
     Returns:
         The entry number, every term concept, and the folded title.
     """
-    names: frozenset[int | ConceptId] = frozenset(term.concept for term in draft.terms)
-    return names | {draft.ref.entry, to_concept_id(draft.title)}
+    names: frozenset[int | ConceptId] = frozenset(
+        term.concept for term in preparation.terms
+    )
+    return names | {preparation.ref.entry, to_concept_id(preparation.title)}
 
 
 def _within(index: int, spans: tuple[tuple[int, int], ...]) -> bool:

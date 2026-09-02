@@ -17,11 +17,11 @@ $ uv run saucier parse
 escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
                 transcription of Project Gutenberg 71395
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                124 sauces, 50 derived, 74 unresolved
+                151 sauces, 57 derived, 94 unresolved
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                115 sauces, 36 derived, 79 unresolved
+                140 sauces, 49 derived, 91 unresolved
 ```
 
 The five mothers were not supplied. Escoffier names them in his own text, and
@@ -33,29 +33,46 @@ on its own title page, and the id is built from that reading. See
 
 ```console
 $ uv run saucier tree espagnole
-BROWN SAUCE OR ESPAGNOLE  [espagnole]
+BROWN SAUCE OR ESPAGNOLE  [espagnole]  derives from brown-roux
+├── HALF GLAZE  (en)
+│   ├── SAUCE BORDELAISE  (fr)
+│   │   └── MARROW SAUCE  (en)
+│   ├── BROWN CHAUD-FROID SAUCE  (en)
+│   ├── DEVILLED SAUCE  (en)
+│   ├── ITALIAN SAUCE  (en)
+│   ├── LYONNAISE SAUCE  (en)
+│   ├── MADEIRA SAUCE  (en)
+│   ├── PIQUANTE SAUCE  (en)
+│   └── ROBERT SAUCE  (en)
 ├── LENTEN ESPAGNOLE  (fr)
 │   └── GENEVOISE SAUCE  (en)
 ├── ORDINARY POIVRADE SAUCE  (en)
-│   └── REFORM SAUCE  (en)
 └── POIVRADE SAUCE FOR VENISON  (en)
 ```
 
-A parent may be any catalogued preparation, not only a mother. Marrow Sauce
-resolves to Bordelaise, and Bordelaise itself states no base. A derivation
-tree can therefore root in an unresolved sauce.
+A parent may be any catalogued preparation, not only a mother. Robert states
+half glaze, half glaze states Espagnole, and Espagnole states brown roux. A
+mother is what the source names as foundational, and two of the five now
+state a parent of their own.
 
-## The interesting number is 74
+## The interesting number is 94
 
-74 of 124 preparations never state what they are built on. Escoffier wrote
-for a reader who already knew, so he did not write it down. That gap is the
-point: it is the measured bar that anything cleverer has to beat. See
+94 of 151 preparations state no base in their opening paragraph, or state
+two and mark neither. Escoffier wrote for a reader who already knew, so he
+did not write it down. That gap is the point: it is the measured bar that
+anything cleverer has to beat. See
 [why there is no model in this yet](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/).
 
-The catalogue holds 124 entries, not every sauce in the book. An entry gets
-in when its own heading says "sauce", or when it names a mother inside a
-chapter Escoffier titles as sauces. Both tests read the source. Neither
-guesses.
+The catalogue holds 151 entries, not every sauce in the book. An entry gets
+in when its own heading says "sauce", or when Escoffier filed it in a chapter
+he titles as sauces. Both tests read the source. Neither guesses.
+
+Derived rose from 50 to 57 in this release, and that seven is three numbers.
+Twelve sauces gained the parent Escoffier wrote, most of them half glaze. Ten
+lost one, because a catalogued butter now sits in their opening paragraph
+beside the base, and a resolver may refuse, never rank. Five admitted entries
+state a parent. `saucier show cardinal-sauce` prints both names it saw. See
+[ADR-0015](docs/adr/0015-the-chapter-decides.md).
 
 ## Two witnesses, and a diff that names its causes
 
@@ -65,7 +82,7 @@ scan, so every difference between them has two explanations.
 ```console
 $ uv run saucier diff escoffier-1907 escoffier-1909
 ...
-  9 unmatched, 18 parent-changed, 35 ocr-suspected
+  11 unmatched, 20 parent-changed, 37 ocr-suspected
   entries read  2679 of escoffier-1907, 2963 of escoffier-1909, a blind spot of 284
 ```
 
@@ -87,7 +104,7 @@ reference is generated from the docstrings, so it cannot drift from the code.
 - [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
 - [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
 - [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
-- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the fourteen records, and what each one accepted
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the fifteen records, and what each one accepted
 
 ## Licence
 

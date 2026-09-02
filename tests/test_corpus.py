@@ -22,7 +22,14 @@ from saucier.domain.types import ConceptId
 from saucier.domain.witness import Fidelity
 from saucier.infrastructure.bootstrap import escoffier_sources
 from saucier.infrastructure.config import Paths
-from saucier.services.extraction import ENTRY, continues_heading, extract
+from saucier.services.extraction import (
+    ENTRY,
+    continues_heading,
+    extract,
+    own_names,
+    parent_candidates,
+    stated_candidates,
+)
 
 
 @pytest.mark.corpus
@@ -40,10 +47,11 @@ def test_the_published_census_still_holds(escoffier, census):
 
 
 @pytest.mark.corpus
-def test_espagnole_is_present_and_is_its_own_root(escoffier):
+def test_espagnole_states_brown_roux_and_is_never_its_own_child(escoffier):
+    """Entry 22 opens with "One lb. of brown roux". A mother is not a root."""
     espagnole = escoffier.find(ConceptId("espagnole"))
     assert espagnole is not None
-    assert espagnole.parent is None
+    assert espagnole.parent == "brown-roux"
     assert espagnole not in escoffier.children_of(ConceptId("espagnole"))
 
 
@@ -137,12 +145,72 @@ def test_marrow_sauce_resolves_to_bordelaise(escoffier):
 
 
 @pytest.mark.corpus
-def test_bordelaise_stays_unresolved_on_the_half_glaze_trap(escoffier):
-    """Entry 32 names half-glaze, which encodes a derivation but states none."""
+def test_bordelaise_resolves_to_half_glaze(escoffier):
+    """Entry 32 says "add one-half pint of half-glaze", at line 1685.
+
+    Half glaze is entry 23, inside THE LEADING WARM SAUCES, and it enters on
+    the chapter. Before ADR-0015 the mother clause kept it out, and this
+    sauce stayed unresolved with its base on the page.
+    """
     bordelaise = escoffier.find(ConceptId("bordelaise"))
     assert bordelaise is not None
     assert bordelaise.title == "SAUCE BORDELAISE"
-    assert bordelaise.parent is None
+    assert bordelaise.parent == "half-glaze"
+
+
+@pytest.mark.corpus
+def test_the_chain_above_robert_is_the_one_the_book_wrote(escoffier):
+    """Robert to half glaze to Espagnole to brown roux, then nothing.
+
+    Lines 1999, 1439, and 1394 of the 1909 text state the three links.
+    """
+    robert = escoffier.find(ConceptId("robert-sauce"))
+    half_glaze = escoffier.find(ConceptId("half-glaze"))
+    espagnole = escoffier.find(ConceptId("espagnole"))
+    brown_roux = escoffier.find(ConceptId("brown-roux"))
+    assert robert is not None and half_glaze is not None
+    assert espagnole is not None and brown_roux is not None
+    assert robert.parent == "half-glaze"
+    assert half_glaze.parent == "espagnole"
+    assert half_glaze.ref.entry == 23
+    assert espagnole.parent == "brown-roux"
+    assert brown_roux.parent is None
+
+
+@pytest.mark.corpus
+def test_the_roux_chain_terminates_at_brown_roux(escoffier):
+    """Pale roux states brown roux, white roux states pale roux. No cycle."""
+    pale = escoffier.find(ConceptId("pale-roux"))
+    white = escoffier.find(ConceptId("white-roux"))
+    assert pale is not None and white is not None
+    assert pale.parent == "brown-roux"
+    assert white.parent == "pale-roux"
+
+
+@pytest.mark.corpus
+def test_a_mother_with_a_parent_still_binds_to_its_own_entry(escoffier):
+    """Espagnole and Velouté now state a roux. They are still the mothers."""
+    assert escoffier.find(ConceptId("espagnole")).ref.entry == 22
+    assert escoffier.find(ConceptId("veloute")).ref.entry == 25
+    assert escoffier.find(ConceptId("veloute")).parent == "pale-roux"
+
+
+@pytest.mark.corpus
+def test_cardinal_states_two_candidates_and_stays_unresolved(escoffier):
+    """Entry 69, line 2194, states Béchamel and then lobster butter.
+
+    "Boil one pint of Béchamel" and then "finish the sauce ... with three
+    oz. of very red lobster butter (No. 149)". The source stated one base
+    and one finish. The resolver reads names and
+    cannot tell them apart, so it refuses. ADR-0012 says that is right.
+    """
+    cardinal = escoffier.find(ConceptId("cardinal-sauce"))
+    assert cardinal is not None
+    assert cardinal.parent is None
+    stated = stated_candidates(
+        cardinal.body, own_names(cardinal), parent_candidates(escoffier)
+    )
+    assert stated == ("bechamel", "lobster-butter")
 
 
 @pytest.mark.corpus
@@ -346,3 +414,146 @@ def test_the_number_of_repaired_separators_is_the_measured_one():
     lines = path.read_text(encoding="utf-8").splitlines()
     cleaned = (normalise(line) for line in lines)
     assert sum(1 for line in cleaned if repair_separator(line) != line) == 57
+
+
+ADMITTED = {
+    19: "BROWN ROUX",
+    20: "PALE ROUX",
+    21: "WHITE ROUX",
+    23: "HALF GLAZE",
+    41: "THICKENED GRAVY",
+    42: "VEAL GRAVY TOMATÉ",
+    97: "SECOND METHOD (WITH COOKED LOBSTER)",
+    128: "WHISKED MAYONNAISE",
+    139: "BERCY BUTTER",
+    140: "CHIVRY OR RAVIGOTE BUTTER",
+    141: "COLBERT BUTTER",
+    142: "RED COLOURING BUTTER",
+    143: "GREEN COLOURING BUTTER",
+    144: "VARIOUS CULLISES",
+    145: "SHRIMP BUTTER",
+    146: "SHALLOT BUTTER",
+    147: "CRAYFISH BUTTER",
+    148: "TARRAGON BUTTER",
+    149: "LOBSTER BUTTER",
+    150: "BUTTER A LA MAÎTRE D’HÔTEL",  # noqa: RUF001
+    151: "MANIED BUTTER",
+    152: "BUTTER A LA MEUNIÈRE",
+    153: "MONTPELLIER BUTTER",
+    154: "BLACK BUTTER",
+    155: "HAZEL-NUT BUTTER",
+    156: "PISTACHIO BUTTER",
+    157: "PRINTANIER BUTTER",
+}
+"""The 27 entries the chapter admits in the 1909 text and the heading did not.
+
+Every one sits inside a chapter Escoffier titles as sauces and lacks the
+word "sauce" in its heading. Nothing here is hand-picked: entry 97 is a
+lobster method the source numbered on its own, and it enters because the
+source numbered it. ADR-0015 records the rule.
+"""
+
+UNREAD_IN_THE_SCAN = {153: "IS3", 155: "15s"}
+"""Two of the 27 the 1907 scan cannot read, with the number as the scan has it.
+
+`MONTPELLIER BUTTER` and `HAZEL-NUT BUTTER` are on the page. The scanner
+read their entry numbers as letters, so the entry pattern never matches.
+That is a corrupted number, and ADR-0013 leaves it unrepaired here.
+"""
+
+GAINED = {
+    "sauce-bordelaise": "half-glaze",
+    "brown-chaud-froid-sauce": "half-glaze",
+    "devilled-sauce": "half-glaze",
+    "italian-sauce": "half-glaze",
+    "lyonnaise-sauce": "half-glaze",
+    "madeira-sauce": "half-glaze",
+    "piquante-sauce": "half-glaze",
+    "robert-sauce": "half-glaze",
+    "espagnole": "brown-roux",
+    "veloute": "pale-roux",
+    "scotch-egg-sauce": "white-roux",
+    "mousseuse-sauce": "manied-butter",
+}
+"""The twelve sauces that gained a parent when the chapter decided.
+
+Each was catalogued and unresolved at v0.3.0, and each stated its base in a
+sentence the catalogue could not reach because the base was not catalogued.
+"""
+
+LOST = {
+    "cardinal-sauce": ("bechamel", "lobster-butter"),
+    "nantua-sauce": ("bechamel", "crayfish-butter"),
+    "noisette-sauce": ("hollandaise", "hazel-nut-butter"),
+    "diplomate-sauce": ("normande-sauce", "lobster-butter"),
+    "joinville-sauce": ("normande-sauce", "shrimp-butter", "crayfish-butter"),
+    "herb-sauce": ("white-wine-sauce", "shallot-butter"),
+    "ravigote-sauce": ("veloute", "shallot-butter"),
+    "perigueux-sauce": ("half-glaze", "madeira-sauce"),
+    "reform-sauce": ("half-glaze", "ordinary-poivrade-sauce"),
+    "chasseur-sauce": ("half-glaze", "tomato"),
+}
+"""The ten sauces that lost a parent, each with what it now states.
+
+Every one was resolved at v0.3.0 to the first name in its tuple. Admitting
+the butters and half glaze put a second catalogued name in the opening
+paragraph, and a resolver may refuse, never rank. The loss is ADR-0012
+working. Recovering these means reading the verb a name sits in.
+"""
+
+
+@pytest.mark.corpus
+def test_every_entry_the_chapter_admits_is_catalogued(escoffier):
+    found = {p.ref.entry: p.title for p in escoffier.preparations}
+    assert {n: found.get(n) for n in ADMITTED} == ADMITTED
+
+
+@pytest.mark.corpus
+def test_the_scan_reads_the_butter_headings_it_can(escoffier_1907):
+    """25 of the 27 in the scan. The two it cannot read are named, not lost."""
+    found = {p.ref.entry for p in escoffier_1907.preparations}
+    readable = set(ADMITTED) - set(UNREAD_IN_THE_SCAN)
+    # The scan reads entry 128 as 138, so WHISKED MAYONNAISE is read under
+    # a number it does not carry on the page.
+    readable.discard(128)
+    assert readable <= found
+    assert not set(UNREAD_IN_THE_SCAN) & found
+    titles = {p.title for p in escoffier_1907.preparations}
+    assert "WHISKED MAYONNAISE" in titles
+    assert "MONTPELLIER BUTTER" not in titles
+    assert "HAZEL-NUT BUTTER" not in titles
+
+
+@pytest.mark.corpus
+def test_the_twelve_gained_parents_are_the_ones_escoffier_wrote(escoffier):
+    for concept, parent in GAINED.items():
+        found = escoffier.find(ConceptId(concept))
+        assert found is not None, concept
+        assert found.parent == parent, concept
+
+
+@pytest.mark.corpus
+def test_the_ten_lost_parents_each_state_two_candidates(escoffier):
+    """Each refusal is checkable: the paragraph names both, in this order."""
+    candidates = parent_candidates(escoffier)
+    for concept, stated in LOST.items():
+        found = escoffier.find(ConceptId(concept))
+        assert found is not None, concept
+        assert found.parent is None, concept
+        assert stated_candidates(found.body, own_names(found), candidates) == stated
+
+
+@pytest.mark.corpus
+def test_the_census_moved_by_the_three_numbers_the_docs_name(escoffier, census):
+    """The seven is not one number.
+
+    Derived is 50 plus twelve gained, minus ten lost, plus five admitted
+    entries that state a parent.
+    """
+    admitted_resolved = [
+        p
+        for p in escoffier.preparations
+        if p.ref.entry in ADMITTED and p.parent is not None
+    ]
+    assert len(admitted_resolved) == 5
+    assert census.derived == 50 + len(GAINED) - len(LOST) + len(admitted_resolved)

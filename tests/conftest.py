@@ -7,16 +7,17 @@ from saucier.infrastructure.bootstrap import escoffier_sources
 from saucier.services.extraction import extract
 
 REVISION = SimpleNamespace(
-    source_id="escoffier-1909", sauces=124, derived=50, unresolved=74
+    source_id="escoffier-1909", sauces=151, derived=57, unresolved=94
 )
 """The numbers the README, the tutorial, and the docs home page publish.
 
 Changing them is a deliberate act: update those pages in the same commit,
-and say why in the changelog. Two published posts quote them as well.
+and say why in the changelog. Three published posts quote the numbers they
+were pinned to, and each post names its tag, so those do not move.
 """
 
 FIRST_PRINTING = SimpleNamespace(
-    source_id="escoffier-1907", sauces=115, derived=36, unresolved=79
+    source_id="escoffier-1907", sauces=140, derived=49, unresolved=91
 )
 """The 1907 witness, which is OCR. Published from release 0.3.0 onward."""
 

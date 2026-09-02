@@ -29,11 +29,11 @@ You should see something like:
 escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
                 transcription of Project Gutenberg 71395
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                124 sauces, 50 derived, 74 unresolved
+                151 sauces, 57 derived, 94 unresolved
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                115 sauces, 36 derived, 79 unresolved
+                140 sauces, 49 derived, 91 unresolved
 ```
 
 Four things happened.
@@ -54,13 +54,13 @@ $ sed -n '119,123p' corpus/escoffier-1909.txt
 The five **mothers** were not supplied by us. Escoffier lists his own base
 sauces, the parser found that sentence, and read them out of it.
 
-**124 sauces** were extracted from roughly 3,000 numbered entries. The rest
+**151 sauces** were extracted from roughly 3,000 numbered entries. The rest
 are stocks, garnishes, soups, and dishes. An entry gets in when its heading
-says "sauce", or when it names a mother inside a chapter Escoffier titles as
-sauces.
+says "sauce", or when Escoffier filed it in a chapter he titles as sauces.
 
-**74 unresolved** is the honest score, and it is the most interesting number
-on the screen. A parser cannot read a derivation the author never wrote down.
+**94 unresolved** is the honest score, and it is the most interesting number
+on the screen. A parser cannot read a derivation the author never wrote down,
+and it will not choose between two he wrote.
 
 The second block is a different book. `escoffier-1907` is a scan of the 1907
 first printing, machine-read rather than proofread. Its numbers are lower,
@@ -70,18 +70,28 @@ and every record it produces says it came through OCR.
 
 ```console
 $ uv run saucier tree espagnole
-BROWN SAUCE OR ESPAGNOLE  [espagnole]
+BROWN SAUCE OR ESPAGNOLE  [espagnole]  derives from brown-roux
+├── HALF GLAZE  (en)
+│   ├── SAUCE BORDELAISE  (fr)
+│   │   └── MARROW SAUCE  (en)
+│   ├── BROWN CHAUD-FROID SAUCE  (en)
+│   ├── DEVILLED SAUCE  (en)
+│   ├── ITALIAN SAUCE  (en)
+│   ├── LYONNAISE SAUCE  (en)
+│   ├── MADEIRA SAUCE  (en)
+│   ├── PIQUANTE SAUCE  (en)
+│   └── ROBERT SAUCE  (en)
 ├── LENTEN ESPAGNOLE  (fr)
 │   └── GENEVOISE SAUCE  (en)
 ├── ORDINARY POIVRADE SAUCE  (en)
-│   └── REFORM SAUCE  (en)
 └── POIVRADE SAUCE FOR VENISON  (en)
 ```
 
 The tag after each name is the language its title is written in. The tree has
 depth because a parent may be any catalogued preparation, not only a mother:
-Genevoise states Lenten Espagnole, and Lenten Espagnole states Espagnole. Try
-`hollandaise` or `veloute` too.
+Robert states half glaze, and half glaze states Espagnole. Espagnole is a
+mother, and it states brown roux, which the heading line says. Try
+`brown-roux` to see the whole chain, or `hollandaise` and `veloute`.
 
 ## Look one up
 
@@ -90,22 +100,36 @@ $ uv run saucier show bordelaise
 SAUCE BORDELAISE
 entry 32, line 1680, transcription of escoffier-1909
   term  SAUCE BORDELAISE  [fr]  sauce-bordelaise
-  parent  (unresolved)
+  parent  half-glaze
 ```
 
 You asked for `bordelaise`. Escoffier writes `SAUCE BORDELAISE`, French word
 order, and the lookup handled it.
 
-Bordelaise states no base of its own, yet Marrow Sauce states Bordelaise:
+Bordelaise states half glaze, and Marrow Sauce states Bordelaise:
 
 ```console
 $ uv run saucier tree bordelaise
-SAUCE BORDELAISE  [bordelaise]
+SAUCE BORDELAISE  [bordelaise]  derives from half-glaze
 └── MARROW SAUCE  (en)
 ```
 
-A tree can root in an unresolved sauce. The record keeps both claims apart:
-what the source said, and what it never wrote down.
+Now look at one the parser refused:
+
+```console
+$ uv run saucier show cardinal-sauce
+CARDINAL SAUCE
+entry 69, line 2192, transcription of escoffier-1909
+  term  CARDINAL SAUCE  [en]  cardinal-sauce
+  parent  (unresolved)
+  stated  bechamel, lobster-butter
+```
+
+Cardinal says "Boil one pint of Béchamel", and later "finish the sauce ...
+with three oz. of very red lobster butter". One is the base and one is the
+finish. The parser reads names and cannot tell which is which, so it records
+nothing and prints both. The record keeps the claims apart: what the source
+said, and what the parser could not decide.
 
 Now check the parser's work. `line 1680` is a line in the file on disk:
 
@@ -137,4 +161,4 @@ record has to carry that distinction.
 ## Next
 
 Read [why there is no model in this yet](../explanation/why-no-model-yet.md).
-The 74 unresolved preparations are the reason there will be one.
+The 94 unresolved preparations are the reason there will be one.

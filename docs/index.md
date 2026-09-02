@@ -43,39 +43,43 @@ them out of that sentence. Nobody supplied the list.
 ## The number this release is judged on
 
 <div class="sc-census">
-<div class="sc-census__bar" role="img" aria-label="Of 124 preparations, 50 resolve to a stated parent and 74 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
+<div class="sc-census__bar" role="img" aria-label="Of 151 preparations, 57 resolve to a stated parent and 94 are unresolved."><span class="sc-census__seg--resolved"></span><span class="sc-census__seg--unresolved"></span></div>
 <ul class="sc-census__key">
-<li><b>124</b> preparations</li>
-<li><b>50</b> resolved</li>
-<li><b>74</b> unresolved</li>
+<li><b>151</b> preparations</li>
+<li><b>57</b> resolved</li>
+<li><b>94</b> unresolved</li>
 </ul>
 </div>
 
-74 preparations state no base in their prose. The parser records those as
-unresolved and does not guess at them. The hatched share is what the source
+94 preparations state no base in their prose, or state two. The parser
+records those as unresolved and does not guess at them. The hatched share is what the source
 declined to say, not what the extraction failed to find. Lowering that count
 by guessing would be the one unrecoverable mistake here, so the number is
 published rather than hidden.
 
 A parent may be any catalogued preparation, not only a mother. Marrow Sauce
 says it is "only a variety of the Bordelaise", so it resolves to Bordelaise.
-Bordelaise itself states no base, and stays unresolved, so a derivation tree
-can root in an unresolved sauce.
+Bordelaise says "add one-half pint of half-glaze", half glaze says it is
+Espagnole despumated, and Espagnole opens with brown roux. Two of the five
+mothers state a parent of their own.
 
-An entry that states two bases counts as unresolved. `SHRIMP SAUCE` says
-"fish velouté or, failing this, Béchamel". The source declined to choose, so
-the parser declines too.
+An entry that states two candidates counts as unresolved. `CARDINAL SAUCE`
+says "Boil one pint of Béchamel" and then "finish ... with lobster butter".
+The source stated one base and one finish. The parser reads names and cannot
+tell which is which, so it declines, and `saucier show` prints both names.
+Ten sauces that were resolved at v0.3.0 are unresolved for that reason, and
+[ADR-0015](adr/0015-the-chapter-decides.md) names them.
 
 ```console
 $ uv run saucier parse
 escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
                 transcription of Project Gutenberg 71395
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                124 sauces, 50 derived, 74 unresolved
+                151 sauces, 57 derived, 94 unresolved
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                115 sauces, 36 derived, 79 unresolved
+                140 sauces, 49 derived, 91 unresolved
 ```
 
 Two witnesses of one book, each naming itself from its own title page. The
