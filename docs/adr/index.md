@@ -50,3 +50,6 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0014: A damaged witness cannot establish
   absence](0014-a-damaged-witness-cannot-establish-absence.md). Why the diff
   reports no additions, and what has to shrink before it can.
+- [ADR-0015: The chapter decides](0015-the-chapter-decides.md). Why the
+  catalogue rose from 124 entries to 151, and why ten sauces lost a parent
+  while derived rose by seven.
