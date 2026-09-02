@@ -7,9 +7,9 @@ source already carries, and therefore the bar any later model has to clear.
 Extraction runs in two passes. The first reads the mothers, the sauce
 chapters, and every kept entry. An entry inside a sauce chapter is kept on
 the chapter, and an entry outside one is kept on its heading. The second
-pass resolves each parent against every name the first pass produced, so a
-parent may be any catalogued preparation, and a chain of stated parents
-never cycles. A mother binds to the first preparation in source order that
+pass resolves each parent against every name the first pass produced. A
+parent may therefore be any catalogued preparation, and a chain of stated
+parents never cycles. A mother binds to the first preparation in source order that
 answers to its name, and a mother may itself state a parent.
 
 A heading is read whole. The typesetter wraps a long one onto a second line,
@@ -304,10 +304,9 @@ def is_sauce(title: str, in_sauce_chapter: bool) -> bool:
     butters enter. The chapter test is what keeps `TOMATO SALAD` and the
     velouté soups out.
 
-    The chapter is not second-guessed. An earlier rule also required a
-    heading inside a sauce chapter to name a mother, and that second test
-    vetoed 27 entries the source had already classified. ADR-0015 records
-    what the veto cost.
+    The parser does not second-guess the chapter. An earlier rule also
+    required a heading inside a sauce chapter to name a mother. That test
+    vetoed 27 entries of the 1909 text. ADR-0015 records what the veto cost.
 
     Args:
         title: The entry heading.
@@ -371,8 +370,8 @@ def stated_candidates(
     """Read every candidate an entry's opening paragraph states.
 
     Only the opening paragraph counts. Escoffier states an ingredient list
-    first, so a base named there is being used; a base named eight paragraphs
-    later is usually being compared against, not built on. A name has to
+    first, so a base named there is being used. A base named eight paragraphs
+    later is being compared against, not built on. A name has to
     appear as a whole run of words inside one sentence, so `tomatoes` is not
     `tomato` and a name split across a full stop is not a statement.
 
@@ -442,9 +441,10 @@ def resolve_parent(
     """Find the catalogued preparation an entry's prose derives it from.
 
     An entry naming no candidate resolves to `None`. So does an entry naming
-    two: `SHRIMP SAUCE` says "fish velouté or, failing this, Béchamel", and
-    picking one of those is a guess the source did not make. A resolver may
-    refuse, never rank, which ADR-0012 records.
+    more than one. `CARDINAL SAUCE` says "Boil one pint of Béchamel" and then
+    "finish ... with lobster butter", and picking one of those is a guess the
+    source did not make. A resolver may refuse, never rank, which ADR-0012
+    records.
 
     Args:
         body: The entry's prose.

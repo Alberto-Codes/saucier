@@ -58,7 +58,7 @@ state a parent of their own.
 ## The interesting number is 94
 
 94 of 151 preparations state no base in their opening paragraph, or state
-two and mark neither. Escoffier wrote for a reader who already knew, so he
+more than one and choose neither. Escoffier wrote for a reader who already knew, so he
 did not write it down. That gap is the point: it is the measured bar that
 anything cleverer has to beat. See
 [why there is no model in this yet](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/).
@@ -69,9 +69,9 @@ he titles as sauces. Both tests read the source. Neither guesses.
 
 Derived rose from 50 to 57 in this release, and that seven is three numbers.
 Twelve sauces gained the parent Escoffier wrote, most of them half glaze. Ten
-lost one, because a catalogued butter now sits in their opening paragraph
-beside the base, and a resolver may refuse, never rank. Five admitted entries
-state a parent. `saucier show cardinal-sauce` prints both names it saw. See
+lost one. A newly catalogued butter or half glaze now sits in their opening
+paragraph beside the old parent, and a resolver may refuse, never rank. Five
+admitted entries state a parent. `saucier show cardinal-sauce` prints both names it saw. See
 [ADR-0015](docs/adr/0015-the-chapter-decides.md).
 
 ## Two witnesses, and a diff that names its causes

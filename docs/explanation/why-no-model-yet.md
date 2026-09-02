@@ -23,7 +23,7 @@ adding anything.
 
 A schema validates shape, not truth. A model asked for JSON will return
 well-formed JSON, with a plausible parent for every preparation, including
-the 94 where the source states none, or states two. Those outputs pass
+the 94 where the source states none, or states more than one. Those outputs pass
 validation, read correctly, and are wrong.
 
 The parser cannot produce that failure. It resolves a parent only where the
@@ -33,13 +33,14 @@ Unresolved is a visible, countable state. Confidently wrong is not.
 ## The unresolved entries are the finding
 
 94 of 151 preparations do not state a base in their opening paragraph, or
-state two names and mark neither as the base. That is not parser weakness —
+state more than one name and mark neither as the base. That is not parser weakness —
 it is what the source is like. Cardinal says "Boil one pint of Béchamel" and
 then "finish ... with lobster butter". Escoffier assumed a reader who already
 knew which of those is the base and which is the finish, so he did not write
-it down. Ten sauces are unresolved for exactly that reason, and every one of
-them was resolved before the butters were catalogued. Widening what the
-parser can see lowered its score, and the lower score is the honest one.
+it down. Seven sauces are unresolved for exactly that reason, and three more
+state half glaze beside another sauce. Every one of the ten was resolved
+before this release widened the catalogue. Widening what the parser can see
+lowered its score, and the lower score is the honest one.
 
 Recovering knowledge an author assumed is exactly the work a model can do and
 a parser cannot. That is the case for adding one — and it is a case that can

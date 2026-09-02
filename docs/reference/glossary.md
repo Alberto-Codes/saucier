@@ -80,8 +80,7 @@ in the same change.
 
 **Mother**
 :   A preparation the source itself names as foundational. Escoffier names
-    five. A mother may state a parent of its own, so a mother is not always
-    a root. Not "base sauce" in prose (use "mother"), not "root" or "parent
+    five. A mother may state a parent of its own. Not "base sauce" in prose (use "mother"), not "root" or "parent
     sauce".
 
 **Derivation**
