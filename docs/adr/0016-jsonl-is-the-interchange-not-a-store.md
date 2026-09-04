@@ -93,8 +93,8 @@ can check the claim. It does not say that two catalogues hold the same
 sauce. The entry number is not identity, because the scan repeats numbers. The
 domain does not forbid two preparations on one line, so the writer
 refuses such a catalogue rather than emit a stream its reader rejects.
-Lab issue #60 separates record, entity, mention, and claim identity, and
-none of that arrives here.
+Separating record, entity, mention, and claim identity is later work, and
+none of it arrives here.
 
 **A catalogue id is a source id, not a witness id.** `Witness.source_id` is
 the work and the edition year. A second scan or a second transcription of
@@ -102,9 +102,9 @@ one edition would share it. Their preparation ids would collide wherever a
 heading line coincides. The record carries the witness
 fields, and that does not make its id a witness id. So version one carries
 one catalogue per source id, and the reader rejects a second as a
-duplicate. Collating two texts of one printing needs the identity work in
-lab issue #60 and a later schema version. This record makes no claim that
-the current identifiers support it.
+duplicate. Collating two texts of one printing needs that separation of
+identities and a later schema version. This record makes no claim that the
+current identifiers support it.
 
 **A `null` parent means unresolved.** It never means the preparation has no
 parent. ADR-0002 governs the interchange as it governs the domain.
@@ -162,8 +162,8 @@ records and does not rebuild the catalogue.
 ### What version one stops before
 
 No claim records. `Preparation.parent` is one field, and it stays one field
-until lab issue #59 changes the domain. No entity, activity, evidence, or
-agent records, which lab issue #58 owns. No JSON-LD keywords. The ids are
+until a later record changes the domain. No entity, activity, evidence, or
+agent records, which are later work. No JSON-LD keywords. The ids are
 stable strings and the records are typed, so a JSON-LD context can be laid
 over them later without rewriting a byte. No difference rows, because the
 domain does not own them. No opaque identifiers, because every record already
@@ -201,8 +201,8 @@ has an address a reader can open.
   store that could list what it holds is a later port change.
 - A catalogue id names an edition, not a text of it. Two scans of one
   printing would collide on every id, so this schema carries one catalogue
-  per source id. Lifting that limit needs the identity in lab issue #60 and
-  a new schema version, and this release does not claim to support
+  per source id. Lifting that limit needs that separation of identities
+  and a new schema version, and this release does not claim to support
   collation.
 - Two complete exports cannot be joined. Each carries every configured
   catalogue, and an export that selects one is a later feature.

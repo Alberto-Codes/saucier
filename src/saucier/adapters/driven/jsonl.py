@@ -8,8 +8,8 @@ and know what it holds and which catalogue it belongs to.
 A catalogue record's id is the catalogue's source id, which names an
 edition of a work. It carries the witness fields the domain needs, and that
 does not make it a witness id. Two texts of one edition would share it, so
-a stream carries at most one catalogue per source id. Lab issue #60 owns
-the identity work that a second text of one edition needs.
+a stream carries at most one catalogue per source id. The identity that a
+second text of one edition needs is later work.
 
 The writer is deterministic. Catalogue records come first, in the order
 given, then each catalogue's preparations in source order. Keys are emitted

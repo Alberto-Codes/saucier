@@ -380,7 +380,7 @@ def test_a_record_without_an_id_is_rejected(revision):
 
 @pytest.mark.unit
 def test_a_duplicate_catalogue_id_is_rejected(revision):
-    """One catalogue per source id. A second text of one edition needs lab #60."""
+    """One catalogue per source id. A second text of one edition is later work."""
     lines = lines_of(revision)
     with pytest.raises(
         RecordRejected,
