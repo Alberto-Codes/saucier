@@ -106,7 +106,7 @@ writes nothing:
 $ uv run saucier export | uv run saucier import --check
 escoffier-1909  151 sauces, 57 derived, 94 unresolved
 escoffier-1907  140 sauces, 50 derived, 90 unresolved
-2 witnesses and 291 preparations rebuilt. Nothing written.
+2 catalogues and 291 preparations rebuilt. Nothing written.
 ```
 
 Every record carries a schema version, a type, and a source-local id. A

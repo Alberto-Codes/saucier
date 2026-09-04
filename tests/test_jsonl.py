@@ -1,6 +1,7 @@
 import io
 import json
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 from conftest import a_witness
@@ -109,7 +110,7 @@ def test_a_catalogue_survives_a_round_trip_through_a_text_stream(revision):
 
 
 @pytest.mark.unit
-def test_two_witnesses_coexist_in_one_stream(revision, scan):
+def test_two_catalogues_coexist_in_one_stream(revision, scan):
     assert decode(lines_of(revision, scan)) == (revision, scan)
 
 
@@ -119,9 +120,9 @@ def test_encoding_the_same_input_twice_yields_identical_text(revision, scan):
 
 
 @pytest.mark.unit
-def test_witnesses_come_first_then_preparations_in_source_order(revision, scan):
+def test_catalogue_records_come_first_then_preparations_in_source_order(revision, scan):
     kinds = [json.loads(line)["type"] for line in lines_of(revision, scan)]
-    assert kinds == ["witness", "witness"] + ["preparation"] * 4
+    assert kinds == ["catalogue", "catalogue"] + ["preparation"] * 4
     ids = [json.loads(line)["id"] for line in lines_of(revision, scan)]
     assert ids[2:] == [
         "fixture-1909:line:900",
@@ -158,7 +159,7 @@ def test_an_unresolved_parent_is_null_and_stays_unresolved(revision):
 
 
 @pytest.mark.unit
-def test_a_witness_record_carries_what_rebuilds_the_frame(revision, scan):
+def test_a_catalogue_record_carries_what_rebuilds_the_frame(revision, scan):
     first, second = (json.loads(line) for line in lines_of(revision, scan)[:2])
     assert first["id"] == "fixture-1909"
     assert first["edition"]["statement"] == "New and Revised Edition, January 1909"
@@ -170,9 +171,9 @@ def test_a_witness_record_carries_what_rebuilds_the_frame(revision, scan):
 
 
 @pytest.mark.unit
-def test_a_preparation_record_names_its_witness_and_its_line(revision):
+def test_a_preparation_record_names_its_catalogue_and_its_line(revision):
     record = json.loads(lines_of(revision)[1])
-    assert record["witness"] == "fixture-1909"
+    assert record["catalogue"] == "fixture-1909"
     assert record["id"] == preparation_id("fixture-1909", 900)
     assert record["ref"] == {"entry": 25, "line": 900, "fidelity": "transcription"}
     assert record["terms"] == [
@@ -215,7 +216,7 @@ def test_an_empty_stream_rebuilds_nothing():
 
 
 @pytest.mark.unit
-def test_a_witness_with_no_preparations_rebuilds_empty(revision):
+def test_a_catalogue_with_no_preparations_rebuilds_empty(revision):
     bare = replace(revision, preparations=())
     assert decode(lines_of(bare)) == (bare,)
 
@@ -266,7 +267,31 @@ def test_a_record_without_an_id_is_rejected(revision):
 
 
 @pytest.mark.unit
-def test_a_duplicate_id_is_rejected_naming_both_lines(revision):
+def test_a_duplicate_catalogue_id_is_rejected(revision):
+    """One catalogue per source id. A second text of one edition needs lab #60."""
+    lines = lines_of(revision)
+    with pytest.raises(
+        RecordRejected,
+        match=r"line 4: duplicate id 'fixture-1909', first seen at line 1",
+    ):
+        decode([*lines, lines[0]])
+
+
+@pytest.mark.unit
+def test_two_complete_streams_concatenated_are_rejected_at_the_first_repeat(
+    revision, scan
+):
+    """`saucier export` writes every catalogue, so two exports cannot be joined."""
+    lines = lines_of(revision, scan)
+    with pytest.raises(
+        RecordRejected,
+        match=r"line 7: duplicate id 'fixture-1909', first seen at line 1",
+    ):
+        decode(lines + lines)
+
+
+@pytest.mark.unit
+def test_a_duplicate_preparation_id_is_rejected_naming_both_lines(revision):
     lines = lines_of(revision)
     with pytest.raises(
         RecordRejected, match=r"line 4: duplicate id .*line:900.*first seen at line 2"
@@ -275,10 +300,11 @@ def test_a_duplicate_id_is_rejected_naming_both_lines(revision):
 
 
 @pytest.mark.unit
-def test_a_preparation_whose_witness_is_absent_is_rejected(revision):
+def test_a_preparation_whose_catalogue_is_absent_is_rejected(revision):
     lines = lines_of(revision)
     with pytest.raises(
-        RecordRejected, match="line 1: preparation names witness 'fixture-1909', which"
+        RecordRejected,
+        match="line 1: preparation names catalogue 'fixture-1909', which",
     ):
         decode(lines[1:])
 
@@ -292,7 +318,7 @@ def test_a_field_the_schema_does_not_name_is_rejected(revision):
     ):
         decode([lines[0], edit(lines[1], chapter="warm"), lines[2]])
     with pytest.raises(
-        RecordRejected, match=r"line 1: witness record fields: absent \['origin'\]"
+        RecordRejected, match=r"line 1: catalogue record fields: absent \['origin'\]"
     ):
         decode([edit(lines[0], origin=...), *lines[1:]])
 
@@ -332,11 +358,11 @@ def test_an_id_that_does_not_address_its_line_is_rejected(revision):
 
 
 @pytest.mark.unit
-def test_a_witness_record_that_misnames_itself_is_rejected(revision):
+def test_a_catalogue_record_that_misnames_itself_is_rejected(revision):
     lines = lines_of(revision)
     with pytest.raises(
         RecordRejected,
-        match="line 1: witness record 'fixture-1800' describes 'fixture-1909'",
+        match="line 1: catalogue record 'fixture-1800' describes 'fixture-1909'",
     ):
         decode([edit(lines[0], id="fixture-1800"), *lines[1:]])
 
@@ -406,11 +432,11 @@ def test_a_missing_nested_field_is_reported_by_name(revision):
 
 @pytest.mark.unit
 def test_a_catalogue_the_domain_refuses_is_rejected(revision):
-    """A preparation citing another fidelity than its witness."""
+    """A preparation citing another fidelity than its catalogue's witness."""
     lines = lines_of(revision)
     ref = {"entry": 25, "line": 900, "fidelity": "ocr"}
     with pytest.raises(
-        RecordRejected, match="witness 'fixture-1909': ORDINARY VELOUTÉ SAUCE cites"
+        RecordRejected, match="catalogue 'fixture-1909': ORDINARY VELOUTÉ SAUCE cites"
     ):
         decode([lines[0], edit(lines[1], ref=ref), lines[2]])
 
@@ -449,8 +475,35 @@ def test_the_corpus_stream_is_deterministic_and_its_ids_are_unique(
 
 
 @pytest.mark.corpus
-def test_the_scan_carries_two_preparations_at_entry_138_under_two_ids(escoffier_1907):
+def test_the_scan_catalogue_carries_two_preparations_at_entry_138_under_two_ids(
+    escoffier_1907,
+):
     records = [json.loads(line) for line in lines_of(escoffier_1907)[1:]]
     at_138 = [r["id"] for r in records if r["ref"]["entry"] == 138]
     assert len(at_138) == 2
     assert len(set(at_138)) == 2
+
+
+DOCUMENTED = (
+    "README.md",
+    "docs/adr/0016-jsonl-is-the-interchange-not-a-store.md",
+    "docs/reference/cli.md",
+    "docs/reference/data-model.md",
+    "docs/tutorial/first-run.md",
+)
+"""Every page that quotes a record. A quoted line is real output or a prefix of it."""
+
+
+@pytest.mark.corpus
+def test_every_documented_record_is_real_output(escoffier, escoffier_1907):
+    real = [line.rstrip("\n") for line in lines_of(escoffier, escoffier_1907)]
+    root = Path(__file__).resolve().parent.parent
+    quoted = 0
+    for page in DOCUMENTED:
+        for text in (root / page).read_text(encoding="utf-8").splitlines():
+            if text.startswith('{"schema":"saucier/1"'):
+                quoted += 1
+                assert any(line == text or line.startswith(text) for line in real), (
+                    f"{page} quotes a record that is not real output: {text[:80]}"
+                )
+    assert quoted >= 6

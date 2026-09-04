@@ -20,7 +20,9 @@ The `export` command writes every stored catalogue to standard output as the
 interchange and nothing else, so the stream can be piped. The `import`
 command reads the interchange from standard input, rebuilds every catalogue
 in memory, and prints the census. Its `--check` flag is mandatory, because
-the command writes nothing and the verb must not suggest otherwise.
+the command writes nothing and the verb must not suggest otherwise. A
+stream that carries no catalogue is a failure, because that is what a
+failed export leaves on the other side of a pipe.
 
 Examples:
     Drive the interface in process:
@@ -46,7 +48,7 @@ import os
 import sys
 from collections.abc import Sequence
 
-from saucier.domain.errors import SaucierError
+from saucier.domain.errors import InterchangeEmpty, SaucierError
 from saucier.domain.models import Catalogue, Preparation
 from saucier.domain.types import ConceptId, to_concept_id
 from saucier.infrastructure.bootstrap import (
@@ -145,16 +147,26 @@ def _import(_: argparse.Namespace) -> int:
     """Rebuild every catalogue the standard input carries, and print the census.
 
     Reads one line at a time and writes no file. The census is printed in
-    the order the witness records arrived, one line per witness, so the
+    the order the catalogue records arrived, one line per catalogue, so the
     numbers can be read beside what `parse` printed.
+
+    A stream with no catalogue in it is refused. Without `pipefail`, a
+    pipeline returns the last command's status, so a validator that passed
+    an empty stream would hide the failed export in front of it.
 
     Args:
         _: Parsed arguments. `--check` is mandatory, so it carries nothing.
 
     Returns:
         Zero. A stream the reader rejects raises instead.
+
+    Raises:
+        InterchangeEmpty: If the stream carries no catalogue.
     """
     catalogues = catalogue_interchange().decode(sys.stdin)
+    if not catalogues:
+        msg = "interchange carries no catalogues"
+        raise InterchangeEmpty(msg)
     for catalogue in catalogues:
         print(
             f"{catalogue.source_id:<14}  {len(catalogue.preparations)} sauces, "
@@ -162,7 +174,7 @@ def _import(_: argparse.Namespace) -> int:
         )
     read = sum(len(c.preparations) for c in catalogues)
     print(
-        f"{len(catalogues)} witnesses and {read} preparations rebuilt. Nothing written."
+        f"{len(catalogues)} catalogues and {read} preparations rebuilt. Nothing written."
     )
     return 0
 

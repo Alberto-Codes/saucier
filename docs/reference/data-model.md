@@ -214,16 +214,20 @@ corpus is English and French, so those are the two members.
 `saucier export` writes every entity above as JSON Lines. Each line is one
 record, and every record carries an envelope of `schema`, `type`, and `id`.
 The schema is `saucier/1`. A program with none of these classes reads one
-line and knows what it holds and which witness supports it. See
+line and knows what it holds and which catalogue it belongs to. See
 [ADR-0016](../adr/0016-jsonl-is-the-interchange-not-a-store.md).
 
-A witness record carries the `Witness`, the mothers, and `entries_read`.
-Its id is the source id.
+A catalogue record carries the `Witness` fields, the mothers, and
+`entries_read`. Its id is the catalogue's source id.
+
+```json
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
+```
 
 | Field | Holds |
 | --- | --- |
 | `schema` | `saucier/1` |
-| `type` | `witness` |
+| `type` | `catalogue` |
 | `id` | The source id. Recomputed from `work` and `edition` on the way back. |
 | `work` | `Witness.work` |
 | `edition` | The four `Edition` fields, `null` where the front matter states none |
@@ -232,16 +236,20 @@ Its id is the source id.
 | `mothers` | Concept ids, sorted |
 | `entries_read` | `Catalogue.entries_read`, or `null` when no count was recorded |
 
-A preparation record names its witness and carries one `Preparation`. Its
-id is the witness and the heading line, joined: `escoffier-1909:line:1437`.
-The entry number is not identity, because a scan repeats numbers.
+A preparation record names its catalogue and carries one `Preparation`. Its
+id is the catalogue id and the heading line, joined. The entry number is not
+identity, because a scan repeats numbers.
+
+```json
+{"schema":"saucier/1","type":"preparation","id":"escoffier-1909:line:38713","catalogue":"escoffier-1909","title":"STRAWBERRY SAUCE","terms":[{"surface":"STRAWBERRY SAUCE","language":"en","concept":"strawberry-sauce"}],"concept":"strawberry-sauce","parent":null,"ref":{"entry":2417,"line":38713,"fidelity":"transcription"},"body":"Proceed as for No. 2416."}
+```
 
 | Field | Holds |
 | --- | --- |
 | `schema` | `saucier/1` |
 | `type` | `preparation` |
-| `id` | The witness and the line. Recomputed on the way back. |
-| `witness` | The source id of the witness record |
+| `id` | The catalogue id and the line. Recomputed on the way back. |
+| `catalogue` | The id of the catalogue record |
 | `title` | `Preparation.title`, verbatim |
 | `terms` | One object per `Term`: `surface`, `language`, and its `concept` |
 | `concept` | `Preparation.concept`. Recomputed on the way back. |
@@ -257,5 +265,8 @@ Every derived field is recomputed by the reader and compared. A record whose
 `concept` is not folded from its terms is rejected at its line number. So is
 a record whose `id` does not address its line.
 
-An id is an address inside one witness. It does not say that two witnesses
-hold one sauce. That claim needs evidence, and no record carries it yet.
+A catalogue id names an edition, because `Witness.source_id` is the work and
+the edition year. It is not a witness id. Two texts of one edition would
+share it. So a stream carries one catalogue per source id, and the reader
+rejects a second as a duplicate. A preparation id is an address inside one
+catalogue. It does not say that two catalogues hold one sauce.

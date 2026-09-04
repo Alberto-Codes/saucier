@@ -145,11 +145,12 @@ because it reads what is stored rather than the corpus.
 
 ```console
 $ uv run saucier export | head -n 1 | cut -c1-110
-{"schema":"saucier/1","type":"witness","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New an
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New
 ```
 
-The stream holds two record types. Witness records come first, in the
-configured order, then each witness's preparations in source order.
+The stream holds two record types. Catalogue records come first, in the
+configured order, then each catalogue's preparations in source order.
+Every export writes every configured catalogue.
 Identical catalogues produce identical bytes, so two exports of one `data/`
 directory have one SHA-256. The record shapes are in the
 [data model](data-model.md#interchange).
@@ -174,12 +175,14 @@ this release, so the verb cannot imply a write the command does not perform.
 $ uv run saucier export | uv run saucier import --check
 escoffier-1909  151 sauces, 57 derived, 94 unresolved
 escoffier-1907  140 sauces, 50 derived, 90 unresolved
-2 witnesses and 291 preparations rebuilt. Nothing written.
+2 catalogues and 291 preparations rebuilt. Nothing written.
 ```
 
-The reader consumes one line at a time and accepts records in any order, so
-two exports joined with `cat` rebuild both witnesses. It rejects the first
-line it cannot accept, and names the line:
+The reader consumes one line at a time and accepts records in any order.
+Catalogues are rebuilt in the order their catalogue records arrived. Two
+complete exports cannot be joined, because the second repeats every id and
+the reader rejects the first repeat. The reader rejects the first line it
+cannot accept, and names the line:
 
 ```console
 $ printf '{"schema":"saucier/2"}\n' | uv run saucier import --check
@@ -194,18 +197,30 @@ saucier: line 1: unknown schema 'saucier/2', this reader accepts 'saucier/1'
 | Unknown record type | `line 2: unknown record type 'claim'` |
 | Missing or blank id | `line 1: a record needs an id` |
 | Duplicate id | `line 3: duplicate id 'escoffier-1909:line:1317', first seen at line 2` |
-| Witness never carried | `line 1: preparation names witness 'escoffier-1909', which the stream does not carry` |
+| A second export joined to the first | `line 294: duplicate id 'escoffier-1909', first seen at line 1` |
+| Catalogue never carried | `line 1: preparation names catalogue 'escoffier-1909', which the stream does not carry` |
 | Unexpected or absent field | `line 2: preparation record fields: absent [], unexpected ['chapter']` |
 | Blank parent | `line 2: surface form yields an empty concept id: ''` |
 | Parent not a concept id | `line 2: 'Brown Roux' is not a concept id` |
 | Concept not folded from the terms | `line 2: concept 'veloute' is not folded from the terms` |
-| Id not the witness and line | `line 2: id 'escoffier-1909:entry:1' does not address 'escoffier-1909:line:1317'` |
-| Witness id disagrees with its edition | `line 1: witness record 'escoffier-1800' describes 'escoffier-1909'` |
+| Id not the catalogue and line | `line 2: id 'escoffier-1909:entry:1' does not address 'escoffier-1909:line:1317'` |
+| Catalogue id disagrees with its edition | `line 1: catalogue record 'escoffier-1800' describes 'escoffier-1909'` |
 | Wrong value type | `line 1: expected a whole number, not '2963'` |
-| A catalogue the domain refuses | `witness 'escoffier-1909': BROWN ROUX cites escoffier-1909 at ocr, in a catalogue of escoffier-1909 at transcription` |
+| A catalogue the domain refuses | `catalogue 'escoffier-1909': BROWN ROUX cites escoffier-1909 at ocr, in a catalogue of escoffier-1909 at transcription` |
 
-A `null` parent is unresolved and is accepted. An empty stream rebuilds
-nothing and says so.
+A `null` parent is unresolved and is accepted.
+
+An empty stream fails. Without `pipefail` a pipeline returns the last
+command's status. An empty stream is what a failed `export` leaves on the
+other side of the pipe. The command refuses to report a success over
+nothing:
+
+```console
+$ printf '' | uv run saucier import --check; echo $?
+saucier: interchange carries no catalogues
+2
+```
 
 Exit codes: `0` on success, `2` when the reader rejects a line or a rebuilt
-catalogue. Without `--check` the parser refuses the command and exits `2`.
+catalogue, or the stream carries no catalogue. Without `--check` the parser
+refuses the command and exits `2`.

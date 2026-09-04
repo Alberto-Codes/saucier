@@ -433,12 +433,12 @@ def test_export_writes_only_records_to_stdout(wired, capsys):
     assert len(lines) == 2 + 151 + 140
     assert out.endswith("\n") and not out.endswith("\n\n")
     kinds = [json.loads(line)["type"] for line in lines]
-    assert kinds[:2] == ["witness", "witness"]
+    assert kinds[:2] == ["catalogue", "catalogue"]
     assert set(kinds[2:]) == {"preparation"}
 
 
 @pytest.mark.corpus
-def test_export_writes_the_witnesses_in_the_configured_order(wired, capsys):
+def test_export_writes_the_catalogues_in_the_configured_order(wired, capsys):
     cli.main(["parse"])
     capsys.readouterr()
     cli.main(["export"])
@@ -479,7 +479,7 @@ def test_the_shell_round_trip_reproduces_the_census(
     assert out.splitlines()[:2] == [first, second]
     assert (
         out.splitlines()[2]
-        == "2 witnesses and 291 preparations rebuilt. Nothing written."
+        == "2 catalogues and 291 preparations rebuilt. Nothing written."
     )
 
 
@@ -518,12 +518,42 @@ def test_import_reports_a_rejected_line_on_stderr(capsys, monkeypatch):
 
 
 @pytest.mark.unit
-def test_import_of_an_empty_stream_says_so(capsys, monkeypatch):
+def test_import_of_an_empty_stream_fails_and_prints_no_success(capsys, monkeypatch):
     monkeypatch.setattr(sys, "stdin", io.StringIO(""))
-    assert cli.main(["import", "--check"]) == 0
-    assert (
-        capsys.readouterr().out
-        == "0 witnesses and 0 preparations rebuilt. Nothing written.\n"
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == "saucier: interchange carries no catalogues\n"
+
+
+@pytest.mark.corpus
+def test_a_failed_export_cannot_be_validated_as_a_success(wired, capsys, monkeypatch):
+    """The pipe shape: export fails before its first record, import sees nothing."""
+    assert cli.main(["export"]) == cli.FAILED
+    exported, err = capsys.readouterr()
+    assert exported == ""
+    assert "no catalogue stored" in err
+    monkeypatch.setattr(sys, "stdin", io.StringIO(exported))
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == "saucier: interchange carries no catalogues\n"
+
+
+@pytest.mark.corpus
+def test_two_exports_concatenated_are_rejected_at_the_first_repeated_id(
+    wired, capsys, monkeypatch
+):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["export"])
+    exported = capsys.readouterr().out
+    monkeypatch.setattr(sys, "stdin", io.StringIO(exported + exported))
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == (
+        "saucier: line 294: duplicate id 'escoffier-1909', first seen at line 1\n"
     )
 
 

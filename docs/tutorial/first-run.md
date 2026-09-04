@@ -154,19 +154,20 @@ anything else, write it as one record per line:
 ```console
 $ uv run saucier export > escoffier.jsonl
 $ head -n 2 escoffier.jsonl
-{"schema":"saucier/1","type":"witness","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
-{"schema":"saucier/1","type":"witness","id":"escoffier-1907","work":"escoffier","edition":{"statement":null,"stated_year":null,"impression":null,"copyright_year":1907},"origin":"Internet Archive cu31924000610117","fidelity":"ocr","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2679}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1907","work":"escoffier","edition":{"statement":null,"stated_year":null,"impression":null,"copyright_year":1907},"origin":"Internet Archive cu31924000610117","fidelity":"ocr","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2679}
 ```
 
-Every line says what it is, which schema shaped it, and which witness
-supports it. The two witness records come first, then one record per
-preparation. A preparation is addressed by its witness and its heading line,
-so `escoffier-1909:line:1680` is Bordelaise, and 1680 is the line you opened
+Every line says what it is, which schema shaped it, and which catalogue it
+belongs to. The two catalogue records come first, each carrying the witness
+it was read from, then one record per preparation. A preparation is
+addressed by its catalogue and its heading line, so
+`escoffier-1909:line:1680` is Bordelaise, and 1680 is the line you opened
 with `sed` above.
 
 ```console
 $ grep '"id":"escoffier-1909:line:1680"' escoffier.jsonl | cut -c1-160
-{"schema":"saucier/1","type":"preparation","id":"escoffier-1909:line:1680","witness":"escoffier-1909","title":"SAUCE BORDELAISE","terms":[{"surface":"SAUCE BORD
+{"schema":"saucier/1","type":"preparation","id":"escoffier-1909:line:1680","catalogue":"escoffier-1909","title":"SAUCE BORDELAISE","terms":[{"surface":"SAUCE BO
 ```
 
 Prove the stream rebuilds both catalogues without writing anything:
@@ -175,12 +176,14 @@ Prove the stream rebuilds both catalogues without writing anything:
 $ uv run saucier import --check < escoffier.jsonl
 escoffier-1909  151 sauces, 57 derived, 94 unresolved
 escoffier-1907  140 sauces, 50 derived, 90 unresolved
-2 witnesses and 291 preparations rebuilt. Nothing written.
+2 catalogues and 291 preparations rebuilt. Nothing written.
 ```
 
 The same four numbers. Run `export` twice and compare the hashes. They are
 identical, because the writer emits records in one order, with one key
-order, and no timestamp. A serialization and a database are different
+order, and no timestamp. Feed the check an empty stream and it fails with
+exit code 2, because an empty stream is what a failed export leaves behind
+and a check must not call that a success. A serialization and a database are different
 decisions, and
 [ADR-0016](../adr/0016-jsonl-is-the-interchange-not-a-store.md) says why
 this release makes only the first.

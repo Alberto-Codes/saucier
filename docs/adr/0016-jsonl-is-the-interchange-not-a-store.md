@@ -51,7 +51,10 @@ works unchanged.
 catalogue to standard output as JSONL and writes nothing else there. `saucier
 import --check` reads JSONL from standard input, rebuilds every catalogue in
 memory, and prints the census. The flag is mandatory in this release, so the
-verb cannot imply a write the command does not perform.
+verb cannot imply a write the command does not perform. A stream that
+carries no catalogue fails the check. Without `pipefail` a pipeline returns
+the last command's status, and an empty stream is what a failed export
+leaves behind.
 
 **The codec is a driven adapter behind a port of its own.** `CatalogueStore`
 describes a place. The interchange is a representation, so
@@ -63,30 +66,41 @@ The domain does not change. JSON syntax stays outside the hexagon.
 Every record carries an envelope of three fields: `schema`, `type`, and `id`.
 The schema is `saucier/1`. There are two record types.
 
-A witness record carries what rebuilds a catalogue's frame. That is the
-work, the edition as the front matter states it, the origin, the fidelity,
-the sorted mothers, and `entries_read`. Its id is the source id.
+A catalogue record carries what rebuilds a catalogue's frame. That is the
+witness fields, which are the work, the edition as the front matter states
+it, the origin, and the fidelity. Then the sorted mothers and
+`entries_read`. Its id is the catalogue's source id.
 
 ```json
-{"schema":"saucier/1","type":"witness","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
 ```
 
-A preparation record names its witness and carries the title, the terms with
-their language tags, the concept, the parent, the reference, and the body.
-Its id is the witness and the heading line, joined: `escoffier-1909:line:1437`.
+A preparation record names its catalogue and carries the title, the terms
+with their language tags, the concept, the parent, the reference, and the
+body. Its id is the catalogue id and the heading line, joined.
 
 ```json
-{"schema":"saucier/1","type":"preparation","id":"escoffier-1909:line:1437","witness":"escoffier-1909","title":"HALF GLAZE","terms":[{"surface":"HALF GLAZE","language":"en","concept":"half-glaze"}],"concept":"half-glaze","parent":"espagnole","ref":{"entry":23,"line":1437,"fidelity":"transcription"},"body":"..."}
+{"schema":"saucier/1","type":"preparation","id":"escoffier-1909:line:38713","catalogue":"escoffier-1909","title":"STRAWBERRY SAUCE","terms":[{"surface":"STRAWBERRY SAUCE","language":"en","concept":"strawberry-sauce"}],"concept":"strawberry-sauce","parent":null,"ref":{"entry":2417,"line":38713,"fidelity":"transcription"},"body":"Proceed as for No. 2416."}
 ```
 
-Five rules govern the record.
+Six rules govern the record.
 
 **An id is a source-local address, never a resolution.** A preparation id
-derives from the witness and the heading line. It says where a reader can
-check the claim. It does not say that two witnesses hold the same sauce. The
-entry number is not identity, because the scan repeats numbers. Lab issue #60
-separates record, entity, mention, and claim identity, and none of that
-arrives here.
+derives from the catalogue id and the heading line. It says where a reader
+can check the claim. It does not say that two catalogues hold the same
+sauce. The entry number is not identity, because the scan repeats numbers.
+Lab issue #60 separates record, entity, mention, and claim identity, and
+none of that arrives here.
+
+**A catalogue id is a source id, not a witness id.** `Witness.source_id` is
+the work and the edition year. A second scan or a second transcription of
+one edition would share it. Their preparation ids would collide wherever a
+heading line coincides. The record carries the witness
+fields, and that does not make its id a witness id. So version one carries
+one catalogue per source id, and the reader rejects a second as a
+duplicate. Collating two texts of one printing needs the identity work in
+lab issue #60 and a later schema version. This record makes no claim that
+the current identifiers support it.
 
 **A `null` parent means unresolved.** It never means the preparation has no
 parent. ADR-0002 governs the interchange as it governs the domain.
@@ -96,12 +110,12 @@ escaping, so `VELOUTÉ` is six characters on disk. Every term keeps its
 language tag.
 
 **Derived fields are written for the reader and verified on the way back.**
-A witness record carries its source id, and a preparation record carries its
+A catalogue record carries its id, and a preparation record carries its
 concept. Both derive from other fields. The reader recomputes each one and
 rejects a record where the two disagree.
 
-**Identical catalogues produce identical bytes.** The writer emits witness
-records first, in the order given, then each witness's preparations in
+**Identical catalogues produce identical bytes.** The writer emits catalogue
+records first, in the order given, then each catalogue's preparations in
 source order. Keys are emitted in one fixed order, with no whitespace, and
 every line ends in one newline. No timestamp appears, because a timestamp
 changes the bytes without adding evidence.
@@ -113,16 +127,19 @@ rejects, with the line number, any of the following:
 
 - a line that is not one JSON object,
 - a schema other than `saucier/1`,
-- a type other than `witness` or `preparation`,
+- a type other than `catalogue` or `preparation`,
 - a missing or blank id, or an id seen on an earlier line,
 - a field the schema does not name, or a named field that is absent,
 - a value of the wrong type, including a blank parent,
 - a derived field that disagrees with what it derives from,
-- a preparation whose witness the stream never carries,
+- a preparation whose catalogue the stream never carries,
 - any rebuilt catalogue the domain refuses.
 
-Records may arrive in any order. Two exports joined with `cat` put a witness
-after another witness's preparations, and that stream is valid. The reader
+Records may arrive in any order, and a preparation may precede the
+catalogue record it names. The reader rebuilds catalogues in the order
+their catalogue records arrived. Two complete exports cannot be joined,
+because `saucier export` writes every configured catalogue and the second
+copy repeats every id. The reader rejects the first repeat. The reader
 holds the preparations it has read until the stream ends. A catalogue is
 validated whole, and the domain holds every preparation in one tuple. What
 streams is the text. A consumer that wants one preparation at a time reads
@@ -145,7 +162,9 @@ has an address a reader can open.
 - One command emits a stream that a shell, DuckDB, or a loader in another
   language reads with no import of this package.
 - The reader is strict, so a hand-edited stream that lies about a concept or
-  a witness is reported at its line rather than loaded.
+  a catalogue is reported at its line rather than loaded.
+- An empty stream fails `import --check`, so a pipeline whose export failed
+  cannot end in a zero.
 - A later SQLite projection consumes this stream and never imports
   extraction. Delete the database, replay the stream, and obtain the same
   answers.
@@ -158,7 +177,14 @@ has an address a reader can open.
 - The same preparation is rendered by two adapters in two shapes. The two
   formats have two jobs and are expected to diverge, but for now they
   duplicate about forty lines of primitives.
-- Rebuilding a catalogue holds every preparation of that witness in memory.
+- A catalogue id names an edition, not a text of it. Two scans of one
+  printing would collide on every id, so this schema carries one catalogue
+  per source id. Lifting that limit needs the identity in lab issue #60 and
+  a new schema version, and this release does not claim to support
+  collation.
+- Two complete exports cannot be joined. Each carries every configured
+  catalogue, and an export that selects one is a later feature.
+- Rebuilding a catalogue holds every preparation of that catalogue in memory.
   That is the domain's shape, not a limit of the format, and this record
   does not hide it behind the word stream.
 - `import` performs no import. The mandatory flag makes that visible at the

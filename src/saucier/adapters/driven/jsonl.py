@@ -1,12 +1,18 @@
 """Carry catalogues as JSON Lines, one record per line.
 
-The interchange, as ADR-0016 decides it. A stream holds witness records and
-preparation records, and every record carries an envelope of `schema`,
+The interchange, as ADR-0016 decides it. A stream holds catalogue records
+and preparation records, and every record carries an envelope of `schema`,
 `type`, and `id`. A program with none of these classes can read one line
-and know what it holds and which text supports it.
+and know what it holds and which catalogue it belongs to.
 
-The writer is deterministic. Witness records come first, in the order
-given, then each witness's preparations in source order. Keys are emitted
+A catalogue record's id is the catalogue's source id, which names an
+edition of a work. It carries the witness fields the domain needs, and that
+does not make it a witness id. Two texts of one edition would share it, so
+a stream carries at most one catalogue per source id. Lab issue #60 owns
+the identity work that a second text of one edition needs.
+
+The writer is deterministic. Catalogue records come first, in the order
+given, then each catalogue's preparations in source order. Keys are emitted
 in one fixed order, with no whitespace and no ASCII escaping, and every
 line ends in one newline. Identical catalogues produce identical bytes.
 
@@ -14,11 +20,11 @@ The reader is strict. It consumes one line at a time and rejects, with the
 line number, anything the schema does not describe: malformed JSON, an
 unknown schema or type, a duplicate id, a field it does not name, a value
 of the wrong type, a derived field that disagrees with its source, and a
-preparation whose witness the stream never carries. It accepts records in
-any order, so two exports joined with `cat` still rebuild. A `null` parent
-is unresolved, and a blank one is damage. Every field the schema names is
-checked to be present before it is read, so a damaged record is always
-reported by what is wrong with it and never by a bare key.
+preparation whose catalogue the stream never carries. It accepts records
+in any order. A `null` parent is unresolved, and a blank one is damage.
+Every field the schema names is checked to be present before it is read,
+so a damaged record is always reported by what is wrong with it and never
+by a bare key.
 
 Examples:
     Write a stream and rebuild the catalogues from it:
@@ -56,19 +62,19 @@ from saucier.domain.witness import Edition, Fidelity, Witness
 SCHEMA = "saucier/1"
 """The version of the interchange this module writes and reads."""
 
-WITNESS = "witness"
-"""Record type carrying what rebuilds a catalogue's frame."""
+CATALOGUE = "catalogue"
+"""Record type carrying a catalogue's frame: its witness, mothers, and count."""
 
 PREPARATION = "preparation"
-"""Record type carrying one preparation and the witness it cites."""
+"""Record type carrying one preparation and the catalogue it belongs to."""
 
 _ENVELOPE = ("schema", "type", "id")
-_WITNESS_KEYS = frozenset(
+_CATALOGUE_KEYS = frozenset(
     (*_ENVELOPE, "work", "edition", "origin", "fidelity", "mothers", "entries_read")
 )
 _EDITION_KEYS = frozenset(("statement", "stated_year", "impression", "copyright_year"))
 _PREPARATION_KEYS = frozenset(
-    (*_ENVELOPE, "witness", "title", "terms", "concept", "parent", "ref", "body")
+    (*_ENVELOPE, "catalogue", "title", "terms", "concept", "parent", "ref", "body")
 )
 _TERM_KEYS = frozenset(("surface", "language", "concept"))
 _REF_KEYS = frozenset(("entry", "line", "fidelity"))
@@ -77,18 +83,19 @@ _DAMAGE = (TypeError, ValueError, EditionUnstated)
 
 
 def preparation_id(source_id: str, line: int) -> str:
-    """Address one preparation inside one witness.
+    """Address one preparation inside one catalogue.
 
     The heading line identifies a preparation where an entry number may
     not, because a scan repeats numbers. The id says where a reader can
-    check the claim. It makes no claim that two witnesses hold one sauce.
+    check the claim. It makes no claim that two catalogues hold one sauce.
 
     Args:
-        source_id: The witness the preparation was read from.
+        source_id: The catalogue the preparation belongs to, which is the
+            source id of its witness.
         line: The line its heading sits on.
 
     Returns:
-        The witness and the line, joined.
+        The catalogue and the line, joined.
     """
     return f"{source_id}:line:{line}"
 
@@ -107,7 +114,7 @@ class JsonlInterchange:
     """
 
     def encode(self, catalogues: Iterable[Catalogue]) -> Iterator[str]:
-        """Render catalogues as lines, witnesses first.
+        """Render catalogues as lines, catalogue records first.
 
         The catalogues are held before the first line is yielded, so a
         catalogue that cannot be read raises before any output exists.
@@ -120,7 +127,7 @@ class JsonlInterchange:
         """
         held = tuple(catalogues)
         for catalogue in held:
-            yield _render(_witness_record(catalogue))
+            yield _render(_catalogue_record(catalogue))
         for catalogue in held:
             for preparation in catalogue.preparations:
                 yield _render(_preparation_record(catalogue.source_id, preparation))
@@ -133,11 +140,12 @@ class JsonlInterchange:
                 skipped, and line numbers in errors count them.
 
         Returns:
-            The rebuilt catalogues, in the order their witness records appeared.
+            The rebuilt catalogues, in the order their catalogue records
+            appeared.
 
         Raises:
             RecordRejected: If any line is not a record this reader accepts,
-                a preparation names a witness the stream never carries, or
+                a preparation names a catalogue the stream never carries, or
                 a rebuilt catalogue violates a domain invariant.
         """
         reader = _Reader()
@@ -151,12 +159,12 @@ class _Reader:
     """What the reader holds between the first line and the last.
 
     Attributes:
-        frames (dict[str, Catalogue]): Witness records rebuilt so far, keyed
-            by source id, each an empty catalogue awaiting its preparations.
+        frames (dict[str, Catalogue]): Catalogue records rebuilt so far,
+            keyed by source id, each awaiting its preparations.
         preparations (dict[str, list[Preparation]]): Preparations read so
-            far, grouped by the witness they name.
+            far, grouped by the catalogue they name.
         seen (dict[str, int]): Every id read so far and the line it was on.
-        cited (dict[str, int]): Each witness a preparation names and the
+        cited (dict[str, int]): Each catalogue a preparation names and the
             first line that named it, for reporting a dangling reference.
 
     Examples:
@@ -181,7 +189,9 @@ class _Reader:
         """Read one line, and reject it with its number if it is not a record.
 
         Malformed JSON is reported with the column the parser stopped at,
-        counted from 1 along the line rather than from the last newline.
+        counted from 1 along the line rather than from the last newline. A
+        catalogue record becomes a frame awaiting its preparations, and a
+        preparation record is filed under the catalogue it names.
         Everything else the rebuild raises is reported in its own words.
 
         Args:
@@ -198,12 +208,12 @@ class _Reader:
                 msg = f"duplicate id {identity!r}, first seen at line {self.seen[identity]}"
                 raise ValueError(msg)
             self.seen[identity] = number
-            if kind == WITNESS:
+            if kind == CATALOGUE:
                 self.frames[identity] = _frame_from(record)
             else:
-                witness, preparation = _preparation_from(record)
-                self.cited.setdefault(witness, number)
-                self.preparations.setdefault(witness, []).append(preparation)
+                catalogue, preparation = _preparation_from(record)
+                self.cited.setdefault(catalogue, number)
+                self.preparations.setdefault(catalogue, []).append(preparation)
         except json.JSONDecodeError as exc:
             msg = f"line {number}: not JSON ({exc.msg} at column {exc.pos + 1})"
             raise RecordRejected(msg) from exc
@@ -217,16 +227,16 @@ class _Reader:
         order, so a shuffled stream rebuilds the same catalogue.
 
         Returns:
-            The catalogues, in the order their witness records appeared.
+            The catalogues, in the order their catalogue records appeared.
 
         Raises:
-            RecordRejected: If a preparation names a witness the stream never
+            RecordRejected: If a preparation names a catalogue the stream never
                 carried, or a catalogue refuses its preparations.
         """
-        for witness, number in self.cited.items():
-            if witness not in self.frames:
+        for catalogue, number in self.cited.items():
+            if catalogue not in self.frames:
                 msg = (
-                    f"line {number}: preparation names witness {witness!r}, "
+                    f"line {number}: preparation names catalogue {catalogue!r}, "
                     "which the stream does not carry"
                 )
                 raise RecordRejected(msg)
@@ -236,7 +246,7 @@ class _Reader:
             try:
                 built.append(replace(frame, preparations=tuple(ordered)))
             except ValueError as exc:
-                raise RecordRejected(f"witness {source_id!r}: {exc}") from exc
+                raise RecordRejected(f"catalogue {source_id!r}: {exc}") from exc
         return tuple(built)
 
 
@@ -264,8 +274,8 @@ def _render(record: dict[str, Any]) -> str:
     return json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
-def _witness_record(catalogue: Catalogue) -> dict[str, Any]:
-    """Render a catalogue's frame as a witness record.
+def _catalogue_record(catalogue: Catalogue) -> dict[str, Any]:
+    """Render a catalogue's frame as a catalogue record.
 
     Args:
         catalogue: The catalogue whose witness, mothers, and count to carry.
@@ -276,7 +286,7 @@ def _witness_record(catalogue: Catalogue) -> dict[str, Any]:
     witness, edition = catalogue.witness, catalogue.witness.edition
     return {
         "schema": SCHEMA,
-        "type": WITNESS,
+        "type": CATALOGUE,
         "id": catalogue.source_id,
         "work": witness.work,
         "edition": {
@@ -293,13 +303,13 @@ def _witness_record(catalogue: Catalogue) -> dict[str, Any]:
 
 
 def _preparation_record(source_id: str, preparation: Preparation) -> dict[str, Any]:
-    """Render one preparation as a record naming its witness.
+    """Render one preparation as a record naming its catalogue.
 
     The body comes last, so a reader skimming the head of a line sees the
     envelope, the names, and the parent before the prose.
 
     Args:
-        source_id: The witness the preparation was read from.
+        source_id: The catalogue the preparation belongs to.
         preparation: The preparation to carry.
 
     Returns:
@@ -310,7 +320,7 @@ def _preparation_record(source_id: str, preparation: Preparation) -> dict[str, A
         "schema": SCHEMA,
         "type": PREPARATION,
         "id": preparation_id(source_id, ref.line),
-        "witness": source_id,
+        "catalogue": source_id,
         "title": preparation.title,
         "terms": [
             {"surface": t.surface, "language": t.language.value, "concept": t.concept}
@@ -346,6 +356,10 @@ def _parse(line: str) -> dict[str, Any]:
 def _envelope(record: dict[str, Any]) -> tuple[str, str]:
     """Check the three fields every record carries.
 
+    The type is `catalogue` or `preparation`. A catalogue record's id is a
+    source id, and a repeat of one is a duplicate, because version one
+    carries one catalogue per source id.
+
     Args:
         record: The parsed record.
 
@@ -361,7 +375,7 @@ def _envelope(record: dict[str, Any]) -> tuple[str, str]:
         msg = f"unknown schema {schema!r}, this reader accepts {SCHEMA!r}"
         raise ValueError(msg)
     kind = record.get("type")
-    if kind not in (WITNESS, PREPARATION):
+    if kind not in (CATALOGUE, PREPARATION):
         msg = f"unknown record type {kind!r}"
         raise ValueError(msg)
     identity = record.get("id")
@@ -372,13 +386,13 @@ def _envelope(record: dict[str, Any]) -> tuple[str, str]:
 
 
 def _frame_from(record: dict[str, Any]) -> Catalogue:
-    """Rebuild a catalogue's frame from a witness record.
+    """Rebuild a catalogue's frame from a catalogue record.
 
     The source id is recomputed from the work and the edition, so a record
     whose id names another text is rejected rather than answered to.
 
     Args:
-        record: A witness record whose envelope has been checked.
+        record: A catalogue record whose envelope has been checked.
 
     Returns:
         A catalogue with its witness, mothers, and count, and no preparations.
@@ -387,7 +401,7 @@ def _frame_from(record: dict[str, Any]) -> Catalogue:
         ValueError: If a field is absent, unexpected, or of the wrong type,
             or the id disagrees with the witness it describes.
     """
-    fields = _fields(record, _WITNESS_KEYS, "witness record")
+    fields = _fields(record, _CATALOGUE_KEYS, "catalogue record")
     edition = _fields(fields["edition"], _EDITION_KEYS, "edition")
     witness = Witness(
         work=_text(fields["work"]),
@@ -401,7 +415,7 @@ def _frame_from(record: dict[str, Any]) -> Catalogue:
         ),
     )
     if witness.source_id != fields["id"]:
-        msg = f"witness record {fields['id']!r} describes {witness.source_id!r}"
+        msg = f"catalogue record {fields['id']!r} describes {witness.source_id!r}"
         raise ValueError(msg)
     return Catalogue(
         witness=witness,
@@ -421,14 +435,14 @@ def _preparation_from(record: dict[str, Any]) -> tuple[str, Preparation]:
         record: A preparation record whose envelope has been checked.
 
     Returns:
-        The witness the record names, and the preparation.
+        The catalogue the record names, and the preparation.
 
     Raises:
         ValueError: If a field is absent, unexpected, or of the wrong type,
             or a derived field disagrees with what it derives from.
     """
     fields = _fields(record, _PREPARATION_KEYS, "preparation record")
-    witness = _text(fields["witness"])
+    catalogue = _text(fields["catalogue"])
     ref = _fields(fields["ref"], _REF_KEYS, "ref")
     parent = fields["parent"]
     preparation = Preparation(
@@ -436,7 +450,7 @@ def _preparation_from(record: dict[str, Any]) -> tuple[str, Preparation]:
         terms=tuple(_term_from(t) for t in _list(fields["terms"], "terms")),
         body=_text(fields["body"]),
         ref=SourceRef(
-            source_id=witness,
+            source_id=catalogue,
             entry=_int(ref["entry"]),
             line=_int(ref["line"]),
             fidelity=Fidelity(_text(ref["fidelity"])),
@@ -446,11 +460,11 @@ def _preparation_from(record: dict[str, Any]) -> tuple[str, Preparation]:
     if fields["concept"] != preparation.concept:
         msg = f"concept {fields['concept']!r} is not folded from the terms"
         raise ValueError(msg)
-    wanted = preparation_id(witness, preparation.ref.line)
+    wanted = preparation_id(catalogue, preparation.ref.line)
     if fields["id"] != wanted:
         msg = f"id {fields['id']!r} does not address {wanted!r}"
         raise ValueError(msg)
-    return witness, preparation
+    return catalogue, preparation
 
 
 def _term_from(payload: Any) -> Term:

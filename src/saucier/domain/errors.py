@@ -4,7 +4,8 @@ Every error this package raises deliberately descends from `SaucierError`,
 so an entry point can turn intended failures into an exit code while letting
 genuine bugs surface as tracebacks. That rule covers bad input of every
 kind: an unreadable source, a damaged store, a rejected record of the
-interchange, an unfoldable term, and a tree with no corpus in it.
+interchange, an interchange with nothing in it, an unfoldable term, and a
+tree with no corpus in it.
 
 Examples:
     Catch anything this package raises on purpose:
@@ -114,7 +115,7 @@ class RecordRejected(SaucierError):
 
     The message names the line, so a reader can open the stream at the
     failure. Malformed JSON, an unknown schema or type, a duplicate id, a
-    field the schema does not name, and a preparation whose witness the
+    field the schema does not name, and a preparation whose catalogue the
     stream never carries all arrive here.
 
     Examples:
@@ -122,6 +123,22 @@ class RecordRejected(SaucierError):
 
         ```python
         interchange.decode(lines)  # RecordRejected: line 7: duplicate id ...
+        ```
+    """
+
+
+class InterchangeEmpty(SaucierError):
+    """A stream asked to carry catalogues carries none.
+
+    An empty stream is what a failed export leaves behind. A command asked
+    to validate one reports the absence rather than a success over nothing,
+    so a pipeline whose first half failed cannot end in a zero.
+
+    Examples:
+        Raised when standard input holds no record:
+
+        ```python
+        main(["import", "--check"])  # saucier: interchange carries no catalogues
         ```
     """
 

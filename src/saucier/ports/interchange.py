@@ -64,7 +64,8 @@ class CatalogueInterchange(Protocol):
             lines: Lines of the interchange, in any order.
 
         Returns:
-            The rebuilt catalogues, in the order their witness records appeared.
+            The rebuilt catalogues, in the order their catalogue records
+            appeared.
 
         Raises:
             RecordRejected: If any line is not a record this reader accepts,

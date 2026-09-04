@@ -175,7 +175,7 @@ in the same change.
 
 **Record**
 :   One line of the interchange: a JSON object carrying an envelope and one
-    witness or one preparation. A record is a unit of the interchange, and
+    catalogue or one preparation. A record is a unit of the interchange, and
     an entry is a division of a source. Not "row" or "line".
 
 **Envelope**
