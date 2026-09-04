@@ -35,6 +35,12 @@ which store is correct at each stage.
 | Object storage | Video arrives | Blobs do not belong in a database, and distributed workers need shared access |
 | Postgres | Concurrent writers appear | Durability and transactional integrity for a work ledger |
 
+*Amended by [ADR-0016](0016-jsonl-is-the-interchange-not-a-store.md).* The
+JSONL row predicted a break that never came. The store writes one file per
+witness, so a second witness rewrote nothing. JSONL arrives as the
+interchange between extraction and every later store, not as a store of its
+own. The JSON snapshot stays the working store, and SQLite is the next rung.
+
 **SQLite is the entry point rather than DuckDB.** DuckDB permits one
 read-write process or several read-only ones against a file, with no
 cross-process writer concurrency. A worker pool, which this system acquires by

@@ -59,10 +59,11 @@ a blog series, and each published post corresponds to an immutable tag.
   paragraph, sentences within 25 words, no marketing adjectives.
   `scripts/check_prose.py` enforces it. Do not suggest "more natural" phrasing
   that breaks those rules.
-- **Storage is staged on purpose.** JSON now, then JSONL, SQLite, object
-  storage, Postgres. Each arrives only when the previous visibly fails. Do not
+- **Storage is staged on purpose.** JSON is the working store. JSONL is the
+  interchange, one record per line, and never a store. SQLite, object storage,
+  and Postgres follow, each only when the previous visibly fails. Do not
   suggest jumping to a database. DuckDB was considered and rejected because it
-  has no cross-process writer concurrency. See ADR-0006.
+  has no cross-process writer concurrency. See ADR-0006 and ADR-0016.
 - **Tags are immutable.** A bug in a published tag gets a new patch tag, never
   a moved one.
 
@@ -89,7 +90,7 @@ src/saucier/
 ├── ports/           Protocols. Imports domain only.
 ├── services/        orchestration. Imports ports and domain.
 ├── adapters/
-│   ├── driven/      implement ports (source readers, stores)
+│   ├── driven/      implement ports (source readers, stores, the interchange)
 │   └── driving/     entry points (CLI)
 └── infrastructure/  config and assembly root
 ```

@@ -53,3 +53,6 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0015: The chapter decides](0015-the-chapter-decides.md). Why the
   catalogue rose from 124 entries to 151, and why ten sauces lost a parent
   while derived rose by seven.
+- [ADR-0016: JSONL is the interchange, not a
+  store](0016-jsonl-is-the-interchange-not-a-store.md). Why the append break
+  ADR-0006 predicted never came, and what one record per line is for instead.

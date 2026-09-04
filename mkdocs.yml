@@ -134,6 +134,7 @@ nav:
       - ADR-0014 A damaged witness and absence:
           adr/0014-a-damaged-witness-cannot-establish-absence.md
       - ADR-0015 The chapter decides: adr/0015-the-chapter-decides.md
+      - ADR-0016 JSONL is the interchange: adr/0016-jsonl-is-the-interchange-not-a-store.md
 
 markdown_extensions:
   - abbr

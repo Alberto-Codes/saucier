@@ -1,9 +1,12 @@
 """Persist catalogues as JSON files.
 
-JSON while a human still checks the parser's work by eye. It stops being the
-right answer the moment appending one record means rewriting the file. The
-corpus now holds two witnesses, so appending the second one rewrites the
-first, and that is the break ADR-0006 waits for.
+JSON while a human still checks the parser's work by eye. ADR-0006
+predicted it would fail when appending one record meant rewriting the file.
+It did not, because each witness has a file of its own. What a snapshot
+cannot do is leave the process. A program without these classes has to learn
+the nested document before it can read one preparation. The interchange in
+`jsonl` does that job, and this store keeps its own. ADR-0016 records the
+split.
 
 A stored file states what it is. The witness block carries the work, the
 edition read from the front matter, the fidelity, and the origin, so a reader
@@ -31,6 +34,8 @@ Examples:
 
 See Also:
     - [saucier.ports.store][]: The contract this satisfies.
+    - [saucier.adapters.driven.jsonl][]: The interchange, which carries a
+      catalogue out of the process.
 """
 
 from __future__ import annotations
@@ -91,8 +96,9 @@ class JsonCatalogueStore:
         """Write a catalogue, replacing any previous one for its source.
 
         The whole file is rendered every time, witness block and entry count
-        included. One added record rewrites every other record, which is the
-        cost this format pays and the reason the next one exists.
+        included. One added record rewrites every other record. That is the
+        cost of a snapshot, and ADR-0016 records that it is a cost rather
+        than the break the next store waits for.
 
         Writes a temporary file and renames it over the target, so an
         interrupted run leaves the previous catalogue intact rather than a

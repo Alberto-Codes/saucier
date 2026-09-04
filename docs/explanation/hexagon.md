@@ -18,10 +18,16 @@ A service that imports an adapter fails the build.
 
 ## What it buys, concretely
 
-**JSON is going to stop being enough.** Appending one record will mean
-rewriting the file, and the store becomes SQLite, then Postgres. Because
-services depend on `CatalogueStore` and not on `JsonCatalogueStore`, that is a
-new module beside the old one plus one line in the assembly root. No service
+**JSON is going to stop being enough.** Not the way the first draft of this
+page predicted. It said appending one record would mean rewriting the file.
+The store writes one file per witness, so that never happened. What did
+happen is that nothing outside this process could read a catalogue without
+learning the nested document first. So the second port arrived before the
+second store: `CatalogueInterchange`, with a JSON Lines adapter behind it.
+[ADR-0016](../adr/0016-jsonl-is-the-interchange-not-a-store.md) records why
+a serialization is not a database. When SQLite does arrive, it is still a new
+module beside `JsonCatalogueStore` plus one line in the assembly root,
+because services depend on `CatalogueStore` and not on the JSON. No service
 changes. No test of the extraction logic changes.
 
 **Video is going to arrive.** It satisfies the same `SourceText` contract as a
