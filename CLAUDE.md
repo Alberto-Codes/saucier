@@ -108,7 +108,7 @@ src/saucier/
 ├── ports/           # Protocols. Imports domain only.
 ├── services/        # orchestration. Imports ports + domain.
 ├── adapters/
-│   ├── driven/      # implement ports (source readers, stores)
+│   ├── driven/      # implement ports (source readers, stores, the interchange)
 │   └── driving/     # entry points (CLI)
 └── infrastructure/  # config and assembly root
 ```

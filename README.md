@@ -95,6 +95,26 @@ entries are unread. So a concept found in one witness and not the other is
 printings has been confirmed.** Every candidate so far has been the scanner
 or the reader.
 
+## One record per line, for whatever comes next
+
+The JSON files under `data/` are a snapshot for this program. `saucier
+export` writes the same catalogues as JSON Lines, one self-describing record
+per line. `saucier import --check` proves the stream rebuilds them and
+writes nothing:
+
+```console
+$ uv run saucier export | uv run saucier import --check
+escoffier-1909  151 sauces, 57 derived, 94 unresolved
+escoffier-1907  140 sauces, 50 derived, 90 unresolved
+2 witnesses and 291 preparations rebuilt. Nothing written.
+```
+
+Every record carries a schema version, a type, and a source-local id. A
+loader in any language reads one line without this package. Two exports of
+one `data/` directory are byte-identical. A serialization and a database
+are different decisions, and this release makes only the first. See
+[ADR-0016](docs/adr/0016-jsonl-is-the-interchange-not-a-store.md).
+
 ## Documentation
 
 The rendered site is <https://alberto-codes.github.io/saucier/>. Its API
@@ -104,7 +124,7 @@ reference is generated from the docstrings, so it cannot drift from the code.
 - [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
 - [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
 - [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
-- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the fifteen records, and what each one accepted
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the sixteen records, and what each one accepted
 
 ## Licence
 

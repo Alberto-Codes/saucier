@@ -208,3 +208,54 @@ order.
 codes for languages actually present in tracked sources. A member is added
 when a source in that language is added, not in anticipation. The tracked
 corpus is English and French, so those are the two members.
+
+## Interchange
+
+`saucier export` writes every entity above as JSON Lines. Each line is one
+record, and every record carries an envelope of `schema`, `type`, and `id`.
+The schema is `saucier/1`. A program with none of these classes reads one
+line and knows what it holds and which witness supports it. See
+[ADR-0016](../adr/0016-jsonl-is-the-interchange-not-a-store.md).
+
+A witness record carries the `Witness`, the mothers, and `entries_read`.
+Its id is the source id.
+
+| Field | Holds |
+| --- | --- |
+| `schema` | `saucier/1` |
+| `type` | `witness` |
+| `id` | The source id. Recomputed from `work` and `edition` on the way back. |
+| `work` | `Witness.work` |
+| `edition` | The four `Edition` fields, `null` where the front matter states none |
+| `origin` | `Witness.origin` |
+| `fidelity` | `transcription` or `ocr` |
+| `mothers` | Concept ids, sorted |
+| `entries_read` | `Catalogue.entries_read`, or `null` when no count was recorded |
+
+A preparation record names its witness and carries one `Preparation`. Its
+id is the witness and the heading line, joined: `escoffier-1909:line:1437`.
+The entry number is not identity, because a scan repeats numbers.
+
+| Field | Holds |
+| --- | --- |
+| `schema` | `saucier/1` |
+| `type` | `preparation` |
+| `id` | The witness and the line. Recomputed on the way back. |
+| `witness` | The source id of the witness record |
+| `title` | `Preparation.title`, verbatim |
+| `terms` | One object per `Term`: `surface`, `language`, and its `concept` |
+| `concept` | `Preparation.concept`. Recomputed on the way back. |
+| `parent` | A concept id, or `null` for unresolved |
+| `ref` | `entry`, `line`, and `fidelity` |
+| `body` | `Preparation.body`, verbatim |
+
+`null` never means the preparation has no parent. It means the source stated
+none, or stated more than one. The reader rejects a blank parent, because a
+blank was never a concept id.
+
+Every derived field is recomputed by the reader and compared. A record whose
+`concept` is not folded from its terms is rejected at its line number. So is
+a record whose `id` does not address its line.
+
+An id is an address inside one witness. It does not say that two witnesses
+hold one sauce. That claim needs evidence, and no record carries it yet.

@@ -180,7 +180,8 @@ class _Reader:
     def take(self, number: int, line: str) -> None:
         """Read one line, and reject it with its number if it is not a record.
 
-        Malformed JSON is reported with the column the parser stopped at.
+        Malformed JSON is reported with the column the parser stopped at,
+        counted from 1 along the line rather than from the last newline.
         Everything else the rebuild raises is reported in its own words.
 
         Args:
@@ -204,7 +205,7 @@ class _Reader:
                 self.cited.setdefault(witness, number)
                 self.preparations.setdefault(witness, []).append(preparation)
         except json.JSONDecodeError as exc:
-            msg = f"line {number}: not JSON ({exc.msg} at column {exc.colno})"
+            msg = f"line {number}: not JSON ({exc.msg} at column {exc.pos + 1})"
             raise RecordRejected(msg) from exc
         except _DAMAGE as exc:
             raise RecordRejected(f"line {number}: {exc}") from exc

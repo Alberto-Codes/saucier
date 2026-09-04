@@ -124,8 +124,9 @@ rejects, with the line number, any of the following:
 Records may arrive in any order. Two exports joined with `cat` put a witness
 after another witness's preparations, and that stream is valid. The reader
 holds the preparations it has read until the stream ends. A catalogue is
-validated whole, and the domain holds every preparation in one tuple. What streams is the text. A consumer that wants one preparation at a
-time reads records and does not rebuild the catalogue.
+validated whole, and the domain holds every preparation in one tuple. What
+streams is the text. A consumer that wants one preparation at a time reads
+records and does not rebuild the catalogue.
 
 ### What version one stops before
 
