@@ -58,7 +58,9 @@ class CatalogueInterchange(Protocol):
         """Rebuild every catalogue the lines carry.
 
         The lines are consumed one at a time. The result arrives only when
-        the stream ends, because a catalogue is validated whole.
+        the stream ends, because a catalogue is validated whole. Records
+        may arrive in any order, and preparations keep the order their
+        records arrived in.
 
         Args:
             lines: Lines of the interchange, in any order.

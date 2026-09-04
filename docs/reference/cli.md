@@ -139,9 +139,10 @@ stored catalogue cannot be read or the name folds to nothing.
 
 ## `saucier export`
 
-Loads every stored catalogue and writes the interchange to standard output.
-One record per line, and nothing else on that stream. Run `parse` first,
-because it reads what is stored rather than the corpus.
+Loads the stored catalogue of every configured witness and writes the
+interchange to standard output. One record per line, and nothing else on
+that stream. Run `parse` first. The witnesses read their ids from the
+corpus front matter, and the catalogues come from the store.
 
 ```console
 $ uv run saucier export | head -n 1 | cut -c1-110
@@ -155,8 +156,9 @@ Identical catalogues produce identical bytes, so two exports of one `data/`
 directory have one SHA-256. The record shapes are in the
 [data model](data-model.md#interchange).
 
-The stream is UTF-8 with no ASCII escaping. On a system whose locale is not
-UTF-8, set `PYTHONUTF8=1`.
+The stream is UTF-8 with no ASCII escaping, whatever the locale says. The
+command sets the encoding on its own stream, so a latin-1 terminal cannot
+make it fail on an em dash.
 
 A reader that closes the pipe early, as `head` does, gets what it asked for
 and the command exits `0`.
@@ -178,8 +180,10 @@ escoffier-1907  140 sauces, 50 derived, 90 unresolved
 2 catalogues and 291 preparations rebuilt. Nothing written.
 ```
 
-The reader consumes one line at a time and accepts records in any order.
-Catalogues are rebuilt in the order their catalogue records arrived. Two
+The reader consumes one line at a time, as UTF-8, and accepts records in
+any order. Catalogues are rebuilt in the order their catalogue records
+arrived. A catalogue record states how many preparations follow it, so a
+stream cut at a line boundary is refused rather than rebuilt short. Two
 complete exports cannot be joined, because the second repeats every id and
 the reader rejects the first repeat. The reader rejects the first line it
 cannot accept, and names the line:
@@ -191,7 +195,10 @@ saucier: line 1: unknown schema 'saucier/2', this reader accepts 'saucier/1'
 
 | Rejected | Message |
 | --- | --- |
-| Malformed JSON | `line 2: not JSON (Expecting value at column 30)` |
+| Malformed JSON | `line 2: not JSON (Expecting value at column 31)` |
+| Not UTF-8 | `line 2: not UTF-8 (invalid start byte at byte 9 of the line)` |
+| A repeated key in one object | `line 2: object repeats a key: ['parent']` |
+| A stream cut at a line boundary | `line 1: catalogue 'escoffier-1909' states 151 preparations, the stream carries 0` |
 | A line that is not an object | `line 1: a record is a JSON object, not list` |
 | Unknown schema | `line 1: unknown schema 'saucier/2', this reader accepts 'saucier/1'` |
 | Unknown record type | `line 2: unknown record type 'claim'` |
@@ -206,7 +213,7 @@ saucier: line 1: unknown schema 'saucier/2', this reader accepts 'saucier/1'
 | Id not the catalogue and line | `line 2: id 'escoffier-1909:entry:1' does not address 'escoffier-1909:line:1317'` |
 | Catalogue id disagrees with its edition | `line 1: catalogue record 'escoffier-1800' describes 'escoffier-1909'` |
 | Wrong value type | `line 1: expected a whole number, not '2963'` |
-| A catalogue the domain refuses | `catalogue 'escoffier-1909': BROWN ROUX cites escoffier-1909 at ocr, in a catalogue of escoffier-1909 at transcription` |
+| A preparation citing another fidelity | `line 3: BROWN ROUX cites escoffier-1909 at ocr, in a catalogue at transcription` |
 
 A `null` parent is unresolved and is accepted.
 

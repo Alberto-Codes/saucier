@@ -24,7 +24,11 @@ preparation whose catalogue the stream never carries. It accepts records
 in any order. A `null` parent is unresolved, and a blank one is damage.
 Every field the schema names is checked to be present before it is read,
 so a damaged record is always reported by what is wrong with it and never
-by a bare key.
+by a bare key. An object that repeats a key is rejected, because `json`
+would keep the last value and say nothing. A catalogue record states how
+many preparations follow it, so a stream cut at a line boundary is
+rejected rather than rebuilt short. A byte that is not UTF-8 is rejected
+with its line.
 
 Examples:
     Write a stream and rebuild the catalogues from it:
@@ -54,7 +58,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import replace
 from typing import Any
 
-from saucier.domain.errors import EditionUnstated, RecordRejected
+from saucier.domain.errors import CatalogueUnwritable, EditionUnstated, RecordRejected
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
 from saucier.domain.types import ConceptId, Language, to_concept_id
 from saucier.domain.witness import Edition, Fidelity, Witness
@@ -63,14 +67,23 @@ SCHEMA = "saucier/1"
 """The version of the interchange this module writes and reads."""
 
 CATALOGUE = "catalogue"
-"""Record type carrying a catalogue's frame: its witness, mothers, and count."""
+"""Record type carrying a catalogue apart from its preparations."""
 
 PREPARATION = "preparation"
 """Record type carrying one preparation and the catalogue it belongs to."""
 
 _ENVELOPE = ("schema", "type", "id")
 _CATALOGUE_KEYS = frozenset(
-    (*_ENVELOPE, "work", "edition", "origin", "fidelity", "mothers", "entries_read")
+    (
+        *_ENVELOPE,
+        "work",
+        "edition",
+        "origin",
+        "fidelity",
+        "mothers",
+        "preparations",
+        "entries_read",
+    )
 )
 _EDITION_KEYS = frozenset(("statement", "stated_year", "impression", "copyright_year"))
 _PREPARATION_KEYS = frozenset(
@@ -78,8 +91,29 @@ _PREPARATION_KEYS = frozenset(
 )
 _TERM_KEYS = frozenset(("surface", "language", "concept"))
 _REF_KEYS = frozenset(("entry", "line", "fidelity"))
-_DAMAGE = (TypeError, ValueError, EditionUnstated)
-"""What a damaged record raises while it is rebuilt. Reported, never raised raw."""
+
+
+class _WrongType(TypeError):
+    """A field holds a value of a type the schema does not give it.
+
+    A private subclass, so the reader catches the wrong types it found in
+    the stream and never a `TypeError` raised by a bug in its own code.
+
+    Examples:
+        Raised by the field readers:
+
+        ```python
+        _int("2963")  # _WrongType: expected a whole number, not '2963'
+        ```
+    """
+
+
+_DAMAGE = (_WrongType, ValueError, EditionUnstated)
+"""What a damaged record raises while it is rebuilt. Reported, never raised raw.
+
+A bare `TypeError` is not in the set. One raised inside the reader is a
+bug in the reader, and it surfaces as a traceback rather than as damage
+attributed to a line of the stream."""
 
 
 def preparation_id(source_id: str, line: int) -> str:
@@ -117,15 +151,23 @@ class JsonlInterchange:
         """Render catalogues as lines, catalogue records first.
 
         The catalogues are held before the first line is yielded, so a
-        catalogue that cannot be read raises before any output exists.
+        catalogue that cannot be read raises before any output exists. So
+        does a catalogue with two preparations on one heading line, whose
+        ids would collide and whose stream the reader would then refuse.
 
         Args:
             catalogues: The catalogues to carry, in the order to write them.
 
         Yields:
             One record per line, each ending in a newline.
+
+        Raises:
+            CatalogueUnwritable: If two preparations of one catalogue sit on
+                one heading line.
         """
         held = tuple(catalogues)
+        for catalogue in held:
+            _check_lines(catalogue)
         for catalogue in held:
             yield _render(_catalogue_record(catalogue))
         for catalogue in held:
@@ -136,8 +178,10 @@ class JsonlInterchange:
         """Rebuild every catalogue the lines carry.
 
         Args:
-            lines: Lines of the interchange, in any order. Blank lines are
-                skipped, and line numbers in errors count them.
+            lines: Lines of the interchange, in any order, one line per
+                element. Blank lines are skipped, and line numbers in errors
+                count them. Decode each line on its own for an exact line
+                on a UTF-8 failure, because a text stream decodes in chunks.
 
         Returns:
             The rebuilt catalogues, in the order their catalogue records
@@ -145,13 +189,26 @@ class JsonlInterchange:
 
         Raises:
             RecordRejected: If any line is not a record this reader accepts,
-                a preparation names a catalogue the stream never carries, or
-                a rebuilt catalogue violates a domain invariant.
+                a line is not UTF-8, a preparation names a catalogue the
+                stream never carries, a catalogue receives fewer preparations
+                than it states, or a rebuilt catalogue violates a domain
+                invariant.
         """
         reader = _Reader()
-        for number, line in enumerate(lines, 1):
-            if line.strip():
-                reader.take(number, line)
+        number = 0
+        try:
+            for number, line in enumerate(lines, 1):
+                if line.strip():
+                    reader.take(number, line)
+        except UnicodeDecodeError as exc:
+            # The iterator raises before the line exists, so the failing
+            # line is the one after the last one read. That is exact when
+            # each line is decoded on its own, as the command line does.
+            msg = (
+                f"line {number + 1}: not UTF-8 "
+                f"({exc.reason} at byte {exc.start} of the line)"
+            )
+            raise RecordRejected(msg) from exc
         return reader.assemble()
 
 
@@ -159,8 +216,10 @@ class _Reader:
     """What the reader holds between the first line and the last.
 
     Attributes:
-        frames (dict[str, Catalogue]): Catalogue records rebuilt so far,
-            keyed by source id, each awaiting its preparations.
+        catalogues (dict[str, Catalogue]): Catalogue records rebuilt so far,
+            keyed by source id, each without its preparations yet.
+        counts (dict[str, int]): How many preparations each catalogue record
+            states, keyed by source id.
         preparations (dict[str, list[Preparation]]): Preparations read so
             far, grouped by the catalogue they name.
         seen (dict[str, int]): Every id read so far and the line it was on.
@@ -179,8 +238,9 @@ class _Reader:
     """
 
     def __init__(self) -> None:
-        """Start with nothing read."""
-        self.frames: dict[str, Catalogue] = {}
+        """Start with nothing read: no catalogues, counts, preparations, or ids."""
+        self.catalogues: dict[str, Catalogue] = {}
+        self.counts: dict[str, int] = {}
         self.preparations: dict[str, list[Preparation]] = {}
         self.seen: dict[str, int] = {}
         self.cited: dict[str, int] = {}
@@ -190,7 +250,7 @@ class _Reader:
 
         Malformed JSON is reported with the column the parser stopped at,
         counted from 1 along the line rather than from the last newline. A
-        catalogue record becomes a frame awaiting its preparations, and a
+        catalogue record is rebuilt without its preparations, and a
         preparation record is filed under the catalogue it names.
         Everything else the rebuild raises is reported in its own words.
 
@@ -209,7 +269,9 @@ class _Reader:
                 raise ValueError(msg)
             self.seen[identity] = number
             if kind == CATALOGUE:
-                self.frames[identity] = _frame_from(record)
+                self.catalogues[identity], self.counts[identity] = _catalogue_from(
+                    record
+                )
             else:
                 catalogue, preparation = _preparation_from(record)
                 self.cited.setdefault(catalogue, number)
@@ -217,49 +279,118 @@ class _Reader:
         except json.JSONDecodeError as exc:
             msg = f"line {number}: not JSON ({exc.msg} at column {exc.pos + 1})"
             raise RecordRejected(msg) from exc
+        except RecursionError as exc:
+            msg = f"line {number}: not JSON (nested too deep)"
+            raise RecordRejected(msg) from exc
         except _DAMAGE as exc:
             raise RecordRejected(f"line {number}: {exc}") from exc
 
     def assemble(self) -> tuple[Catalogue, ...]:
         """Build every catalogue once the stream has ended.
 
-        Preparations are ordered by their heading line, which is source
-        order, so a shuffled stream rebuilds the same catalogue.
+        Preparations keep the order their records arrived in. The writer
+        emits them in the catalogue's own order, so a stream read back as
+        written rebuilds the catalogue exactly, whatever its order was.
 
         Returns:
             The catalogues, in the order their catalogue records appeared.
 
         Raises:
             RecordRejected: If a preparation names a catalogue the stream never
-                carried, or a catalogue refuses its preparations.
+                carried, a catalogue receives fewer or more preparations than
+                its record states, a preparation cites another fidelity than
+                its catalogue, or a catalogue refuses its preparations.
         """
         for catalogue, number in self.cited.items():
-            if catalogue not in self.frames:
+            if catalogue not in self.catalogues:
                 msg = (
                     f"line {number}: preparation names catalogue {catalogue!r}, "
                     "which the stream does not carry"
                 )
                 raise RecordRejected(msg)
         built = []
-        for source_id, frame in self.frames.items():
-            ordered = sorted(self.preparations.get(source_id, ()), key=_line_of)
+        for source_id, catalogue in self.catalogues.items():
+            carried = self.preparations.get(source_id, [])
+            self._check_count(source_id, len(carried))
+            self._check_fidelity(source_id, catalogue, carried)
             try:
-                built.append(replace(frame, preparations=tuple(ordered)))
+                built.append(replace(catalogue, preparations=tuple(carried)))
             except ValueError as exc:
                 raise RecordRejected(f"catalogue {source_id!r}: {exc}") from exc
         return tuple(built)
 
+    def _check_count(self, source_id: str, carried: int) -> None:
+        """Refuse a catalogue that received a different number than it states.
 
-def _line_of(preparation: Preparation) -> int:
-    """Read the heading line a preparation sits on, for ordering.
+        A stream cut at a line boundary is otherwise complete JSON, so the
+        count is the only evidence of the cut.
+
+        Args:
+            source_id: The catalogue being assembled.
+            carried: How many preparations the stream carried for it.
+
+        Raises:
+            RecordRejected: If the count disagrees, naming the catalogue
+                record's line.
+        """
+        stated = self.counts[source_id]
+        if carried != stated:
+            msg = (
+                f"line {self.seen[source_id]}: catalogue {source_id!r} states "
+                f"{stated} preparations, the stream carries {carried}"
+            )
+            raise RecordRejected(msg)
+
+    def _check_fidelity(
+        self, source_id: str, catalogue: Catalogue, carried: list[Preparation]
+    ) -> None:
+        """Refuse a preparation that cites another fidelity than its catalogue.
+
+        The domain refuses this too, but at the catalogue, without a line.
+        The reader knows the line and says it.
+
+        Args:
+            source_id: The catalogue being assembled.
+            catalogue: The catalogue rebuilt so far, carrying the witness.
+            carried: Its preparations.
+
+        Raises:
+            RecordRejected: If a preparation's fidelity disagrees, naming the
+                preparation's line.
+        """
+        for preparation in carried:
+            if preparation.ref.fidelity != catalogue.fidelity:
+                line = self.seen[preparation_id(source_id, preparation.ref.line)]
+                msg = (
+                    f"line {line}: {preparation.title} cites {source_id} at "
+                    f"{preparation.ref.fidelity}, in a catalogue at {catalogue.fidelity}"
+                )
+                raise RecordRejected(msg)
+
+
+def _check_lines(catalogue: Catalogue) -> None:
+    """Refuse a catalogue whose preparation ids would collide.
+
+    The domain identifies a preparation by its heading line but does not
+    enforce that two never share one. The writer does, because a stream it
+    wrote must be one its reader accepts.
 
     Args:
-        preparation: The preparation to order.
+        catalogue: The catalogue about to be rendered.
 
-    Returns:
-        Its heading line.
+    Raises:
+        CatalogueUnwritable: If two preparations sit on one heading line.
     """
-    return preparation.ref.line
+    seen: dict[int, str] = {}
+    for preparation in catalogue.preparations:
+        line = preparation.ref.line
+        if line in seen:
+            msg = (
+                f"{catalogue.source_id} holds {seen[line]} and {preparation.title} "
+                f"at line {line}, so their ids would collide"
+            )
+            raise CatalogueUnwritable(msg)
+        seen[line] = preparation.title
 
 
 def _render(record: dict[str, Any]) -> str:
@@ -275,7 +406,11 @@ def _render(record: dict[str, Any]) -> str:
 
 
 def _catalogue_record(catalogue: Catalogue) -> dict[str, Any]:
-    """Render a catalogue's frame as a catalogue record.
+    """Render a catalogue, apart from its preparations, as a catalogue record.
+
+    The record states how many preparations follow it. A reader that
+    receives fewer knows the stream was cut, and a catalogue with none says
+    so in its own record.
 
     Args:
         catalogue: The catalogue whose witness, mothers, and count to carry.
@@ -298,6 +433,7 @@ def _catalogue_record(catalogue: Catalogue) -> dict[str, Any]:
         "origin": witness.origin,
         "fidelity": witness.fidelity.value,
         "mothers": sorted(catalogue.mothers),
+        "preparations": len(catalogue.preparations),
         "entries_read": catalogue.entries_read,
     }
 
@@ -344,13 +480,37 @@ def _parse(line: str) -> dict[str, Any]:
 
     Raises:
         json.JSONDecodeError: If the line is not JSON.
-        TypeError: If the line is JSON but not an object.
+        _WrongType: If the line is JSON but not an object.
+        ValueError: If an object repeats a key.
     """
-    record = json.loads(line)
+    record = json.loads(line, object_pairs_hook=_object)
     if not isinstance(record, dict):
         msg = f"a record is a JSON object, not {type(record).__name__}"
-        raise TypeError(msg)
+        raise _WrongType(msg)
     return record
+
+
+def _object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Build one JSON object, refusing a key that repeats.
+
+    `json` keeps the last value of a repeated key and reports nothing, so
+    a line carrying `parent` twice would rewrite a derivation silently.
+
+    Args:
+        pairs: The object's members in the order the line gives them.
+
+    Returns:
+        The object as a dictionary.
+
+    Raises:
+        ValueError: If a key appears more than once.
+    """
+    keys = [key for key, _ in pairs]
+    if len(set(keys)) != len(keys):
+        repeated = sorted({key for key in keys if keys.count(key) > 1})
+        msg = f"object repeats a key: {repeated}"
+        raise ValueError(msg)
+    return dict(pairs)
 
 
 def _envelope(record: dict[str, Any]) -> tuple[str, str]:
@@ -385,8 +545,8 @@ def _envelope(record: dict[str, Any]) -> tuple[str, str]:
     return kind, identity
 
 
-def _frame_from(record: dict[str, Any]) -> Catalogue:
-    """Rebuild a catalogue's frame from a catalogue record.
+def _catalogue_from(record: dict[str, Any]) -> tuple[Catalogue, int]:
+    """Rebuild a catalogue, apart from its preparations, from its record.
 
     The source id is recomputed from the work and the edition, so a record
     whose id names another text is rejected rather than answered to.
@@ -395,7 +555,8 @@ def _frame_from(record: dict[str, Any]) -> Catalogue:
         record: A catalogue record whose envelope has been checked.
 
     Returns:
-        A catalogue with its witness, mothers, and count, and no preparations.
+        A catalogue with its witness, mothers, and entry count, and no
+        preparations, with the number of preparations the record states.
 
     Raises:
         ValueError: If a field is absent, unexpected, or of the wrong type,
@@ -417,11 +578,16 @@ def _frame_from(record: dict[str, Any]) -> Catalogue:
     if witness.source_id != fields["id"]:
         msg = f"catalogue record {fields['id']!r} describes {witness.source_id!r}"
         raise ValueError(msg)
-    return Catalogue(
+    catalogue = Catalogue(
         witness=witness,
         mothers=_concepts(fields["mothers"]),
         entries_read=_int_or_none(fields["entries_read"]),
     )
+    stated = _int(fields["preparations"])
+    if stated < 0:
+        msg = f"a catalogue cannot state {stated} preparations"
+        raise ValueError(msg)
+    return catalogue, stated
 
 
 def _preparation_from(record: dict[str, Any]) -> tuple[str, Preparation]:
@@ -502,12 +668,12 @@ def _fields(payload: Any, expected: frozenset[str], what: str) -> dict[str, Any]
         The object, unchanged.
 
     Raises:
-        TypeError: If the value is not an object.
+        _WrongType: If the value is not an object.
         ValueError: If a field is absent or unexpected.
     """
     if not isinstance(payload, dict):
         msg = f"{what} is not a JSON object"
-        raise TypeError(msg)
+        raise _WrongType(msg)
     if set(payload) != expected:
         absent = sorted(expected - set(payload))
         extra = sorted(set(payload) - expected)
@@ -527,11 +693,11 @@ def _list(payload: Any, what: str) -> list[Any]:
         The array, unchanged.
 
     Raises:
-        TypeError: If the value is not an array.
+        _WrongType: If the value is not an array.
     """
     if not isinstance(payload, list):
         msg = f"{what} is not a JSON array"
-        raise TypeError(msg)
+        raise _WrongType(msg)
     return payload
 
 
@@ -545,11 +711,11 @@ def _text(value: Any) -> str:
         The string.
 
     Raises:
-        TypeError: If the value is not a string.
+        _WrongType: If the value is not a string.
     """
     if not isinstance(value, str):
         msg = f"expected a string, not {value!r}"
-        raise TypeError(msg)
+        raise _WrongType(msg)
     return value
 
 
@@ -578,11 +744,11 @@ def _int(value: Any) -> int:
         The number.
 
     Raises:
-        TypeError: If the value is not a whole number.
+        _WrongType: If the value is not a whole number.
     """
     if isinstance(value, bool) or not isinstance(value, int):
         msg = f"expected a whole number, not {value!r}"
-        raise TypeError(msg)
+        raise _WrongType(msg)
     return value
 
 
@@ -602,8 +768,9 @@ def _concept(value: Any) -> ConceptId:
     """Read a concept id, refusing one that is not its own fold.
 
     A parent or a mother is written folded. A value that folds to something
-    else was never a concept id, and reading it as one would let a stream
-    name a parent the catalogue cannot find.
+    else was never a concept id. This checks the form only. Whether the
+    concept names anything in the catalogue is not a domain invariant, and
+    the reader does not add rules the domain does not hold.
 
     Args:
         value: The stored value.

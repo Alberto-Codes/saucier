@@ -7,7 +7,7 @@ import pytest
 from conftest import a_witness
 
 from saucier.adapters.driven.jsonl import SCHEMA, JsonlInterchange, preparation_id
-from saucier.domain.errors import RecordRejected
+from saucier.domain.errors import CatalogueUnwritable, RecordRejected
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
 from saucier.domain.types import ConceptId, Language
 from saucier.domain.witness import Edition, Fidelity, Witness
@@ -196,9 +196,32 @@ def test_a_repeated_entry_number_does_not_collide(scan):
 
 @pytest.mark.unit
 def test_records_may_arrive_in_any_order(revision, scan):
+    """Preparations before their catalogue, catalogues reversed."""
     lines = lines_of(revision, scan)
-    shuffled = [lines[5], lines[2], lines[1], lines[4], lines[0], lines[3]]
+    shuffled = [lines[4], lines[2], lines[1], lines[5], lines[0], lines[3]]
     assert decode(shuffled) == (scan, revision)
+
+
+@pytest.mark.unit
+def test_preparations_keep_the_order_their_records_arrived_in(revision):
+    """A catalogue whose lines do not ascend is legal, and must read back equal."""
+    descending = replace(revision, preparations=revision.preparations[::-1])
+    assert decode(lines_of(descending)) == (descending,)
+    lines = lines_of(revision)
+    swapped = decode([lines[0], lines[2], lines[1]])[0]
+    assert swapped == descending
+
+
+@pytest.mark.unit
+def test_two_preparations_on_one_line_are_refused_before_any_output(revision):
+    first, second = revision.preparations
+    clash = replace(second, ref=replace(second.ref, line=first.ref.line))
+    doubled = replace(revision, preparations=(first, clash))
+    with pytest.raises(
+        CatalogueUnwritable,
+        match="holds ORDINARY VELOUTÉ SAUCE and MARROW SAUCE at line 900",
+    ):
+        list(JsonlInterchange().encode([doubled]))
 
 
 @pytest.mark.unit
@@ -229,12 +252,101 @@ def test_a_catalogue_with_no_preparations_rebuilds_empty(revision):
 @pytest.mark.unit
 def test_malformed_json_is_rejected_with_its_line_number(revision):
     lines = lines_of(revision)
-    with pytest.raises(RecordRejected, match=r"^line 2: not JSON \("):
-        decode([lines[0], '{"schema": "saucier/1", "type":', lines[2]])
+    with pytest.raises(
+        RecordRejected, match=r"^line 2: not JSON \(Expecting value at column 30\)"
+    ):
+        decode([lines[0], '{"schema":"saucier/1","type":', lines[2]])
+    # The newline is skipped as whitespace before the parser gives up.
+    with pytest.raises(
+        RecordRejected, match=r"^line 1: not JSON \(Expecting value at column 31\)"
+    ):
+        decode(['{"schema":"saucier/1","type":\n'])
 
 
 @pytest.mark.unit
-def test_a_line_that_is_json_but_not_an_object_is_rejected(revision):
+def test_a_line_nested_too_deep_is_rejected_with_its_line_number():
+    with pytest.raises(RecordRejected, match=r"^line 1: not JSON \(nested too deep\)"):
+        decode(["[" * 100_000 + "\n"])
+
+
+@pytest.mark.unit
+def test_a_repeated_key_is_rejected_rather_than_read_last_wins(revision):
+    """`json` keeps the last value of a repeated key. A rewritten parent must not pass."""
+    lines = lines_of(revision)
+    resolved = lines[1].rstrip("\n")
+    with pytest.raises(
+        RecordRejected, match=r"line 2: object repeats a key: \['parent'\]"
+    ):
+        decode([lines[0], resolved[:-1] + ',"parent":null}\n', lines[2]])
+
+
+@pytest.mark.unit
+def test_a_stream_cut_at_a_line_boundary_is_rejected(revision, scan):
+    lines = lines_of(revision, scan)
+    with pytest.raises(
+        RecordRejected,
+        match=r"line 2: catalogue 'fixture-1907' states 2 preparations, the stream carries 0",
+    ):
+        decode(lines[:4])
+    with pytest.raises(
+        RecordRejected,
+        match=r"line 1: catalogue 'fixture-1909' states 2 preparations, the stream carries 1",
+    ):
+        decode(lines[:3] + lines[4:])
+
+
+@pytest.mark.unit
+def test_a_catalogue_record_that_understates_its_preparations_is_rejected(revision):
+    lines = lines_of(revision)
+    with pytest.raises(
+        RecordRejected, match=r"states 1 preparations, the stream carries 2"
+    ):
+        decode([edit(lines[0], preparations=1), *lines[1:]])
+    with pytest.raises(RecordRejected, match=r"line 1: a catalogue cannot state -1"):
+        decode([edit(lines[0], preparations=-1), *lines[1:]])
+
+
+@pytest.mark.unit
+def test_a_byte_that_is_not_utf8_is_rejected_with_its_line(revision):
+    lines = lines_of(revision)
+    raw = (
+        lines[0].encode()
+        + lines[1].encode().replace(b"Prose", b"Pr\xffose")
+        + lines[2].encode()
+    )
+    offset = lines[1].encode().index(b"Prose") + 2
+    with pytest.raises(
+        RecordRejected,
+        match=rf"^line 2: not UTF-8 \(invalid start byte at byte {offset} of the line\)",
+    ):
+        decode(line.decode("utf-8") for line in io.BytesIO(raw))
+
+
+@pytest.mark.unit
+def test_a_language_or_fidelity_tag_the_domain_does_not_know_is_rejected(revision):
+    lines = lines_of(revision)
+    terms = [{"surface": "MARROW SAUCE", "language": "xx", "concept": "marrow-sauce"}]
+    with pytest.raises(RecordRejected, match=r"line 3: 'xx' is not a valid Language"):
+        decode([lines[0], lines[1], edit(lines[2], terms=terms)])
+    with pytest.raises(RecordRejected, match=r"line 1: 'scan' is not a valid Fidelity"):
+        decode([edit(lines[0], fidelity="scan"), *lines[1:]])
+
+
+@pytest.mark.unit
+def test_the_bytes_of_one_record_are_pinned(revision):
+    """Key order, separators, null, and the newline, in one literal."""
+    assert lines_of(revision)[2] == (
+        '{"schema":"saucier/1","type":"preparation","id":"fixture-1909:line:950",'
+        '"catalogue":"fixture-1909","title":"MARROW SAUCE",'
+        '"terms":[{"surface":"MARROW SAUCE","language":"en","concept":"marrow-sauce"}],'
+        '"concept":"marrow-sauce","parent":null,'
+        '"ref":{"entry":26,"line":950,"fidelity":"transcription"},'
+        '"body":"Prose of MARROW SAUCE."}\n'
+    )
+
+
+@pytest.mark.unit
+def test_a_line_that_is_json_but_not_an_object_is_rejected():
     with pytest.raises(
         RecordRejected, match="line 1: a record is a JSON object, not list"
     ):
@@ -436,7 +548,9 @@ def test_a_catalogue_the_domain_refuses_is_rejected(revision):
     lines = lines_of(revision)
     ref = {"entry": 25, "line": 900, "fidelity": "ocr"}
     with pytest.raises(
-        RecordRejected, match="catalogue 'fixture-1909': ORDINARY VELOUTÉ SAUCE cites"
+        RecordRejected,
+        match="line 2: ORDINARY VELOUTÉ SAUCE cites fixture-1909 at ocr, "
+        "in a catalogue at transcription",
     ):
         decode([lines[0], edit(lines[1], ref=ref), lines[2]])
 
@@ -506,4 +620,4 @@ def test_every_documented_record_is_real_output(escoffier, escoffier_1907):
                 assert any(line == text or line.startswith(text) for line in real), (
                     f"{page} quotes a record that is not real output: {text[:80]}"
                 )
-    assert quoted >= 6
+    assert quoted >= 8

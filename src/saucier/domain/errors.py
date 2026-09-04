@@ -99,7 +99,11 @@ class UnfoldableTerm(SaucierError, ValueError):
 
 
 class CatalogueUnwritable(SaucierError):
-    """A catalogue could not be written to its store.
+    """A catalogue could not be written to its store or as the interchange.
+
+    The interchange refuses a catalogue with two preparations on one heading
+    line, because their ids would collide and the reader would reject the
+    stream the writer had just made.
 
     Examples:
         Raised when the output directory rejects the write:

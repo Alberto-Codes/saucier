@@ -154,8 +154,8 @@ anything else, write it as one record per line:
 ```console
 $ uv run saucier export > escoffier.jsonl
 $ head -n 2 escoffier.jsonl
-{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
-{"schema":"saucier/1","type":"catalogue","id":"escoffier-1907","work":"escoffier","edition":{"statement":null,"stated_year":null,"impression":null,"copyright_year":1907},"origin":"Internet Archive cu31924000610117","fidelity":"ocr","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2679}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"preparations":151,"entries_read":2963}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1907","work":"escoffier","edition":{"statement":null,"stated_year":null,"impression":null,"copyright_year":1907},"origin":"Internet Archive cu31924000610117","fidelity":"ocr","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"preparations":140,"entries_read":2679}
 ```
 
 Every line says what it is, which schema shaped it, and which catalogue it

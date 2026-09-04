@@ -217,11 +217,13 @@ The schema is `saucier/1`. A program with none of these classes reads one
 line and knows what it holds and which catalogue it belongs to. See
 [ADR-0016](../adr/0016-jsonl-is-the-interchange-not-a-store.md).
 
-A catalogue record carries the `Witness` fields, the mothers, and
-`entries_read`. Its id is the catalogue's source id.
+A catalogue record carries the `Witness` fields, the mothers, how many
+preparations follow it, and `entries_read`. Its id is the catalogue's
+source id. The count lets the reader refuse a stream that was cut at a
+line boundary, which is otherwise complete JSON.
 
 ```json
-{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"preparations":151,"entries_read":2963}
 ```
 
 | Field | Holds |
@@ -234,6 +236,7 @@ A catalogue record carries the `Witness` fields, the mothers, and
 | `origin` | `Witness.origin` |
 | `fidelity` | `transcription` or `ocr` |
 | `mothers` | Concept ids, sorted |
+| `preparations` | How many preparation records name this catalogue |
 | `entries_read` | `Catalogue.entries_read`, or `null` when no count was recorded |
 
 A preparation record names its catalogue and carries one `Preparation`. Its

@@ -491,13 +491,68 @@ def test_import_check_touches_neither_the_store_nor_the_disk(
     capsys.readouterr()
     cli.main(["export"])
     exported = capsys.readouterr().out
-    before = sorted(p.name for p in tmp_path.iterdir())
+    before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
     monkeypatch.setattr(
         cli, "catalogue_store", lambda: pytest.fail("import reached for the store")
     )
     monkeypatch.setattr(sys, "stdin", io.StringIO(exported))
     assert cli.main(["import", "--check"]) == 0
-    assert sorted(p.name for p in tmp_path.iterdir()) == before
+    assert {p.name: p.read_bytes() for p in tmp_path.iterdir()} == before
+
+
+@pytest.mark.unit
+def test_import_of_only_blank_lines_fails_like_an_empty_stream(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "stdin", io.StringIO("\n\n   \n"))
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == "saucier: interchange carries no catalogues\n"
+
+
+@pytest.mark.corpus
+def test_export_writes_utf8_whatever_the_stream_was_told(wired, capsys, monkeypatch):
+    """The corpus holds 144 em dashes. A latin-1 stdout must not get to refuse one."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    sink = io.TextIOWrapper(io.BytesIO(), encoding="latin-1", newline="\n")
+    monkeypatch.setattr(sys, "stdout", sink)
+    assert cli.main(["export"]) == 0
+    raw = sink.buffer.getvalue()
+    assert "—".encode() in raw
+    assert raw.decode("utf-8").count("\n") == 2 + 151 + 140
+
+
+@pytest.mark.unit
+def test_import_reads_utf8_strictly_and_names_the_bad_line(capsys, monkeypatch):
+    raw = b'\n{"body":"\xff"}\n'
+    monkeypatch.setattr(
+        sys, "stdin", io.TextIOWrapper(io.BytesIO(raw), encoding="utf-8")
+    )
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert (
+        err == "saucier: line 2: not UTF-8 (invalid start byte at byte 9 of the line)\n"
+    )
+
+
+@pytest.mark.corpus
+def test_a_stream_cut_after_the_catalogue_records_is_refused(
+    wired, capsys, monkeypatch
+):
+    """`saucier export | head -n 2 | saucier import --check` must not exit 0."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["export"])
+    head = "".join(capsys.readouterr().out.splitlines(keepends=True)[:2])
+    monkeypatch.setattr(sys, "stdin", io.StringIO(head))
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err == (
+        "saucier: line 1: catalogue 'escoffier-1909' states 151 preparations, "
+        "the stream carries 0\n"
+    )
 
 
 @pytest.mark.unit
@@ -578,3 +633,45 @@ def test_export_exits_clean_when_the_reader_closes_the_pipe(
     with (tmp_path / "sink").open("w") as handle:
         monkeypatch.setattr(sys, "stdout", Closed(handle))
         assert cli.main(["export"]) == 0
+
+
+@pytest.mark.corpus
+def test_a_closed_pipe_on_a_stdout_with_no_descriptor_still_exits_clean(
+    wired, capsys, monkeypatch
+):
+    """A harness stdout has no fileno. The handler must not chain a traceback."""
+    cli.main(["parse"])
+    capsys.readouterr()
+
+    class Closed:
+        def writelines(self, _):
+            raise BrokenPipeError
+
+    monkeypatch.setattr(sys, "stdout", Closed())
+    assert cli.main(["export"]) == 0
+
+
+@pytest.mark.corpus
+def test_every_command_exits_clean_when_the_reader_closes_the_pipe(
+    wired, capsys, monkeypatch
+):
+    """`saucier diff ... | head -1` used to exit 120 with an ignored exception."""
+    cli.main(["parse"])
+    capsys.readouterr()
+
+    class Closed:
+        def write(self, _):
+            raise BrokenPipeError
+
+        def flush(self):
+            raise BrokenPipeError
+
+    monkeypatch.setattr(sys, "stdout", Closed())
+    assert cli.main(["diff", FIRST_PRINTING.source_id, REVISION.source_id]) == 0
+
+
+@pytest.mark.unit
+def test_import_with_standard_input_closed_is_refused(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "stdin", None)
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    assert capsys.readouterr().err == "saucier: standard input is closed\n"

@@ -66,13 +66,15 @@ The domain does not change. JSON syntax stays outside the hexagon.
 Every record carries an envelope of three fields: `schema`, `type`, and `id`.
 The schema is `saucier/1`. There are two record types.
 
-A catalogue record carries what rebuilds a catalogue's frame. That is the
-witness fields, which are the work, the edition as the front matter states
-it, the origin, and the fidelity. Then the sorted mothers and
-`entries_read`. Its id is the catalogue's source id.
+A catalogue record carries the catalogue apart from its preparations. That
+is the witness fields, which are the work, the edition as the front matter
+states it, the origin, and the fidelity. Then the sorted mothers, how many
+preparations follow, and `entries_read`. Its id is the catalogue's source
+id. The count is what lets the reader refuse a stream cut at a line
+boundary, because such a stream is otherwise complete JSON.
 
 ```json
-{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"entries_read":2963}
+{"schema":"saucier/1","type":"catalogue","id":"escoffier-1909","work":"escoffier","edition":{"statement":"New and Revised Edition, January 1909","stated_year":1909,"impression":"January 1920","copyright_year":1907},"origin":"Project Gutenberg 71395","fidelity":"transcription","mothers":["bechamel","espagnole","hollandaise","tomato","veloute"],"preparations":151,"entries_read":2963}
 ```
 
 A preparation record names its catalogue and carries the title, the terms
@@ -88,7 +90,9 @@ Six rules govern the record.
 **An id is a source-local address, never a resolution.** A preparation id
 derives from the catalogue id and the heading line. It says where a reader
 can check the claim. It does not say that two catalogues hold the same
-sauce. The entry number is not identity, because the scan repeats numbers.
+sauce. The entry number is not identity, because the scan repeats numbers. The
+domain does not forbid two preparations on one line, so the writer
+refuses such a catalogue rather than emit a stream its reader rejects.
 Lab issue #60 separates record, entity, mention, and claim identity, and
 none of that arrives here.
 
@@ -107,7 +111,8 @@ parent. ADR-0002 governs the interchange as it governs the domain.
 
 **Surface forms survive as written.** The writer emits UTF-8 with no ASCII
 escaping, so `VELOUTÉ` is six characters on disk. Every term keeps its
-language tag.
+language tag. The two commands set UTF-8 on their own streams rather than
+trusting the locale, because the stream is UTF-8 by contract.
 
 **Derived fields are written for the reader and verified on the way back.**
 A catalogue record carries its id, and a preparation record carries its
@@ -122,10 +127,14 @@ changes the bytes without adding evidence.
 
 ### The reader
 
-The reader consumes one line at a time and never reads the stream whole. It
-rejects, with the line number, any of the following:
+The reader consumes one line at a time, as UTF-8, and never reads the
+stream whole. It rejects, with the line number, any of the following:
 
-- a line that is not one JSON object,
+- a line that is not UTF-8, or not one JSON object,
+- an object that repeats a key, because `json` would keep the last value
+  and say nothing,
+- a catalogue that receives a different number of preparations than its
+  record states,
 - a schema other than `saucier/1`,
 - a type other than `catalogue` or `preparation`,
 - a missing or blank id, or an id seen on an earlier line,
@@ -133,11 +142,16 @@ rejects, with the line number, any of the following:
 - a value of the wrong type, including a blank parent,
 - a derived field that disagrees with what it derives from,
 - a preparation whose catalogue the stream never carries,
+- a preparation that cites another fidelity than its catalogue,
 - any rebuilt catalogue the domain refuses.
 
 Records may arrive in any order, and a preparation may precede the
 catalogue record it names. The reader rebuilds catalogues in the order
-their catalogue records arrived. Two complete exports cannot be joined,
+their catalogue records arrived, and each catalogue's preparations in the
+order their records arrived. The writer emits them in the catalogue's own
+order, so what was written reads back equal. The reader does not sort by
+line, because the domain admits a catalogue whose lines do not ascend, and
+sorting would rebuild a different one. Two complete exports cannot be joined,
 because `saucier export` writes every configured catalogue and the second
 copy repeats every id. The reader rejects the first repeat. The reader
 holds the preparations it has read until the stream ends. A catalogue is
@@ -162,7 +176,8 @@ has an address a reader can open.
 - One command emits a stream that a shell, DuckDB, or a loader in another
   language reads with no import of this package.
 - The reader is strict, so a hand-edited stream that lies about a concept or
-  a catalogue is reported at its line rather than loaded.
+  a catalogue is reported at its line rather than loaded. So is one that
+  repeats a key, or one that was cut after its catalogue records.
 - An empty stream fails `import --check`, so a pipeline whose export failed
   cannot end in a zero.
 - A later SQLite projection consumes this stream and never imports
@@ -175,8 +190,15 @@ has an address a reader can open.
 - ADR-0006's JSONL row predicted a break that never arrived, and this record
   says so. The table stays as written, with a note pointing here.
 - The same preparation is rendered by two adapters in two shapes. The two
-  formats have two jobs and are expected to diverge, but for now they
-  duplicate about forty lines of primitives.
+  formats have two jobs and are expected to diverge, but for now each
+  renders the witness and the edition on its own.
+- The reader checks the form of a parent and not its referent. A parent
+  that names nothing in its catalogue is carried as written. The domain
+  permits it, and the reader adds no rule the domain does not hold.
+  `tree` will never show such a preparation under a root.
+- `export` reads the corpus as well as the store. The configured witnesses
+  supply the ids, and each witness reads its id from its front matter. A
+  store that could list what it holds is a later port change.
 - A catalogue id names an edition, not a text of it. Two scans of one
   printing would collide on every id, so this schema carries one catalogue
   per source id. Lifting that limit needs the identity in lab issue #60 and
