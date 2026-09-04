@@ -110,7 +110,7 @@ current identifiers support it.
 parent. ADR-0002 governs the interchange as it governs the domain.
 
 **Surface forms survive as written.** The writer emits UTF-8 with no ASCII
-escaping, so `VELOUTÉ` is six characters on disk. Every term keeps its
+escaping, so `VELOUTÉ` is seven characters on disk. Every term keeps its
 language tag. The two commands set UTF-8 on their own streams rather than
 trusting the locale, because the stream is UTF-8 by contract.
 
