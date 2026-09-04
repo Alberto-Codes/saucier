@@ -9,6 +9,9 @@ carries a Gutenberg wrapper and needs no cleaning. The scan carries no
 wrapper and is wrapped in `NormalisedText`, which is where a reader can see
 which source is normalised and which is not.
 
+The interchange takes no path. It works on lines, and the command line
+supplies the streams, so the factory builds it bare.
+
 Examples:
     Wire the defaults and extract every witness:
 
@@ -28,6 +31,7 @@ from __future__ import annotations
 
 from saucier.adapters.driven.gutenberg import GutenbergText
 from saucier.adapters.driven.json_store import JsonCatalogueStore
+from saucier.adapters.driven.jsonl import JsonlInterchange
 from saucier.adapters.driven.normalised import NormalisedText
 from saucier.adapters.driven.plain_text import PlainText
 from saucier.domain.witness import Fidelity
@@ -37,6 +41,7 @@ from saucier.infrastructure.config import (
     GUTENBERG_ORIGIN,
     Paths,
 )
+from saucier.ports.interchange import CatalogueInterchange
 from saucier.ports.source import SourceText
 from saucier.ports.store import CatalogueStore
 
@@ -98,3 +103,15 @@ def catalogue_store(paths: Paths | None = None) -> CatalogueStore:
     """
     resolved = paths or Paths.discover()
     return JsonCatalogueStore(directory=resolved.data)
+
+
+def catalogue_interchange() -> CatalogueInterchange:
+    """Build the interchange adapter.
+
+    Takes no layout, because the interchange works on text and never on a
+    path. The caller supplies the stream.
+
+    Returns:
+        The JSON Lines interchange.
+    """
+    return JsonlInterchange()

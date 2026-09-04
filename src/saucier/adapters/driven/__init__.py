@@ -11,6 +11,8 @@ Attributes:
     normalised: `NormalisedText`, wrapping any source to clean the whitespace
         a scanner leaves behind.
     json_store: `JsonCatalogueStore`, persisting catalogues as JSON files.
+    jsonl: `JsonlInterchange`, carrying catalogues as one record per line
+        so a program with none of these classes can read them.
 
 Examples:
     Persist a catalogue to a directory:

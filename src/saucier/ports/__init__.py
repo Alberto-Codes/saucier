@@ -9,6 +9,8 @@ Attributes:
     source: `SourceText`, a readable source document with its packaging
         already stripped.
     store: `CatalogueStore`, somewhere an extracted catalogue persists.
+    interchange: `CatalogueInterchange`, a representation catalogues travel
+        in and are rebuilt from.
 
 Examples:
     Type a function against the port rather than the adapter:

@@ -3,8 +3,8 @@
 Every error this package raises deliberately descends from `SaucierError`,
 so an entry point can turn intended failures into an exit code while letting
 genuine bugs surface as tracebacks. That rule covers bad input of every
-kind: an unreadable source, a damaged store, an unfoldable term, and a tree
-with no corpus in it.
+kind: an unreadable source, a damaged store, a rejected record of the
+interchange, an unfoldable term, and a tree with no corpus in it.
 
 Examples:
     Catch anything this package raises on purpose:
@@ -105,6 +105,23 @@ class CatalogueUnwritable(SaucierError):
 
         ```python
         store.save(catalogue)  # CatalogueUnwritable: cannot write ...
+        ```
+    """
+
+
+class RecordRejected(SaucierError):
+    """A line of the interchange is not a record this reader accepts.
+
+    The message names the line, so a reader can open the stream at the
+    failure. Malformed JSON, an unknown schema or type, a duplicate id, a
+    field the schema does not name, and a preparation whose witness the
+    stream never carries all arrive here.
+
+    Examples:
+        Raised with the failing line number first:
+
+        ```python
+        interchange.decode(lines)  # RecordRejected: line 7: duplicate id ...
         ```
     """
 
