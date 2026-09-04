@@ -164,6 +164,25 @@ in the same change.
     reader could not see, so it is what an `unmatched` row cannot look past.
     Not "coverage" or "recall", which name a score rather than a gap.
 
+## Interchange
+
+**Interchange**
+:   The representation that carries catalogues between this project and any
+    program that does not share its object model. JSON Lines, one record per
+    line, written by `saucier export` and read by `saucier import`. It is a
+    serialization and never a store. Not "export format", "dump", or
+    "database".
+
+**Record**
+:   One line of the interchange: a JSON object carrying an envelope and one
+    witness or one preparation. A record is a unit of the interchange, and
+    an entry is a division of a source. Not "row" or "line".
+
+**Envelope**
+:   The three fields every record carries. `schema` names the version of
+    the interchange that shaped it. `type` says which kind of record it is.
+    `id` is its source-local address. Not "header" or "metadata".
+
 ## Names this project does not use
 
 **`shortorder`**
