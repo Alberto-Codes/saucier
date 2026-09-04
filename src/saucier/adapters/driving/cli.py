@@ -186,14 +186,18 @@ def _discard_exit_flush() -> None:
 
     The interpreter flushes stdout again when it exits. Pointing descriptor
     1 at nothing makes that flush succeed. A stdout with no descriptor, as
-    under a test harness, has nothing to flush and is left alone.
+    under a test harness, has nothing to flush and is left alone, and the
+    command's clean exit stands.
     """
     try:
         devnull = os.open(os.devnull, os.O_WRONLY)
         os.dup2(devnull, sys.stdout.fileno())
         os.close(devnull)
     except (OSError, ValueError, AttributeError):
-        pass
+        # No descriptor to redirect, so there is no exit flush to silence.
+        # A harness stdout raises here, and the command has already
+        # finished cleanly.
+        return
 
 
 def _import(_: argparse.Namespace) -> int:
