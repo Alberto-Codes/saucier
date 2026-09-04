@@ -3,6 +3,13 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.5.0](https://github.com/Alberto-Codes/saucier/compare/v0.4.0...v0.5.0) (2026-09-04)
+
+
+### Features
+
+* **adapters:** stream catalogues as versioned jsonl ([d0ede9d](https://github.com/Alberto-Codes/saucier/commit/d0ede9d20e42ce51b61111431c30850752eb0e53))
+
 ## [0.4.0](https://github.com/Alberto-Codes/saucier/compare/v0.3.0...v0.4.0) (2026-09-04)
 
 
