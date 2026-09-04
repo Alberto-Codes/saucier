@@ -3,6 +3,28 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.4.0](https://github.com/Alberto-Codes/saucier/compare/v0.3.0...v0.4.0) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* **extraction:** `is_sauce` takes the title and the chapter test only. The mothers no longer take part in admission.
+
+### Features
+
+* **extraction:** admit an entry on the sauce chapter alone ([1fdca5d](https://github.com/Alberto-Codes/saucier/commit/1fdca5db6b57d1e5651650a3c8d77f5705704df2))
+
+
+### Fixes
+
+* **extraction:** identify a preparation by its line, not its number ([228ecc6](https://github.com/Alberto-Codes/saucier/commit/228ecc6660dd5093d984392ebb388e954fcbc124))
+
+
+### Documentation
+
+* **adr:** record that the chapter decides ([a9b345d](https://github.com/Alberto-Codes/saucier/commit/a9b345dad2373abfcca37d1150b40cdfbe0ac3e5))
+* say which of the ten lost to half glaze, not to a butter ([6d155fe](https://github.com/Alberto-Codes/saucier/commit/6d155fe4d2a2ffb8c1c8200748d6cb7783fb1c78))
+
 ## [0.3.0](https://github.com/Alberto-Codes/saucier/compare/v0.2.0...v0.3.0) (2026-09-02)
 
 
