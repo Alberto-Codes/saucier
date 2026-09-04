@@ -5,6 +5,7 @@ from saucier.domain.errors import ProjectRootNotFound
 from saucier.domain.models import Catalogue
 from saucier.domain.witness import Fidelity
 from saucier.infrastructure.bootstrap import (
+    catalogue_interchange,
     catalogue_store,
     default_source_id,
     escoffier_sources,
@@ -52,3 +53,11 @@ def test_discovery_finds_the_tree_holding_the_corpus():
 def test_discovery_reports_a_tree_with_no_corpus_rather_than_guessing(tmp_path):
     with pytest.raises(ProjectRootNotFound, match="no corpus/ directory"):
         Paths.discover(start=tmp_path / "nowhere" / "module.py")
+
+
+@pytest.mark.unit
+def test_the_interchange_factory_returns_a_working_codec():
+    witness = a_witness()
+    catalogue = Catalogue(witness=witness)
+    interchange = catalogue_interchange()
+    assert interchange.decode(interchange.encode([catalogue])) == (catalogue,)

@@ -16,7 +16,9 @@ unknown schema or type, a duplicate id, a field it does not name, a value
 of the wrong type, a derived field that disagrees with its source, and a
 preparation whose witness the stream never carries. It accepts records in
 any order, so two exports joined with `cat` still rebuild. A `null` parent
-is unresolved, and a blank one is damage.
+is unresolved, and a blank one is damage. Every field the schema names is
+checked to be present before it is read, so a damaged record is always
+reported by what is wrong with it and never by a bare key.
 
 Examples:
     Write a stream and rebuild the catalogues from it:
@@ -70,7 +72,7 @@ _PREPARATION_KEYS = frozenset(
 )
 _TERM_KEYS = frozenset(("surface", "language", "concept"))
 _REF_KEYS = frozenset(("entry", "line", "fidelity"))
-_DAMAGE = (KeyError, TypeError, ValueError, EditionUnstated)
+_DAMAGE = (TypeError, ValueError, EditionUnstated)
 """What a damaged record raises while it is rebuilt. Reported, never raised raw."""
 
 
@@ -178,6 +180,9 @@ class _Reader:
     def take(self, number: int, line: str) -> None:
         """Read one line, and reject it with its number if it is not a record.
 
+        Malformed JSON is reported with the column the parser stopped at.
+        Everything else the rebuild raises is reported in its own words.
+
         Args:
             number: The line's position in the stream, from 1.
             line: The text of the line.
@@ -202,7 +207,7 @@ class _Reader:
             msg = f"line {number}: not JSON ({exc.msg} at column {exc.colno})"
             raise RecordRejected(msg) from exc
         except _DAMAGE as exc:
-            raise RecordRejected(f"line {number}: {_describe(exc)}") from exc
+            raise RecordRejected(f"line {number}: {exc}") from exc
 
     def assemble(self) -> tuple[Catalogue, ...]:
         """Build every catalogue once the stream has ended.
@@ -244,23 +249,6 @@ def _line_of(preparation: Preparation) -> int:
         Its heading line.
     """
     return preparation.ref.line
-
-
-def _describe(exc: BaseException) -> str:
-    """Word a rebuild failure for the line it happened on.
-
-    A `KeyError` carries only the key, so it is spelled out. Every other
-    failure already says what was wrong.
-
-    Args:
-        exc: What the rebuild raised.
-
-    Returns:
-        A sentence fragment naming the fault.
-    """
-    if isinstance(exc, KeyError):
-        return f"no {exc.args[0]!r} field"
-    return str(exc)
 
 
 def _render(record: dict[str, Any]) -> str:

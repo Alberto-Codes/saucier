@@ -1,4 +1,7 @@
+import io
+import json
 import os
+import sys
 
 import pytest
 from conftest import FIRST_PRINTING, REVISION, a_witness
@@ -412,3 +415,136 @@ def test_two_proofread_witnesses_get_the_blind_spot_without_the_caveat(
     out = capsys.readouterr().out
     assert "a blind spot of 63" in out
     assert "never that the printing lacks one" not in out
+
+
+# --------------------------------------------------------------------------- #
+# The interchange round trip
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.corpus
+def test_export_writes_only_records_to_stdout(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["export"]) == 0
+    out, err = capsys.readouterr()
+    assert err == ""
+    lines = out.splitlines()
+    assert len(lines) == 2 + 151 + 140
+    assert out.endswith("\n") and not out.endswith("\n\n")
+    kinds = [json.loads(line)["type"] for line in lines]
+    assert kinds[:2] == ["witness", "witness"]
+    assert set(kinds[2:]) == {"preparation"}
+
+
+@pytest.mark.corpus
+def test_export_writes_the_witnesses_in_the_configured_order(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["export"])
+    heads = [json.loads(line) for line in capsys.readouterr().out.splitlines()[:2]]
+    assert [h["id"] for h in heads] == [REVISION.source_id, FIRST_PRINTING.source_id]
+
+
+@pytest.mark.corpus
+def test_export_before_parse_fails_on_stderr_and_keeps_stdout_empty(wired, capsys):
+    assert cli.main(["export"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "no catalogue stored" in err
+    assert "Run `saucier parse`" in err
+
+
+@pytest.mark.corpus
+def test_the_shell_round_trip_reproduces_the_census(
+    wired, capsys, monkeypatch, census, first_printing_census
+):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["export"])
+    exported = capsys.readouterr().out
+    monkeypatch.setattr(sys, "stdin", io.StringIO(exported))
+    assert cli.main(["import", "--check"]) == 0
+    out, err = capsys.readouterr()
+    assert err == ""
+    first = (
+        f"{census.source_id:<14}  {census.sauces} sauces, "
+        f"{census.derived} derived, {census.unresolved} unresolved"
+    )
+    second = (
+        f"{first_printing_census.source_id:<14}  {first_printing_census.sauces} "
+        f"sauces, {first_printing_census.derived} derived, "
+        f"{first_printing_census.unresolved} unresolved"
+    )
+    assert out.splitlines()[:2] == [first, second]
+    assert (
+        out.splitlines()[2]
+        == "2 witnesses and 291 preparations rebuilt. Nothing written."
+    )
+
+
+@pytest.mark.corpus
+def test_import_check_touches_neither_the_store_nor_the_disk(
+    wired, capsys, monkeypatch, tmp_path
+):
+    cli.main(["parse"])
+    capsys.readouterr()
+    cli.main(["export"])
+    exported = capsys.readouterr().out
+    before = sorted(p.name for p in tmp_path.iterdir())
+    monkeypatch.setattr(
+        cli, "catalogue_store", lambda: pytest.fail("import reached for the store")
+    )
+    monkeypatch.setattr(sys, "stdin", io.StringIO(exported))
+    assert cli.main(["import", "--check"]) == 0
+    assert sorted(p.name for p in tmp_path.iterdir()) == before
+
+
+@pytest.mark.unit
+def test_import_without_check_is_refused(capsys):
+    with pytest.raises(SystemExit) as stopped:
+        cli.main(["import"])
+    assert stopped.value.code == 2
+    assert "--check" in capsys.readouterr().err
+
+
+@pytest.mark.unit
+def test_import_reports_a_rejected_line_on_stderr(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "stdin", io.StringIO('{"schema":"saucier/9"}\n'))
+    assert cli.main(["import", "--check"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert err.startswith("saucier: line 1: unknown schema 'saucier/9'")
+
+
+@pytest.mark.unit
+def test_import_of_an_empty_stream_says_so(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "stdin", io.StringIO(""))
+    assert cli.main(["import", "--check"]) == 0
+    assert (
+        capsys.readouterr().out
+        == "0 witnesses and 0 preparations rebuilt. Nothing written.\n"
+    )
+
+
+@pytest.mark.corpus
+def test_export_exits_clean_when_the_reader_closes_the_pipe(
+    wired, capsys, monkeypatch, tmp_path
+):
+    """`saucier export | head -n 1` must not end in a traceback."""
+    cli.main(["parse"])
+    capsys.readouterr()
+
+    class Closed:
+        def __init__(self, handle):
+            self.handle = handle
+
+        def writelines(self, _):
+            raise BrokenPipeError
+
+        def fileno(self):
+            return self.handle.fileno()
+
+    with (tmp_path / "sink").open("w") as handle:
+        monkeypatch.setattr(sys, "stdout", Closed(handle))
+        assert cli.main(["export"]) == 0

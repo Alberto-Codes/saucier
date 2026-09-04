@@ -16,6 +16,12 @@ refusal is readable beside the sentence that caused it. The `tree` command
 names the root's own parent on its heading line, because a mother that states
 a roux is not a root.
 
+The `export` command writes every stored catalogue to standard output as the
+interchange and nothing else, so the stream can be piped. The `import`
+command reads the interchange from standard input, rebuilds every catalogue
+in memory, and prints the census. Its `--check` flag is mandatory, because
+the command writes nothing and the verb must not suggest otherwise.
+
 Examples:
     Drive the interface in process:
 
@@ -24,11 +30,13 @@ Examples:
 
     assert main(["parse"]) == 0
     assert main(["tree", "espagnole"]) == 0
+    assert main(["export"]) == 0
     ```
 
 See Also:
     - [saucier.services.extraction][]: What these commands call into.
     - [saucier.services.comparison][]: What `diff` calls into.
+    - [saucier.ports.interchange][]: What `export` and `import` call into.
 """
 
 from __future__ import annotations
@@ -42,6 +50,7 @@ from saucier.domain.errors import SaucierError
 from saucier.domain.models import Catalogue, Preparation
 from saucier.domain.types import ConceptId, to_concept_id
 from saucier.infrastructure.bootstrap import (
+    catalogue_interchange,
     catalogue_store,
     default_source_id,
     escoffier_sources,
@@ -99,6 +108,62 @@ def _parse(_: argparse.Namespace) -> int:
         print(f"Wrote {os.path.relpath(path)}")
     print("Those unresolved entries are the honest score. A parser cannot")
     print("read a derivation the source never wrote down.")
+    return 0
+
+
+def _export(_: argparse.Namespace) -> int:
+    """Write every stored catalogue to standard output as the interchange.
+
+    Every catalogue is loaded before the first line is written, so a
+    missing one is reported on standard error and standard output stays
+    empty. Nothing but records reaches standard output.
+
+    A reader that closes the pipe early, as `head` does, has what it asked
+    for. The remaining output goes nowhere and the command exits clean.
+
+    Args:
+        _: Parsed arguments, unused.
+
+    Returns:
+        Zero. A catalogue that cannot be loaded raises instead.
+    """
+    store = catalogue_store()
+    catalogues = [store.load(s.witness.source_id) for s in escoffier_sources()]
+    try:
+        sys.stdout.writelines(catalogue_interchange().encode(catalogues))
+        sys.stdout.flush()
+    except BrokenPipeError:
+        # The interpreter flushes stdout again at exit. Point it at nothing,
+        # so the closed pipe is not reported a second time.
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        os.close(devnull)
+    return 0
+
+
+def _import(_: argparse.Namespace) -> int:
+    """Rebuild every catalogue the standard input carries, and print the census.
+
+    Reads one line at a time and writes no file. The census is printed in
+    the order the witness records arrived, one line per witness, so the
+    numbers can be read beside what `parse` printed.
+
+    Args:
+        _: Parsed arguments. `--check` is mandatory, so it carries nothing.
+
+    Returns:
+        Zero. A stream the reader rejects raises instead.
+    """
+    catalogues = catalogue_interchange().decode(sys.stdin)
+    for catalogue in catalogues:
+        print(
+            f"{catalogue.source_id:<14}  {len(catalogue.preparations)} sauces, "
+            f"{catalogue.resolved} derived, {catalogue.unresolved} unresolved"
+        )
+    read = sum(len(c.preparations) for c in catalogues)
+    print(
+        f"{len(catalogues)} witnesses and {read} preparations rebuilt. Nothing written."
+    )
     return 0
 
 
@@ -314,7 +379,8 @@ def build_parser() -> argparse.ArgumentParser:
     """Define the command line interface.
 
     The tree command roots at any preparation, not only a mother. A lookup
-    reads the first committed witness unless `--source` names another.
+    reads the first committed witness unless `--source` names another. The
+    import command requires `--check`, so the verb cannot pass for a write.
 
     Returns:
         The configured argument parser.
@@ -344,6 +410,20 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("older", help="the earlier edition, e.g. escoffier-1907")
     diff.add_argument("newer", help="the later edition, e.g. escoffier-1909")
     diff.set_defaults(run=_diff)
+
+    export = sub.add_parser(
+        "export", help="write every stored catalogue to stdout as jsonl"
+    )
+    export.set_defaults(run=_export)
+
+    imp = sub.add_parser("import", help="rebuild catalogues from jsonl on stdin")
+    imp.add_argument(
+        "--check",
+        action="store_true",
+        required=True,
+        help="rebuild in memory and print the census. Mandatory: nothing is written",
+    )
+    imp.set_defaults(run=_import)
     return parser
 
 
