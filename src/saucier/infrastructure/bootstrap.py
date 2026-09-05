@@ -10,7 +10,9 @@ wrapper and is wrapped in `NormalisedText`, which is where a reader can see
 which source is normalised and which is not.
 
 The interchange takes no path. It works on lines, and the command line
-supplies the streams, so the factory builds it bare.
+supplies the streams, so the factory builds it bare. So does the adapter
+that serves recorded procedures, because this release records them by
+hand and holds them in the adapter itself.
 
 Examples:
     Wire the defaults and extract every witness:
@@ -30,6 +32,7 @@ See Also:
 from __future__ import annotations
 
 from saucier.adapters.driven.gutenberg import GutenbergText
+from saucier.adapters.driven.hand_procedures import HandProcedures
 from saucier.adapters.driven.json_store import JsonCatalogueStore
 from saucier.adapters.driven.jsonl import JsonlInterchange
 from saucier.adapters.driven.normalised import NormalisedText
@@ -42,6 +45,7 @@ from saucier.infrastructure.config import (
     Paths,
 )
 from saucier.ports.interchange import CatalogueInterchange
+from saucier.ports.procedure import RecordedProcedures
 from saucier.ports.source import SourceText
 from saucier.ports.store import CatalogueStore
 
@@ -115,3 +119,16 @@ def catalogue_interchange() -> CatalogueInterchange:
         The JSON Lines interchange.
     """
     return JsonlInterchange()
+
+
+def recorded_procedures() -> RecordedProcedures:
+    """Build the adapter that serves recorded procedures.
+
+    Takes no layout, because this release records by hand and the
+    procedures are held in the adapter itself. A file under a tracked
+    directory is a later store.
+
+    Returns:
+        The procedures recorded by hand.
+    """
+    return HandProcedures()

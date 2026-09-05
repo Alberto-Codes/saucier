@@ -11,6 +11,8 @@ Attributes:
     store: `CatalogueStore`, somewhere an extracted catalogue persists.
     interchange: `CatalogueInterchange`, a representation catalogues travel
         in and are rebuilt from.
+    procedure: `RecordedProcedures`, somewhere a recorded procedure is
+        looked up by the reference of the preparation it belongs to.
 
 Examples:
     Type a function against the port rather than the adapter:

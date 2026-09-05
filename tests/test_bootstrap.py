@@ -9,6 +9,7 @@ from saucier.infrastructure.bootstrap import (
     catalogue_store,
     default_source_id,
     escoffier_sources,
+    recorded_procedures,
 )
 from saucier.infrastructure.config import SCAN_FILE, TRANSCRIPTION_FILE, Paths
 
@@ -61,3 +62,9 @@ def test_the_interchange_factory_returns_a_working_codec():
     catalogue = Catalogue(witness=witness)
     interchange = catalogue_interchange()
     assert interchange.decode(interchange.encode([catalogue])) == (catalogue,)
+
+
+@pytest.mark.unit
+def test_the_recorded_procedures_factory_names_its_recorder():
+    """A procedure is never shown without saying who read it."""
+    assert recorded_procedures().recorder == "hand"

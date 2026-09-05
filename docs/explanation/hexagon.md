@@ -62,7 +62,7 @@ records the argument.
 
 ## What it costs
 
-Eight `__init__.py` files, two protocol modules that hold no logic, and an
+Eight `__init__.py` files, four protocol modules that hold no logic, and an
 assembly root. That is the whole overhead, and `check_loc.py` keeps any single
 module under 320 code lines so the structure stays legible rather than
 becoming the point.

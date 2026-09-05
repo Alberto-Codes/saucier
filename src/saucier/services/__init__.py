@@ -10,6 +10,8 @@ Attributes:
         source, with no model involved.
     front_matter: Reading the edition a source states about itself.
     comparison: Comparing two catalogues, with a cause on every row.
+    procedure: Fetching a recorded procedure and checking every word of
+        it against the body it cites.
 
 Examples:
     Extract a catalogue from any source implementation:

@@ -101,6 +101,7 @@ SAUCE BORDELAISE
 entry 32, line 1680, transcription of escoffier-1909
   term  SAUCE BORDELAISE  [fr]  sauce-bordelaise
   parent  half-glaze
+  procedure  (unrecorded)
 ```
 
 You asked for `bordelaise`. Escoffier writes `SAUCE BORDELAISE`, French word
@@ -123,6 +124,7 @@ entry 69, line 2192, transcription of escoffier-1909
   term  CARDINAL SAUCE  [en]  cardinal-sauce
   parent  (unresolved)
   stated  bechamel, lobster-butter
+  procedure  (unrecorded)
 ```
 
 Cardinal says "Boil one pint of Béchamel", and later "finish the sauce ...
@@ -139,6 +141,60 @@ $ sed -n '1680p' corpus/escoffier-1909.txt
 ```
 
 Every claim in the output is traceable that way.
+
+## Read a procedure
+
+A parent says what a sauce is built from, and not what is done with it.
+One preparation now says that too:
+
+```console
+$ uv run saucier show mornay
+MORNAY SAUCE
+entry 91, line 2437, transcription of escoffier-1909
+  term  MORNAY SAUCE  [en]  mornay-sauce
+  parent  bechamel
+  procedure  6 operations, recorded by hand
+    Boil      Béchamel Sauce [fr] 1 pint, fumet [fr] 1/4 pint
+    Reduce    criterion: by a good quarter (unresolved)
+    add       Gruyère [fr] 2 oz., Parmesan [en] 2 oz.
+    Put       duration: a few minutes (unresolved), on the fire again
+    stirring  instrument: small whisk, criterion: the melting of the cheese (unresolved)
+    Finish    butter [en] 2 oz., away from the fire, added by degrees
+```
+
+Six operations, in the order the body states them. The first one boils
+one pint of Béchamel, which is the parent, so the derivation finally has
+a verb. Every word on those lines is quoted from the entry, and the
+command checks each one against the body before it prints. `a few
+minutes` is a duration the text gives no number for, so its number is
+unresolved. That is the same absence a parent records when the source
+states none.
+
+The scan states the same procedure in its own words. Its heading reads
+`MORN AY SAUCE`, so look it up by that name:
+
+```console
+$ uv run saucier show morn-ay-sauce --source escoffier-1907
+MORN AY SAUCE
+entry 91, line 2864, ocr of escoffier-1907
+  term  MORN AY SAUCE  [en]  morn-ay-sauce
+  parent  (unresolved)
+  stated  no candidate
+  procedure  6 operations, recorded by hand
+    Boil      Bdchamel Sauce [fr] 1 pint, fumet [fr] 1/4 pint
+    Reduce    criterion: by a good quarter (unresolved)
+    add       Gruy^re [fr] 2 oz., Parmesan [en] 2 oz.
+    Put       duration: a few minutes (unresolved), on the fire again
+    stirring  instrument: small whisk, criterion: the melting of the cheese (unresolved)
+    Finish    butter [en] 2 oz., away from the fire, added by degrees
+```
+
+The scanner turned `Béchamel` into `Bdchamel`, so the scan's Mornay has
+no parent it can name. The verb survived, and so did every quantity. Only
+one preparation is recorded in this release, and a hand read it.
+Everything else prints `(unrecorded)`.
+[ADR-0017](../adr/0017-a-procedure-quotes-its-witness.md) says why one is
+enough to settle the shape, and what the two witnesses disagree on.
 
 ## What you have
 

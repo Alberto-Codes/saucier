@@ -209,10 +209,39 @@ codes for languages actually present in tracked sources. A member is added
 when a source in that language is added, not in anticipation. The tracked
 corpus is English and French, so those are the two members.
 
+## `Procedure`
+
+The operations one body states, in the order it states them. A procedure
+is recorded beside a preparation and never in place of its parent. This
+release records one preparation, `MORNAY SAUCE`, once per witness, by
+hand. See [ADR-0017](../adr/0017-a-procedure-quotes-its-witness.md).
+
+Every element quotes its witness. An operation carries the clause it was
+read from as its `wording`, and each element inside it carries its own.
+The entity refuses an element whose words are not inside its operation's.
+`unstated(body)` names every operation the body does not carry in that
+order, so a procedure recorded by hand is checked rather than trusted.
+
+| Entity | Fields | Notes |
+| --- | --- | --- |
+| `Operation` | `wording`, `verb`, `inputs`, `instrument`, `criterion`, `duration`, `constraints` | The verb and the instrument are terms. No field has a default. |
+| `Input` | `wording`, `term`, `quantity` | The preparation in progress is not an input. |
+| `Parameter` | `wording`, `number`, `unit` | `number` is `None` when the words give none. |
+
+`number` is a `Fraction`. `one-quarter pint` records `1/4` and `pint`, and
+`a few minutes` records `minutes` and no number. `None` is unresolved in
+the sense of ADR-0002, and no code fills it.
+
+A procedure is not stored, and the interchange does not carry it.
+`saucier show` fetches it through `RecordedProcedures`, checks it against
+the body, and prints it. A preparation with none recorded prints
+`(unrecorded)`, which says nothing about the source.
+
 ## Interchange
 
-`saucier export` writes every entity above as JSON Lines. Each line is one
-record, and every record carries an envelope of `schema`, `type`, and `id`.
+`saucier export` writes every entity above except the procedure as JSON
+Lines. Each line is one record, and every record carries an envelope of
+`schema`, `type`, and `id`.
 The schema is `saucier/1`. A program with none of these classes reads one
 line and knows what it holds and which catalogue it belongs to. See
 [ADR-0016](../adr/0016-jsonl-is-the-interchange-not-a-store.md).

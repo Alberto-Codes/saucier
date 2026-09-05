@@ -9,6 +9,8 @@ Attributes:
     types: Value objects — `Language`, `ConceptId`, and concept folding.
     models: Frozen entities — `Term`, `Preparation`, `SourceRef`, `Catalogue`.
     witness: What a text is — `Edition`, `Fidelity`, and `Witness`.
+    procedure: What a body states is done — `Parameter`, `Input`,
+        `Operation`, and `Procedure`, each quoting its witness.
     errors: The typed exception hierarchy this package raises deliberately.
 
 Examples:
