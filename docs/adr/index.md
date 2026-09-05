@@ -56,3 +56,7 @@ repository, because they govern the writing rather than this implementation.
 - [ADR-0016: JSONL is the interchange, not a
   store](0016-jsonl-is-the-interchange-not-a-store.md). Why the append break
   ADR-0006 predicted never came, and what one record per line is for instead.
+- [ADR-0017: A procedure quotes its
+  witness](0017-a-procedure-quotes-its-witness.md). Why Mornay's parent has
+  a verb, why one preparation carries a procedure, and what the scan does
+  to it.
