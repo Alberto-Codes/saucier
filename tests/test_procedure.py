@@ -120,7 +120,9 @@ def test_a_parameter_needs_its_wording():
 @pytest.mark.unit
 def test_an_input_refuses_a_term_outside_its_words():
     with pytest.raises(ValueError, match="term 'butter' is not inside"):
-        Input(wording="one pint of Béchamel Sauce", term=Term("butter", EN), quantity=None)
+        Input(
+            wording="one pint of Béchamel Sauce", term=Term("butter", EN), quantity=None
+        )
 
 
 @pytest.mark.unit
@@ -141,8 +143,18 @@ def test_an_operation_refuses_a_verb_outside_its_clause():
     [
         ("input", {"inputs": (BECHAMEL,)}),
         ("instrument", {"instrument": Term("small whisk", EN)}),
-        ("criterion", {"criterion": Parameter(wording="until it coats", number=None, unit=None)}),
-        ("duration", {"duration": Parameter(wording="a few minutes", number=None, unit="minutes")}),
+        (
+            "criterion",
+            {"criterion": Parameter(wording="until it coats", number=None, unit=None)},
+        ),
+        (
+            "duration",
+            {
+                "duration": Parameter(
+                    wording="a few minutes", number=None, unit="minutes"
+                )
+            },
+        ),
         ("constraint", {"constraints": ("away from the fire",)}),
     ],
 )
@@ -191,10 +203,10 @@ def test_an_operation_stated_out_of_order_is_unstated():
 
 @pytest.mark.unit
 def test_wrapped_lines_and_non_breaking_spaces_do_not_hide_a_statement():
-    """The 1909 text sets `two oz.` and wraps at the column."""
-    assert collapse("two oz.\nof  butter ") == "two oz. of butter"
+    """The 1909 text sets a no-break space before `oz.` and wraps at the column."""
+    assert collapse("two\u00a0oz.\nof  butter ") == "two oz. of butter"
     butter = operation("Finish with two oz. of butter", "Finish")
-    body = "Finish with two oz.\nof butter added by degrees."
+    body = "Finish with two\u00a0oz.\nof butter added by degrees."
     assert Procedure((butter,)).unstated(body) == ()
 
 
@@ -212,14 +224,18 @@ def test_an_unrecorded_preparation_yields_none():
 def test_a_recorded_procedure_the_body_states_is_returned():
     preparation = a_preparation(BODY)
     procedure = Procedure((BOIL, REDUCE))
-    assert procedure_of(preparation, Recorded({preparation.ref: procedure})) is procedure
+    assert (
+        procedure_of(preparation, Recorded({preparation.ref: procedure})) is procedure
+    )
 
 
 @pytest.mark.unit
 def test_a_recorded_procedure_the_body_does_not_state_is_damage():
     preparation = a_preparation(BODY)
     recorded = Recorded({preparation.ref: Procedure((BOIL, STRAIN))})
-    with pytest.raises(ProcedureUnstated, match="line 10 .* does not state 'Strain the sauce'"):
+    with pytest.raises(
+        ProcedureUnstated, match=r"line 10 .* does not state 'Strain the sauce'"
+    ):
         procedure_of(preparation, recorded)
 
 
