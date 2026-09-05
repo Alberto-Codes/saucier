@@ -119,11 +119,39 @@ entry 69, line 2192, transcription of escoffier-1909
   term  CARDINAL SAUCE  [en]  cardinal-sauce
   parent  (unresolved)
   stated  bechamel, lobster-butter
+  procedure  (unrecorded)
 ```
 
 Cardinal states one base and one finish. The resolver reads names and cannot
 tell them apart, so it refuses and prints what it saw. See
 [ADR-0012](../adr/0012-a-resolver-may-refuse-never-rank.md).
+
+Below the parent the command prints the procedure recorded for the
+preparation, one operation per line, or `(unrecorded)` when none is. This
+release records one, by hand, once per witness. See
+[ADR-0017](../adr/0017-a-procedure-quotes-its-witness.md).
+
+```console
+$ uv run saucier show mornay
+MORNAY SAUCE
+entry 91, line 2437, transcription of escoffier-1909
+  term  MORNAY SAUCE  [en]  mornay-sauce
+  parent  bechamel
+  procedure  6 operations, recorded by hand
+    Boil      Béchamel Sauce [fr] 1 pint, fumet [fr] 1/4 pint
+    Reduce    criterion: by a good quarter (unresolved)
+    add       Gruyère [fr] 2 oz., Parmesan [en] 2 oz.
+    Put       duration: a few minutes (unresolved), on the fire again
+    stirring  instrument: small whisk, criterion: the melting of the cheese (unresolved)
+    Finish    butter [en] 2 oz., away from the fire, added by degrees
+```
+
+Each line names the verb as the source writes it, then what the clause
+states. Inputs come first, each with its language tag and its quantity.
+Then the instrument, the criterion, the duration, and every constraint.
+`(unresolved)` marks a parameter whose words give no number. Every word is
+checked against the body before it is printed. A recorded procedure the
+body does not state exits `2` and names the operation.
 
 `--chars` sets how much prose to print. Default `600`. Prose that was cut
 says so, and reports how much was left out.
@@ -134,8 +162,9 @@ answers to all of them. `BROWN SAUCE OR ESPAGNOLE` is reachable as either.
 When a name matches several preparations, the command prints the best match
 and names the others on standard error.
 
-Exit codes: `0` on success, `1` when no preparation matches, `2` when the
-stored catalogue cannot be read or the name folds to nothing.
+Exit codes: `0` on success, `1` when no preparation matches. `2` when the
+stored catalogue cannot be read, the name folds to nothing, or a recorded
+procedure misquotes its body.
 
 ## `saucier export`
 

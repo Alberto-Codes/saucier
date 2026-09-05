@@ -4,8 +4,9 @@ Every error this package raises deliberately descends from `SaucierError`,
 so an entry point can turn intended failures into an exit code while letting
 genuine bugs surface as tracebacks. That rule covers bad input of every
 kind: an unreadable source, a damaged store, a rejected record of the
-interchange, an interchange with nothing in it, an unfoldable term, and a
-tree with no corpus in it.
+interchange, an interchange with nothing in it, an unfoldable term, a
+recorded procedure its body does not state, and a tree with no corpus in
+it.
 
 Examples:
     Catch anything this package raises on purpose:
@@ -143,6 +144,22 @@ class InterchangeEmpty(SaucierError):
 
         ```python
         main(["import", "--check"])  # saucier: interchange carries no catalogues
+        ```
+    """
+
+
+class ProcedureUnstated(SaucierError):
+    """A recorded procedure quotes words its preparation's body does not carry.
+
+    A procedure recorded by hand is checked against the text it cites
+    before it is shown. One that fails the check is damage to report,
+    never a procedure to print as if the text said it.
+
+    Examples:
+        Raised with the first operation the body does not state:
+
+        ```python
+        procedure_of(preparation, recorded)  # ProcedureUnstated: MORNAY SAUCE ...
         ```
     """
 

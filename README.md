@@ -74,6 +74,33 @@ paragraph beside the old parent, and a resolver may refuse, never rank. Five
 admitted entries state a parent. `saucier show cardinal-sauce` prints both names it saw. See
 [ADR-0015](docs/adr/0015-the-chapter-decides.md).
 
+## The parent has a verb
+
+A parent says what a sauce is built from. `MORNAY SAUCE` now says what is
+done with it:
+
+```console
+$ uv run saucier show mornay
+MORNAY SAUCE
+entry 91, line 2437, transcription of escoffier-1909
+  term  MORNAY SAUCE  [en]  mornay-sauce
+  parent  bechamel
+  procedure  6 operations, recorded by hand
+    Boil      Béchamel Sauce [fr] 1 pint, fumet [fr] 1/4 pint
+    Reduce    criterion: by a good quarter (unresolved)
+    add       Gruyère [fr] 2 oz., Parmesan [en] 2 oz.
+    Put       duration: a few minutes (unresolved), on the fire again
+    stirring  instrument: small whisk, criterion: the melting of the cheese (unresolved)
+    Finish    butter [en] 2 oz., away from the fire, added by degrees
+```
+
+Every word is quoted from the entry, and the command checks each one
+against the body before it prints. `a few minutes` names no number, so
+its number is unresolved, the same absence a parent records. One
+preparation is recorded in this release, by hand, once per witness. The
+scan's copy reads `Bdchamel`, so its parent is lost where its verb is
+not. See [ADR-0017](docs/adr/0017-a-procedure-quotes-its-witness.md).
+
 ## Two witnesses, and a diff that names its causes
 
 The corpus holds two texts of one book. One is proofread and one is a raw
@@ -91,9 +118,13 @@ says so rather than reporting a removal it cannot support.
 
 It reports no additions at all. The 1907 witness is a scan and 284 of its
 entries are unread. So a concept found in one witness and not the other is
-`unmatched` rather than added. **No editorial difference between the two
-printings has been confirmed.** Every candidate so far has been the scanner
-or the reader.
+`unmatched` rather than added. **The diff has confirmed no editorial
+difference between the two printings.** Every candidate it has raised has
+been the scanner or the reader. One difference has been confirmed by hand.
+Mornay's fumet is of `that fish` in 1907 and of `the fish, poultry, or
+vegetable` in 1909, and
+[ADR-0017](docs/adr/0017-a-procedure-quotes-its-witness.md) quotes both
+lines.
 
 ## One record per line, for whatever comes next
 
@@ -124,7 +155,7 @@ reference is generated from the docstrings, so it cannot drift from the code.
 - [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
 - [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
 - [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
-- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the sixteen records, and what each one accepted
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the seventeen records, and what each one accepted
 
 ## Licence
 

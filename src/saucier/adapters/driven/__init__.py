@@ -15,6 +15,8 @@ Attributes:
         so a program with none of these classes can read them.
     jsonl_records: The `saucier/1` record schema and the strict reader
         that enforces it, line by line.
+    hand_procedures: `HandProcedures`, the procedures recorded by hand,
+        one per witness of Mornay, looked up by reference.
 
 Examples:
     Persist a catalogue to a directory:

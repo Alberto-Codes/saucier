@@ -12,9 +12,12 @@ beside the counts rather than below them, because a count read without its
 blind spot is a stronger claim than the evidence carries.
 
 The `show` command prints the candidates an unresolved parent states, so a
-refusal is readable beside the sentence that caused it. The `tree` command
-names the root's own parent on its heading line, because a mother that states
-a roux is not a root.
+refusal is readable beside the sentence that caused it. It prints the
+procedure recorded for the preparation, one operation per line, after
+the service has checked every word of it against the body. A preparation
+with none recorded says so. The `tree` command names the root's own
+parent on its heading line, because a mother that states a roux is not a
+root.
 
 The `export` command writes every stored catalogue to standard output as the
 interchange and nothing else, so the stream can be piped. The `import`
@@ -44,6 +47,7 @@ See Also:
     - [saucier.services.extraction][]: What these commands call into.
     - [saucier.services.comparison][]: What `diff` calls into.
     - [saucier.ports.interchange][]: What `export` and `import` call into.
+    - [saucier.services.procedure][]: What `show` calls into for a procedure.
 """
 
 from __future__ import annotations
@@ -56,12 +60,14 @@ from typing import TextIO
 
 from saucier.domain.errors import InterchangeEmpty, SaucierError
 from saucier.domain.models import Catalogue, Preparation
+from saucier.domain.procedure import Input, Operation, Parameter, Procedure
 from saucier.domain.types import ConceptId, to_concept_id
 from saucier.infrastructure.bootstrap import (
     catalogue_interchange,
     catalogue_store,
     default_source_id,
     escoffier_sources,
+    recorded_procedures,
 )
 from saucier.services.comparison import Difference, Report, compare
 from saucier.services.extraction import (
@@ -70,6 +76,7 @@ from saucier.services.extraction import (
     parent_candidates,
     stated_candidates,
 )
+from saucier.services.procedure import procedure_of
 
 BRANCH, LAST, PIPE, GAP = "├── ", "└── ", "│   ", "    "
 
@@ -386,11 +393,19 @@ def _show(args: argparse.Namespace) -> int:
     opening paragraph states, so a reader sees why the resolver refused. `CARDINAL
     SAUCE` states Béchamel and lobster butter, and the line says so.
 
+    Below the parent it prints the recorded procedure, one operation per
+    line, or says the preparation is unrecorded. The procedure is checked
+    against the body before the first line is printed, so a misquoted
+    record leaves stdout empty.
+
     Args:
         args: Parsed arguments carrying the concept to show and the source.
 
     Returns:
         Zero, or `NOT_FOUND` when nothing answers to the concept.
+
+    Raises:
+        ProcedureUnstated: If the recorded procedure misquotes the body.
     """
     concept = to_concept_id(args.concept)
     catalogue = catalogue_store().load(args.source or default_source_id())
@@ -400,6 +415,8 @@ def _show(args: argparse.Namespace) -> int:
         return NOT_FOUND
 
     preparation = matches[0]
+    recorded = recorded_procedures()
+    procedure = procedure_of(preparation, recorded)
     ref = preparation.ref
     print(preparation.title)
     print(
@@ -412,6 +429,7 @@ def _show(args: argparse.Namespace) -> int:
         print(f"  stated  {_stated(catalogue, preparation)}")
     else:
         print(f"  parent  {preparation.parent}")
+    _print_procedure(procedure, recorded.recorder)
     print()
     print(_prose(preparation.body, args.chars))
     if len(matches) > 1:
@@ -435,6 +453,98 @@ def _stated(catalogue: Catalogue, preparation: Preparation) -> str:
         preparation.body, own_names(preparation), parent_candidates(catalogue)
     )
     return ", ".join(stated) if stated else "no candidate"
+
+
+def _print_procedure(procedure: Procedure | None, recorder: str) -> None:
+    """Print a checked procedure, or say the preparation is unrecorded.
+
+    The heading line says how many operations and who recorded them. Each
+    operation then takes one line: its verb, then what the clause states,
+    in the order stated. A parameter whose words give no number says
+    `(unresolved)`, because the slot is the one a parent uses.
+
+    Args:
+        procedure: The procedure the body was checked against, or `None`
+            when the preparation is unrecorded.
+        recorder: Who recorded it.
+    """
+    if procedure is None:
+        print("  procedure  (unrecorded)")
+        return
+    count = len(procedure.operations)
+    print(f"  procedure  {count} operations, recorded by {recorder}")
+    for line in _operation_lines(procedure):
+        print(line)
+
+
+def _operation_lines(procedure: Procedure) -> list[str]:
+    """Render every operation of a procedure, verbs aligned.
+
+    Args:
+        procedure: The procedure to render.
+
+    Returns:
+        One line per operation, in procedure order.
+    """
+    width = max(len(operation.verb.surface) for operation in procedure.operations)
+    return [
+        f"    {operation.verb.surface:<{width}}  {', '.join(_parts(operation))}".rstrip()
+        for operation in procedure.operations
+    ]
+
+
+def _parts(operation: Operation) -> list[str]:
+    """Render what one clause states, in the order the record holds it.
+
+    Args:
+        operation: The operation to render.
+
+    Returns:
+        Inputs first, then the instrument, the criterion, the duration,
+        and every constraint, each as text.
+    """
+    parts = [_input(found) for found in operation.inputs]
+    if operation.instrument is not None:
+        parts.append(f"instrument: {operation.instrument.surface}")
+    if operation.criterion is not None:
+        parts.append(f"criterion: {_parameter(operation.criterion)}")
+    if operation.duration is not None:
+        parts.append(f"duration: {_parameter(operation.duration)}")
+    parts.extend(operation.constraints)
+    return parts
+
+
+def _input(found: Input) -> str:
+    """Render one input as its term, its language, and its quantity.
+
+    Args:
+        found: The input to render.
+
+    Returns:
+        The surface form, the language tag, and the quantity when one is
+        stated.
+    """
+    text = f"{found.term.surface} [{found.term.language.value}]"
+    if found.quantity is None:
+        return text
+    return f"{text} {_parameter(found.quantity)}"
+
+
+def _parameter(parameter: Parameter) -> str:
+    """Render a parameter as its number and unit, or its words and a marker.
+
+    Args:
+        parameter: The parameter to render.
+
+    Returns:
+        `1/4 pint` when the words give a number, and the words followed by
+        `(unresolved)` when they do not.
+    """
+    if parameter.number is None:
+        return f"{parameter.wording} (unresolved)"
+    if parameter.unit is None:
+        return str(parameter.number)
+    return f"{parameter.number} {parameter.unit}"
 
 
 def _prose(body: str, limit: int) -> str:

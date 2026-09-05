@@ -14,9 +14,11 @@ posts quote. The `escoffier_1907` fixture is the scanned first printing.
 """
 
 import re
+from fractions import Fraction
 
 import pytest
 
+from saucier.adapters.driven.hand_procedures import HandProcedures
 from saucier.adapters.driven.normalised import normalise, repair_separator
 from saucier.domain.types import ConceptId
 from saucier.domain.witness import Fidelity
@@ -30,6 +32,7 @@ from saucier.services.extraction import (
     parent_candidates,
     stated_candidates,
 )
+from saucier.services.procedure import procedure_of
 
 
 @pytest.mark.corpus
@@ -601,3 +604,137 @@ def test_the_census_moved_by_the_three_numbers_the_docs_name(escoffier, census):
     assert len(admitted_resolved) == 5
     assert escoffier.resolved == census.derived
     assert escoffier.resolved == 50 + len(GAINED) - len(LOST) + len(admitted_resolved)
+
+
+MORNAY_VERBS = ("Boil", "Reduce", "add", "Put", "stirring", "Finish")
+"""The six operations Mornay states, as each witness writes the verb.
+
+Lines 2439 to 2446 of the 1909 text, and 2866 to 2878 of the scan. The
+verbs keep the case the source gives them, because a wording quotes.
+"""
+
+
+def recorded_in(catalogue):
+    """Every preparation of a catalogue with a recorded procedure, checked."""
+    recorded = HandProcedures()
+    found = []
+    for preparation in catalogue.preparations:
+        procedure = procedure_of(preparation, recorded)
+        if procedure is not None:
+            found.append((preparation, procedure))
+    return found
+
+
+def recorded_procedure(catalogue, concept):
+    """The checked procedure of one preparation, which has to have one."""
+    preparation = catalogue.find(ConceptId(concept))
+    assert preparation is not None, concept
+    procedure = procedure_of(preparation, HandProcedures())
+    assert procedure is not None, concept
+    return preparation, procedure
+
+
+def measured(parameter):
+    """The number and unit of a parameter that has to be stated."""
+    assert parameter is not None
+    return parameter.number, parameter.unit
+
+
+@pytest.mark.corpus
+def test_one_preparation_per_witness_carries_a_recorded_procedure(
+    escoffier, escoffier_1907
+):
+    """The published count of recorded preparations, and it is one.
+
+    A change that records a second preparation adds its hand check here in
+    the same change, or fails. ADR-0017 records the rule.
+    """
+    assert [(p.ref.entry, p.ref.line) for p, _ in recorded_in(escoffier)] == [
+        (91, 2437)
+    ]
+    assert [(p.ref.entry, p.ref.line) for p, _ in recorded_in(escoffier_1907)] == [
+        (91, 2864)
+    ]
+
+
+@pytest.mark.corpus
+def test_mornay_states_six_operations_in_the_order_the_body_states_them(escoffier):
+    _, procedure = recorded_procedure(escoffier, "mornay-sauce")
+    assert tuple(op.verb.surface for op in procedure.operations) == MORNAY_VERBS
+
+
+@pytest.mark.corpus
+def test_mornay_first_operation_takes_its_parent(escoffier):
+    """The derivation has a verb. Boil one pint of it, with a quarter pint of fumet."""
+    mornay, procedure = recorded_procedure(escoffier, "mornay-sauce")
+    bechamel, fumet = procedure.operations[0].inputs
+    assert mornay.parent == "bechamel"
+    assert escoffier.find(bechamel.term.concept) is escoffier.find(mornay.parent)
+    assert measured(bechamel.quantity) == (1, "pint")
+    assert measured(fumet.quantity) == (Fraction(1, 4), "pint")
+    assert fumet.term.surface == "fumet"
+
+
+@pytest.mark.corpus
+def test_a_stated_number_is_recorded_and_an_unstated_one_is_unresolved(escoffier):
+    """Two oz. three times. `a few minutes` is a duration with no number."""
+    _, procedure = recorded_procedure(escoffier, "mornay-sauce")
+    reduce, add, put, stir, finish = procedure.operations[1:]
+    assert [
+        (i.term.surface, *measured(i.quantity)) for i in add.inputs + finish.inputs
+    ] == [("Gruyère", 2, "oz."), ("Parmesan", 2, "oz."), ("butter", 2, "oz.")]
+    assert reduce.criterion is not None
+    assert reduce.criterion.wording == "by a good quarter"
+    assert measured(reduce.criterion) == (None, None)
+    assert put.duration is not None
+    assert put.duration.wording == "a few minutes"
+    assert measured(put.duration) == (None, "minutes")
+    assert put.constraints == ("on the fire again",)
+    assert stir.instrument is not None
+    assert stir.instrument.surface == "small whisk"
+    assert stir.criterion is not None
+    assert stir.criterion.wording == "the melting of the cheese"
+    assert finish.constraints == ("away from the fire", "added by degrees")
+
+
+@pytest.mark.corpus
+def test_the_scan_states_the_same_operations_and_cannot_name_the_parent(
+    escoffier_1907,
+):
+    """`MORN AY SAUCE` at line 2864. Its Béchamel reads `Bdchamel`.
+
+    The scanner broke the heading and the parent's name. The verb survived,
+    and so did every quantity. The reduce clause crosses a page break, so
+    its wording carries the running header the scan puts there.
+    """
+    scanned, procedure = recorded_procedure(escoffier_1907, "morn-ay-sauce")
+    assert scanned.title == "MORN AY SAUCE"
+    assert scanned.parent is None
+    assert tuple(op.verb.surface for op in procedure.operations) == MORNAY_VERBS
+    bechamel = procedure.operations[0].inputs[0]
+    assert bechamel.term.surface == "Bdchamel Sauce"
+    assert escoffier_1907.find(bechamel.term.concept) is None
+    assert procedure.operations[2].inputs[0].term.surface == "Gruy^re"
+    assert "40 GUIDE TO MODERN COOKERY" in procedure.operations[1].wording
+
+
+@pytest.mark.corpus
+def test_the_revision_widened_mornay_from_fish_to_fish_poultry_or_vegetable(
+    escoffier, escoffier_1907
+):
+    """The first editorial difference confirmed between the two printings.
+
+    Line 2866 of the scan reads `of that fish`. Line 2438 of the revision
+    reads `of the fish, poultry, or vegetable`. No scanner adds two nouns.
+    The other five operations read the same in both, and the last three
+    word for word.
+    """
+    _, clean = recorded_procedure(escoffier, "mornay-sauce")
+    _, scanned = recorded_procedure(escoffier_1907, "morn-ay-sauce")
+    clean_fumet = clean.operations[0].inputs[1]
+    scanned_fumet = scanned.operations[0].inputs[1]
+    assert "of the fish, poultry, or vegetable, which is" in clean_fumet.wording
+    assert "of that fish which is" in scanned_fumet.wording
+    assert clean_fumet.term == scanned_fumet.term
+    assert clean_fumet.quantity == scanned_fumet.quantity
+    assert clean.operations[3:] == scanned.operations[3:]

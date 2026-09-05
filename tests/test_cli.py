@@ -2,6 +2,7 @@ import io
 import json
 import os
 import sys
+from fractions import Fraction
 
 import pytest
 from conftest import FIRST_PRINTING, REVISION, a_witness
@@ -10,6 +11,7 @@ from saucier.adapters.driven.json_store import JsonCatalogueStore
 from saucier.adapters.driving import cli
 from saucier.domain.errors import SourceUnreadable
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
+from saucier.domain.procedure import Input, Operation, Parameter, Procedure
 from saucier.domain.types import ConceptId, Language
 from saucier.infrastructure.bootstrap import escoffier_sources
 from saucier.services.extraction import extract
@@ -121,6 +123,51 @@ def test_show_names_the_candidates_an_unresolved_parent_states(wired, capsys):
     assert cli.main(["show", "aurore-sauce"]) == 0
     out = capsys.readouterr().out
     assert "  parent  (unresolved)\n  stated  veloute, tomato\n" in out
+
+
+@pytest.mark.corpus
+def test_show_prints_the_recorded_procedure_one_operation_per_line(wired, capsys):
+    """The acceptance test for ADR-0017. Every word is the entry's own."""
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["show", "mornay"]) == 0
+    out = capsys.readouterr().out
+    assert "  parent  bechamel\n  procedure  6 operations, recorded by hand\n" in out
+    assert "    Boil      Béchamel Sauce [fr] 1 pint, fumet [fr] 1/4 pint\n" in out
+    assert "    Reduce    criterion: by a good quarter (unresolved)\n" in out
+    assert (
+        "    Put       duration: a few minutes (unresolved), on the fire again\n" in out
+    )
+    assert (
+        "    Finish    butter [en] 2 oz., away from the fire, added by degrees\n" in out
+    )
+
+
+@pytest.mark.corpus
+def test_show_reads_the_scan_procedure_under_its_damaged_name(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["show", "mornay", "--source", FIRST_PRINTING.source_id]) == (
+        cli.NOT_FOUND
+    )
+    capsys.readouterr()
+    assert (
+        cli.main(["show", "morn-ay-sauce", "--source", FIRST_PRINTING.source_id]) == 0
+    )
+    out = capsys.readouterr().out
+    assert "  parent  (unresolved)\n  stated  no candidate\n" in out
+    assert "  procedure  6 operations, recorded by hand\n" in out
+    assert "    Boil      Bdchamel Sauce [fr] 1 pint, fumet [fr] 1/4 pint\n" in out
+
+
+@pytest.mark.corpus
+def test_show_says_when_no_procedure_is_recorded(wired, capsys):
+    cli.main(["parse"])
+    capsys.readouterr()
+    assert cli.main(["show", "bordelaise"]) == 0
+    assert (
+        "  parent  half-glaze\n  procedure  (unrecorded)\n" in capsys.readouterr().out
+    )
 
 
 @pytest.mark.corpus
@@ -344,6 +391,45 @@ def test_show_prints_a_resolved_parent_with_no_stated_line(small, capsys):
 
 
 @pytest.mark.unit
+def test_show_prints_unrecorded_for_a_catalogue_with_no_procedure(small, capsys):
+    assert cli.main(["show", "espagnole"]) == 0
+    assert (
+        "  parent  brown-roux\n  procedure  (unrecorded)\n" in capsys.readouterr().out
+    )
+
+
+@pytest.mark.unit
+def test_a_recorded_procedure_the_body_does_not_state_is_an_exit_code(
+    small, monkeypatch, capsys
+):
+    """A hand can misquote. The command reports it rather than printing it."""
+
+    class Misquoting:
+        recorder = "test"
+
+        def at(self, ref):
+            return Procedure(
+                (
+                    Operation(
+                        wording="Strain the moon",
+                        verb=Term("Strain", Language.ENGLISH),
+                        inputs=(),
+                        instrument=None,
+                        criterion=None,
+                        duration=None,
+                        constraints=(),
+                    ),
+                )
+            )
+
+    monkeypatch.setattr(cli, "recorded_procedures", Misquoting)
+    assert cli.main(["show", "espagnole"]) == cli.FAILED
+    out, err = capsys.readouterr()
+    assert "does not state 'Strain the moon'" in err
+    assert out == ""
+
+
+@pytest.mark.unit
 def test_tree_heading_names_the_root_own_parent(small, capsys):
     assert cli.main(["tree", "espagnole"]) == 0
     # Cardinal states two candidates, so nothing hangs beneath Espagnole.
@@ -362,6 +448,40 @@ def test_tree_of_a_declared_mother_with_no_entry_prints_the_concept(small, capsy
     """`tomato` is a mother the source names and never numbers."""
     assert cli.main(["tree", "tomato"]) == 0
     assert capsys.readouterr().out.splitlines()[0] == "tomato  [tomato]"
+
+
+@pytest.mark.unit
+def test_an_operation_line_renders_what_the_clause_states_and_nothing_else():
+    """An input with no quantity, and a number with no unit, print bare."""
+    season = Operation(
+        wording="Season with salt, the yolks of three eggs, and a pinch",
+        verb=Term("Season", Language.ENGLISH),
+        inputs=(
+            Input(wording="salt", term=Term("salt", Language.ENGLISH), quantity=None),
+            Input(
+                wording="the yolks of three eggs",
+                term=Term("eggs", Language.ENGLISH),
+                quantity=Parameter(wording="three", number=Fraction(3), unit=None),
+            ),
+        ),
+        instrument=None,
+        criterion=None,
+        duration=None,
+        constraints=(),
+    )
+    strain = Operation(
+        wording="Strain",
+        verb=Term("Strain", Language.ENGLISH),
+        inputs=(),
+        instrument=None,
+        criterion=None,
+        duration=None,
+        constraints=(),
+    )
+    assert cli._operation_lines(Procedure((season, strain))) == [
+        "    Season  salt [en], eggs [en] 3",
+        "    Strain",
+    ]
 
 
 @pytest.mark.unit

@@ -127,6 +127,60 @@ in the same change.
     "conflicting" or "uncertain", which describe the parser rather than the
     text.
 
+## Procedure
+
+**Procedure**
+:   The operations one entry states, in the order it states them, each in
+    the witness's own words. Recorded beside a preparation and never in
+    place of its parent. Not "recipe", "method", or "steps".
+
+**Operation**
+:   One action a procedure states, named by its verb as a term, with the
+    inputs, instrument, criterion, duration, and constraints the same
+    clause states. Not "step", "action", or "instruction".
+
+**Wording**
+:   The words of the witness an element of a procedure was read from,
+    exactly as written, with whitespace collapsed. An element's wording
+    lies inside its operation's wording, and the entity refuses one that
+    does not. Not "statement", which is a candidate's name inside one
+    sentence, and not "quote" or "text".
+
+**Input**
+:   One thing an operation takes, as a term, with its quantity where the
+    words give one. The preparation in progress is not an input. Not
+    "component" or "material".
+
+**Parameter**
+:   Words that state a quantity, a duration, or a degree, with the number
+    they give and the unit they name. The number is `None` when the words
+    give none. That is unresolved in the sense of ADR-0002, and no code
+    fills it. Not "amount", "value", or "measure".
+
+**Criterion**
+:   A parameter that states what an operation is carried to: `by a good
+    quarter`, `the melting of the cheese`. Not "target", "goal", or
+    "endpoint".
+
+**Constraint**
+:   A condition the source sets on an operation, in its words: `away from
+    the fire`. Not "condition" or "rule".
+
+**Instrument**
+:   The tool an operation names, as a term: `small whisk`. Not "tool",
+    "equipment", or "utensil".
+
+**Recorder**
+:   Who recorded a procedure. `hand` in this release. A rule reader or a
+    model names itself here, so no procedure is shown without saying who
+    read it. Not "author", "source", or "reader".
+
+**Unrecorded**
+:   A preparation for which no procedure has been recorded. States that
+    no recorder has read one, never that the source states no procedure.
+    Not "unresolved", which says what the source declined to state, and
+    not "missing".
+
 ## Extraction
 
 **Extraction**
