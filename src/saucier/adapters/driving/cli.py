@@ -394,13 +394,18 @@ def _show(args: argparse.Namespace) -> int:
     SAUCE` states Béchamel and lobster butter, and the line says so.
 
     Below the parent it prints the recorded procedure, one operation per
-    line, or says the preparation is unrecorded.
+    line, or says the preparation is unrecorded. The procedure is checked
+    against the body before the first line is printed, so a misquoted
+    record leaves stdout empty.
 
     Args:
         args: Parsed arguments carrying the concept to show and the source.
 
     Returns:
         Zero, or `NOT_FOUND` when nothing answers to the concept.
+
+    Raises:
+        ProcedureUnstated: If the recorded procedure misquotes the body.
     """
     concept = to_concept_id(args.concept)
     catalogue = catalogue_store().load(args.source or default_source_id())
@@ -410,6 +415,8 @@ def _show(args: argparse.Namespace) -> int:
         return NOT_FOUND
 
     preparation = matches[0]
+    recorded = recorded_procedures()
+    procedure = procedure_of(preparation, recorded)
     ref = preparation.ref
     print(preparation.title)
     print(
@@ -422,7 +429,7 @@ def _show(args: argparse.Namespace) -> int:
         print(f"  stated  {_stated(catalogue, preparation)}")
     else:
         print(f"  parent  {preparation.parent}")
-    _print_procedure(preparation)
+    _print_procedure(procedure, recorded.recorder)
     print()
     print(_prose(preparation.body, args.chars))
     if len(matches) > 1:
@@ -448,8 +455,8 @@ def _stated(catalogue: Catalogue, preparation: Preparation) -> str:
     return ", ".join(stated) if stated else "no candidate"
 
 
-def _print_procedure(preparation: Preparation) -> None:
-    """Print the procedure recorded for a preparation, or say there is none.
+def _print_procedure(procedure: Procedure | None, recorder: str) -> None:
+    """Print a checked procedure, or say the preparation is unrecorded.
 
     The heading line says how many operations and who recorded them. Each
     operation then takes one line: its verb, then what the clause states,
@@ -457,15 +464,15 @@ def _print_procedure(preparation: Preparation) -> None:
     `(unresolved)`, because the slot is the one a parent uses.
 
     Args:
-        preparation: The preparation being shown.
+        procedure: The procedure the body was checked against, or `None`
+            when the preparation is unrecorded.
+        recorder: Who recorded it.
     """
-    recorded = recorded_procedures()
-    procedure = procedure_of(preparation, recorded)
     if procedure is None:
         print("  procedure  (unrecorded)")
         return
     count = len(procedure.operations)
-    print(f"  procedure  {count} operations, recorded by {recorded.recorder}")
+    print(f"  procedure  {count} operations, recorded by {recorder}")
     for line in _operation_lines(procedure):
         print(line)
 

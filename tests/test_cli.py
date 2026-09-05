@@ -424,7 +424,9 @@ def test_a_recorded_procedure_the_body_does_not_state_is_an_exit_code(
 
     monkeypatch.setattr(cli, "recorded_procedures", Misquoting)
     assert cli.main(["show", "espagnole"]) == cli.FAILED
-    assert "does not state 'Strain the moon'" in capsys.readouterr().err
+    out, err = capsys.readouterr()
+    assert "does not state 'Strain the moon'" in err
+    assert out == ""
 
 
 @pytest.mark.unit

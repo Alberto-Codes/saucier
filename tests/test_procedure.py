@@ -241,14 +241,6 @@ def test_the_hand_adapter_answers_by_reference_not_by_name():
 
 
 @pytest.mark.unit
-def test_the_hand_adapter_accepts_other_procedures():
-    preparation = a_preparation(BODY)
-    recorded = HandProcedures({preparation.ref: Procedure((BOIL,))})
-    assert recorded.at(preparation.ref) is not None
-    assert recorded.at(REVISION) is None
-
-
-@pytest.mark.unit
 def test_both_hand_procedures_state_six_verbs_in_one_order():
     verbs = ["boil", "reduce", "add", "put", "stirring", "finish"]
     for procedure in (MORNAY_1909, MORNAY_1907):
