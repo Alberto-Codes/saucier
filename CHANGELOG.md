@@ -3,6 +3,13 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.6.0](https://github.com/Alberto-Codes/saucier/compare/v0.5.0...v0.6.0) (2026-09-05)
+
+
+### Features
+
+* **domain:** record mornay's stated procedure ([#18](https://github.com/Alberto-Codes/saucier/issues/18)) ([6131d24](https://github.com/Alberto-Codes/saucier/commit/6131d2465b52dabe01ae93c4c42db3d82899bf49))
+
 ## [0.5.0](https://github.com/Alberto-Codes/saucier/compare/v0.4.0...v0.5.0) (2026-09-04)
 
 
