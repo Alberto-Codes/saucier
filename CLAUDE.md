@@ -88,7 +88,8 @@ two releases because a filename was trusted. See ADR-0009.
 **A damaged witness cannot establish absence.** The scan has a 284-entry
 blind spot, so the diff reports `unmatched` rather than `added` or `removed`.
 Restoring the stronger claim means shrinking the blind spot first. See
-ADR-0014.
+ADR-0014. Mother identity applies the same limit to name-run matches. See
+ADR-0018 and `domain/statement.py` for the shared statement test.
 
 **A parent resolver may refuse, never rank.** No parent is ever chosen by
 score. An abstention is the instrument that catches silent corruption, not a

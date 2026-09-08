@@ -60,3 +60,6 @@ repository, because they govern the writing rather than this implementation.
   witness](0017-a-procedure-quotes-its-witness.md). Why Mornay's parent has
   a verb, why one preparation carries a procedure, and what the scan does
   to it.
+- [ADR-0018: A mother does not bind to its
+  derivative](0018-a-mother-does-not-bind-to-its-derivative.md). Why a stated
+  derivative cannot supply a mother's identity when a scan loses its name.

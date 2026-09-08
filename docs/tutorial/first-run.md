@@ -33,7 +33,7 @@ escoffier-1909  New and Revised Edition, January 1909 (impression: January 1920)
 escoffier-1907  no edition stated, copyright 1907
                 ocr of Internet Archive cu31924000610117
                 mothers: bechamel, espagnole, hollandaise, tomato, veloute
-                140 sauces, 50 derived, 90 unresolved
+                140 sauces, 51 derived, 89 unresolved
 ```
 
 Four things happened.
@@ -231,7 +231,7 @@ Prove the stream rebuilds both catalogues without writing anything:
 ```console
 $ uv run saucier import --check < escoffier.jsonl
 escoffier-1909  151 sauces, 57 derived, 94 unresolved
-escoffier-1907  140 sauces, 50 derived, 90 unresolved
+escoffier-1907  140 sauces, 51 derived, 89 unresolved
 2 catalogues and 291 preparations rebuilt. Nothing written.
 ```
 

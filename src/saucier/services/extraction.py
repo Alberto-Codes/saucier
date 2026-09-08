@@ -9,8 +9,10 @@ chapters, and every kept entry. An entry inside a sauce chapter is kept on
 the chapter, and an entry outside one is kept on its heading. The second
 pass resolves each parent against every name the first pass produced. A
 parent may therefore be any catalogued preparation, and a chain of stated
-parents never cycles. A mother binds to the first preparation in source order that
-answers to its name, and a mother may itself state a parent.
+parents never cycles. The catalogue rejects a mother's name-run matches
+when their opening paragraph states that mother. Remaining matches keep
+source order, and a mother may itself state a different parent. Binding
+and resolution use the domain statement reader, so they share word spans.
 
 A heading is read whole. The typesetter wraps a long one onto a second line,
 and two printings wrap at different points, so a reader that stops at the
@@ -40,6 +42,7 @@ from typing import NamedTuple
 
 from saucier.domain.errors import NoPreparationsFound
 from saucier.domain.models import Catalogue, Preparation, SourceRef, Term
+from saucier.domain.statement import Span, folded_segments, inside, spans_in
 from saucier.domain.types import ConceptId, Language, to_concept_id
 from saucier.ports.source import SourceText
 
@@ -79,12 +82,6 @@ ACCOMPANIMENT = re.compile(r",\s*SAUCE\b", re.IGNORECASE)
 
 CHAPTER_LOOKAHEAD = 6
 """Lines to read past a chapter marker while looking for its title."""
-
-SEGMENT = re.compile(r"[.!?;:]")
-"""Sentence boundaries. A name split across two sentences is not a statement."""
-
-WORDED = re.compile(r"[a-zA-Z0-9]")
-"""A segment with no letter or digit folds to nothing and is skipped."""
 
 ASCII_MAX = 127
 """Above this codepoint a letter carries a diacritic the source kept.
@@ -372,7 +369,8 @@ def stated_candidates(
 ) -> tuple[ConceptId, ...]:
     """Read every candidate an entry's opening paragraph states.
 
-    Only the opening paragraph counts. Escoffier states an ingredient list
+    The domain statement reader supplies sentence-bounded word spans from
+    the opening paragraph. Escoffier states an ingredient list
     first, so a base named there is being used. A base named eight paragraphs
     later is being compared against, not built on. A name has to
     appear as a whole run of words inside one sentence, so `tomatoes` is not
@@ -400,15 +398,15 @@ def stated_candidates(
         One concept per preparation the paragraph states, in the order the
         paragraph first states them. Empty when it states none.
     """
-    segments = _folded_segments(body.split("\n\n", 1)[0])
+    segments = folded_segments(body)
     own_names = tuple(str(key).split("-") for key in own if not isinstance(key, int))
     found: dict[ConceptId, tuple[Span, ...]] = {}
     for name, candidate in candidates.items():
         words = name.split("-")
-        subject = not candidate.mother and bool(_spans(words, own_names))
+        subject = not candidate.mother and bool(spans_in(words, own_names))
         if candidate.key in own or subject:
             continue
-        spans = _spans(words, segments)
+        spans = spans_in(words, segments)
         if spans:
             found[name] = spans
     stated = sorted(
@@ -463,45 +461,6 @@ def resolve_parent(
     return stated[0] if len(stated) == 1 else None
 
 
-def _folded_segments(opening: str) -> tuple[list[str], ...]:
-    """Fold an opening paragraph into sentence-bounded word runs.
-
-    Args:
-        opening: The opening paragraph, verbatim.
-
-    Returns:
-        One list of folded words per sentence that carries any.
-    """
-    return tuple(
-        to_concept_id(segment).split("-")
-        for segment in SEGMENT.split(opening)
-        if WORDED.search(segment)
-    )
-
-
-Span = tuple[int, int, int]
-"""Where a name was stated: segment index, first word, one past the last."""
-
-
-def _spans(words: list[str], segments: tuple[list[str], ...]) -> tuple[Span, ...]:
-    """Find every place a run of words appears whole inside one sentence.
-
-    Args:
-        words: The folded words of one candidate name.
-        segments: The folded sentences of an opening paragraph.
-
-    Returns:
-        One span per occurrence, empty when the name is never stated.
-    """
-    width = len(words)
-    return tuple(
-        (index, start, start + width)
-        for index, segment in enumerate(segments)
-        for start in range(len(segment) - width + 1)
-        if segment[start : start + width] == words
-    )
-
-
 def _shadowed(
     name: ConceptId,
     found: dict[ConceptId, tuple[Span, ...]],
@@ -511,8 +470,9 @@ def _shadowed(
 
     `Lenten Espagnole` contains the word `espagnole`, and reading both as
     statements would turn one claim into a false ambiguity. A name shadows a
-    shorter one only when the two reach different preparations, so a mother
-    stated as `Béchamel Sauce` still records the mother.
+    shorter one only when the two reach different preparations. The shared
+    span containment test requires both occurrences to share a sentence.
+    A mother stated as `Béchamel Sauce` still records the mother.
 
     Args:
         name: The candidate name being tested.
@@ -531,20 +491,7 @@ def _shadowed(
         if len(other.split("-")) > width and candidates[other].key != key
         for span in spans
     ]
-    return all(any(_inside(span, cover) for cover in covers) for span in found[name])
-
-
-def _inside(span: Span, cover: Span) -> bool:
-    """Test whether one span lies within another in the same sentence.
-
-    Args:
-        span: The span being tested.
-        cover: The span that may contain it.
-
-    Returns:
-        True if `span` falls entirely within `cover`.
-    """
-    return span[0] == cover[0] and cover[1] <= span[1] and span[2] <= cover[2]
+    return all(any(inside(span, cover) for cover in covers) for span in found[name])
 
 
 def _without_cycles(
