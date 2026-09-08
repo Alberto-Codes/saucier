@@ -28,7 +28,6 @@ _REF = re.compile(r"\bsaucier(?:\.[A-Za-z_][A-Za-z0-9_]*)+\b")
 
 DEFAULT_DOC_GLOBS = (
     "README.md",
-    "AGENTS.md",
     "CLAUDE.md",
     "CONTRIBUTING.md",
     "docs/**/*.md",
