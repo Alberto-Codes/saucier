@@ -72,7 +72,8 @@ Besides 1907 LENTEN ESPAGNOLE, it removes 1909 VELOUTÉ DE VOLAILLE, which alrea
 An uncatalogued mother is keyed by its concept, not by a heading line.
 No entry shares that key, so no entry is held out from stating it.
 A damaged heading therefore cannot recognise its own repaired name.
-In 1907, entry 22 `BROWN SAUCE OR ESPAQNOLE` states Espagnole only in its second paragraph, at line 1755.
+In 1907, entry 22 `BROWN SAUCE OR ESPAQNOLE` does not state Espagnole in its opening paragraph.
+The word first appears at line 1755, in the third paragraph.
 Had that paragraph opened the entry, entry 22 would record its own identity as its parent.
 The cycle check reads heading lines, so it cannot catch a parent that names no entry.
 
