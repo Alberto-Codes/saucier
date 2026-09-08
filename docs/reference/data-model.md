@@ -197,10 +197,12 @@ another source or another fidelity.
 
 `matches` takes an exact hit outright. Otherwise the name has to appear as a
 whole run of words, so `bordelaise` reaches `SAUCE BORDELAISE` and never
-`bordelaise-butter`. A mother binds to the first preparation the source
-presents among its hits, because the source states a base before its
-derivatives. Any other concept prefers the least qualified name, then source
-order.
+`bordelaise-butter`. A mother rejects every run match whose opening paragraph
+states that mother. A derivative therefore never replaces its own base. The
+surviving hits keep source order, because the source states a base before its
+derivatives. An empty result leaves the mother uncatalogued in that witness.
+Any other concept prefers the least qualified name, then source order. See
+[ADR-0018](../adr/0018-a-mother-does-not-bind-to-its-derivative.md).
 
 ## `Language`
 

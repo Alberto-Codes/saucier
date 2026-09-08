@@ -58,6 +58,7 @@ The lookup does not repair `ESPAQNOLE` or infer which preparation the damaged he
 - The diff changes from 11 / 19 / 36 to 11 / 18 / 35: unmatched, parent-changed, ocr-suspected.
 - All other rendered trees remain identical across both witnesses. Hollandaise retains two children in 1909 and three in 1907.
 - The guard preserves all nine correct mother bindings, including eight partial bindings and the exact 1909 Espagnole binding.
+- `saucier show espagnole --source escoffier-1907` now reports NOT_FOUND. `show` reads `matches` alone, although `tree` falls back to the declared mother.
 
 ### Limits
 
@@ -67,6 +68,13 @@ Damage to both a base heading and a derivative's opening can still defeat this g
 
 The guard removes two name-run candidates across both witnesses.
 Besides 1907 LENTEN ESPAGNOLE, it removes 1909 VELOUTÉ DE VOLAILLE, which already lost to entry 25 on source order.
+
+An uncatalogued mother is keyed by its concept, not by a heading line.
+No entry shares that key, so no entry is held out from stating it.
+A damaged heading therefore cannot recognise its own repaired name.
+In 1907, entry 22 `BROWN SAUCE OR ESPAQNOLE` states Espagnole only in its second paragraph, at line 1755.
+Had that paragraph opened the entry, entry 22 would record its own identity as its parent.
+The cycle check reads heading lines, so it cannot catch a parent that names no entry.
 
 ## Alternatives declined
 

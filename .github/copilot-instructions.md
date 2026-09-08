@@ -96,4 +96,4 @@ src/saucier/
 ```
 
 Decision records live in `docs/adr/`. Contributor rules live in
-`CONTRIBUTING.md`. Agent working rules live in `CLAUDE.md`.
+`CONTRIBUTING.md`. Agent working rules live in `AGENTS.md`.

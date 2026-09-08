@@ -11,6 +11,8 @@ Attributes:
     witness: What a text is — `Edition`, `Fidelity`, and `Witness`.
     procedure: What a body states is done — `Parameter`, `Input`,
         `Operation`, and `Procedure`, each quoting its witness.
+    statement: What counts as a statement in an entry's opening paragraph,
+        shared by mother binding and parent resolution.
     errors: The typed exception hierarchy this package raises deliberately.
 
 Examples:
