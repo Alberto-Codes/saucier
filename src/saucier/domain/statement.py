@@ -43,18 +43,6 @@ Span = tuple[int, int, int]
 """Where a name was stated: segment index, first word, one past the last."""
 
 
-def opening_of(body: str) -> str:
-    """Take the paragraph an entry states its inputs in.
-
-    Args:
-        body: The entry's prose, verbatim.
-
-    Returns:
-        The opening paragraph.
-    """
-    return body.split("\n\n", 1)[0]
-
-
 def folded_segments(body: str) -> tuple[list[str], ...]:
     """Fold an entry's opening paragraph into sentence-bounded word runs.
 
@@ -68,7 +56,7 @@ def folded_segments(body: str) -> tuple[list[str], ...]:
     """
     return tuple(
         to_concept_id(segment).split("-")
-        for segment in SEGMENT.split(opening_of(body))
+        for segment in SEGMENT.split(body.split("\n\n", 1)[0])
         if WORDED.search(segment)
     )
 
