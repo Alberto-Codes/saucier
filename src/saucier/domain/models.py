@@ -36,7 +36,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from saucier.domain.statement import folded_segments, spans_of
+from saucier.domain.statement import folded_segments, spans_in
 from saucier.domain.types import ConceptId, Language, to_concept_id
 from saucier.domain.witness import Fidelity, Witness
 
@@ -182,7 +182,7 @@ class Preparation:
         Returns:
             True if the opening paragraph states the concept.
         """
-        return bool(spans_of(concept, folded_segments(self.body)))
+        return bool(spans_in(concept.split("-"), folded_segments(self.body)))
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

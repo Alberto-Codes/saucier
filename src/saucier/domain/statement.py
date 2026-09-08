@@ -15,11 +15,11 @@ Examples:
     Read the runs an opening paragraph states:
 
     ```python
-    from saucier.domain.statement import folded_segments, spans_of
+    from saucier.domain.statement import folded_segments, spans_in
     from saucier.domain.types import ConceptId
 
     segments = folded_segments("Boil one pint of Bechamel. Season it.")
-    assert spans_of(ConceptId("bechamel"), segments)
+    assert spans_in(ConceptId("bechamel").split("-"), segments)
     ```
 
 See Also:
@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import re
 
-from saucier.domain.types import ConceptId, to_concept_id
+from saucier.domain.types import to_concept_id
 
 SEGMENT = re.compile(r"[.!?;:]")
 """Sentence boundaries. A name split across two sentences is not a statement."""
@@ -71,19 +71,6 @@ def folded_segments(body: str) -> tuple[list[str], ...]:
         for segment in SEGMENT.split(opening_of(body))
         if WORDED.search(segment)
     )
-
-
-def spans_of(concept: ConceptId, segments: tuple[list[str], ...]) -> tuple[Span, ...]:
-    """Find every place a concept's words appear whole inside one sentence.
-
-    Args:
-        concept: The concept whose folded words are looked for.
-        segments: The folded sentences of an opening paragraph.
-
-    Returns:
-        One span per occurrence, empty when the concept is never stated.
-    """
-    return spans_in(concept.split("-"), segments)
 
 
 def spans_in(words: list[str], segments: tuple[list[str], ...]) -> tuple[Span, ...]:

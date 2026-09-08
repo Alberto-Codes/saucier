@@ -93,5 +93,5 @@ The captain declined this stricter variant.
 - [ADR-0008: A parent may be any catalogued preparation](0008-a-parent-may-be-any-catalogued-preparation.md)
 - [ADR-0012: A resolver may refuse, never rank](0012-a-resolver-may-refuse-never-rank.md)
 - [ADR-0014: A damaged witness cannot establish absence](0014-a-damaged-witness-cannot-establish-absence.md)
-- [Implementation tracker](https://github.com/Alberto-Codes/saucier-lab/issues/71)
-- [Superseded issue framing](https://github.com/Alberto-Codes/saucier-lab/issues/56)
+- Implementation tracker: saucier-lab issue 71
+- Superseded issue framing: saucier-lab issue 56
