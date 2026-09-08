@@ -96,6 +96,13 @@ SAUCE BORDELAISE  [bordelaise]  derives from half-glaze
 └── MARROW SAUCE  (en)
 ```
 
+A witness may leave a mother uncatalogued. That tree heads on the bare
+concept, `espagnole  [espagnole]`, and its derivations still print. The 1907
+scan reads entry 22 as `BROWN SAUCE OR ESPAQNOLE`. The one name left holding
+the word belongs to a derivative, and the mother lookup rejects it.
+`saucier show espagnole --source escoffier-1907` exits `1`. See
+[ADR-0018](../adr/0018-a-mother-does-not-bind-to-its-derivative.md).
+
 `--source` chooses the witness to read. It defaults to the revision, which is
 `escoffier-1909`.
 

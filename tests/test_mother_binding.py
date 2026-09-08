@@ -1,5 +1,8 @@
-"""A derivative that states its mother cannot establish that mother's identity
-through a name run."""
+"""A derivative cannot establish a mother its opening paragraph states.
+
+A derivative whose opening paragraph states its mother cannot establish
+that mother's identity through a name run.
+"""
 
 from dataclasses import replace
 
