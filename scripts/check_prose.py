@@ -1,6 +1,6 @@
 """Prose gate: strict-mode pages obey the writing system.
 
-The writing system in `CLAUDE.md` is distilled from ASD-STE100. Guidance
+The writing system in `AGENTS.md` is distilled from ASD-STE100. Guidance
 drifts across a long series, so the mechanical rules are checked rather
 than trusted: no semicolons, at most one em-dash per paragraph, sentences
 within the word cap, and no marketing adjectives.
