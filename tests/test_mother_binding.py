@@ -1,4 +1,5 @@
-"""A derivative cannot establish its mother's identity through a name run."""
+"""A derivative that states its mother cannot establish that mother's identity
+through a name run."""
 
 from dataclasses import replace
 

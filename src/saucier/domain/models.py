@@ -5,7 +5,8 @@ does not record what the parser wishes were true: an unresolved parent is
 `None`, never a guess. A recorded parent may name any preparation in the
 catalogue, under any of its names, and lookups resolve that identity.
 A mother lookup rejects a name-run match whose opening states the mother.
-A derivative cannot supply its own base's identity when the scan loses it.
+A derivative that states its base cannot supply that base's identity when
+the scan loses it.
 
 It also records what the source *is*. Every reference carries the fidelity of
 the text the claim came through, and a catalogue carries the witness it was

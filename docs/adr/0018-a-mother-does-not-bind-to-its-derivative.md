@@ -19,7 +19,8 @@ No catalogued name exactly matches `espagnole`.
 Only `LENTEN ESPAGNOLE`, entry 24 at line 1795, contains that word.
 The lookup therefore names a derivative as the mother.
 
-Entry 24 opens with "The ordinary Espagnole being really a neutral sauce in flavour".
+Entry 24 opens at line 1797 with "Practical men are not agreed as to the need of Lenten Espagnole."
+That first sentence alone states Espagnole, because the run sits inside "Lenten Espagnole".
 The resolver discards that statement as self-reference because the mother lookup returns entry 24 itself.
 The tree then prints twelve preparations beneath Lenten Espagnole, including HALF GLAZE and its nine derivatives.
 
