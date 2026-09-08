@@ -72,6 +72,11 @@ and collapse two preparations into one candidate. `ORDINARY CHAUD-FROID
 SAUCE` says "substituting Allemande Sauce for the velouté". That states two
 preparations, so it records `None`.
 
+*Amended by [ADR-0018](0018-a-mother-does-not-bind-to-its-derivative.md).*
+This clause assumes the base survives among the matches. A mother now rejects
+every name-run match whose opening paragraph states that mother. Source order
+still ranks the survivors, and an empty result leaves the mother uncatalogued.
+
 **A cycle is cleared, never broken by choice.** Two preparations deriving
 from each other would make each its own ancestor. Every derivation on a cycle
 is cleared, and derivations leading into it stay. Choosing one to keep
