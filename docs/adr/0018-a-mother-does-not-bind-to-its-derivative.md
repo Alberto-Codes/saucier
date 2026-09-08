@@ -66,6 +66,11 @@ The guard depends on the witness's opening prose.
 The 1907 VELOUTE DE VOLAILLE opening does not state velouté, although the 1909 opening does.
 Damage to both a base heading and a derivative's opening can still defeat this guard.
 
+The guard also reads the true base's own opening paragraph.
+Eight of the nine surviving bindings are name-run matches, so only the 1909 Espagnole binding escapes this test.
+Escoffier opens each of those bases with an ingredient list that does not repeat the sauce's own name.
+A base that states its own name loses the heading to the next match in source order.
+
 The guard removes two name-run candidates across both witnesses.
 Besides 1907 LENTEN ESPAGNOLE, it removes 1909 VELOUTÉ DE VOLAILLE, which already lost to entry 25 on source order.
 

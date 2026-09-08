@@ -49,3 +49,23 @@ def test_the_scan_does_not_promote_lenten_espagnole_to_mother(escoffier_1907):
     assert escoffier_1907.find(mother) is None
     assert derivative in escoffier_1907.children_of(mother)
     assert escoffier_1907.children_of(derivative.concept) == ()
+
+
+@pytest.mark.unit
+def test_an_exact_mother_name_binds_before_the_guard_applies():
+    base = Preparation(
+        title="ESPAGNOLE",
+        terms=(Term("ESPAGNOLE", Language.FRENCH),),
+        body="Espagnole is finished with brown stock.",
+        ref=SourceRef(source_id="test-1900", entry=22, line=22, fidelity=Fidelity.OCR),
+        parent=None,
+    )
+    mother = ConceptId("espagnole")
+    catalogue = Catalogue(
+        witness=a_witness(fidelity=Fidelity.OCR),
+        preparations=(base,),
+        mothers=frozenset({mother}),
+    )
+    assert base.states(mother)
+    assert catalogue.matches(mother) == (base,)
+    assert catalogue.find(mother) == base
