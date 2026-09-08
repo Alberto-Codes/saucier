@@ -4,6 +4,8 @@ The model records what a source says, and how confidently it was read. It
 does not record what the parser wishes were true: an unresolved parent is
 `None`, never a guess. A recorded parent may name any preparation in the
 catalogue, under any of its names, and lookups resolve that identity.
+A mother lookup rejects a name-run match whose opening states the mother.
+A derivative cannot supply its own base's identity when the scan loses it.
 
 It also records what the source *is*. Every reference carries the fidelity of
 the text the claim came through, and a catalogue carries the witness it was
@@ -34,6 +36,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from saucier.domain.statement import folded_segments, spans_of
 from saucier.domain.types import ConceptId, Language, to_concept_id
 from saucier.domain.witness import Fidelity, Witness
 
@@ -165,6 +168,22 @@ class Preparation:
         """
         return self.terms[0].concept if self.terms else to_concept_id(self.title)
 
+    def states(self, concept: ConceptId) -> bool:
+        """Test whether this preparation's opening paragraph names a concept.
+
+        The opening paragraph is where Escoffier writes an ingredient list,
+        so a name there is a name the entry builds on. The run has to sit
+        whole inside one sentence, which is the statement test ADR-0008
+        already applies.
+
+        Args:
+            concept: The concept to look for.
+
+        Returns:
+            True if the opening paragraph states the concept.
+        """
+        return bool(spans_of(concept, folded_segments(self.body)))
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Catalogue:
@@ -255,9 +274,12 @@ class Catalogue:
 
         An exact hit wins outright. Otherwise the concept has to appear as a
         whole run of words inside a name, so `bordelaise` reaches
-        `SAUCE BORDELAISE` but never `bordelaise-butter`. A mother is
-        ordered by the order the source presents its hits, because the
-        source states a base before its derivatives. Any other concept
+        `SAUCE BORDELAISE` but never `bordelaise-butter`. A mother rejects
+        run matches whose opening paragraph states that mother. The shared
+        statement reader requires a whole word run within one sentence.
+        Remaining hits keep source order: the source presents a base before
+        its derivatives, provided the witness still names that base. When no
+        hit survives, the mother stays uncatalogued. Any other concept
         prefers the least qualified name, then source order. Source order is
         read from the heading line, which is unique where an entry number
         in a scan may not be.
@@ -278,12 +300,10 @@ class Catalogue:
             parts = name.split("-")
             if _contains_run(parts, wanted):
                 hits.append((len(parts), order[found.ref.line], found))
-        ranked = (
-            sorted(hits, key=lambda h: h[1])
-            if concept in self.mothers
-            else sorted(hits, key=lambda h: h[:2])
-        )
-        return tuple(found for _, _, found in ranked)
+        if concept in self.mothers:
+            kept = [hit for hit in hits if not hit[2].states(concept)]
+            return tuple(found for _, _, found in sorted(kept, key=lambda h: h[1]))
+        return tuple(found for _, _, found in sorted(hits, key=lambda h: h[:2]))
 
     def find(self, concept: ConceptId) -> Preparation | None:
         """Look up the preparation a concept names.

@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. Mother-binding clause amended by
+[ADR-0018](0018-a-mother-does-not-bind-to-its-derivative.md).
 
 ## Date
 
