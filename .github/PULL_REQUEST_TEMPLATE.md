@@ -8,6 +8,7 @@ title. The squash body is blank. So release-please reads the title and nothing
 else.
 
 Format: type(scope): description
+        type(scope)!: description   for a breaking change, see below
 Under 50 characters, imperative mood.
 
 Types:  feat | fix | docs | refactor | test | chore | perf | ci
@@ -46,8 +47,10 @@ WHICH BUMP EACH TITLE PRODUCES
   fix(scope):    -> patch
   any scope + !  -> minor, while the version stays below 1.0.0
 
-After merge, release-please opens a release pull request. It creates the
-release as a draft. Nothing reaches PyPI until a person publishes it.
+After merge, release-please opens or updates a release pull request. Merging
+that release pull request creates the GitHub release, and the release is a
+draft. A draft creates no tag. Nothing reaches PyPI until a person publishes
+the draft.
 -->
 
 ## Why
