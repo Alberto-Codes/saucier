@@ -3,6 +3,18 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.7.0](https://github.com/Alberto-Codes/saucier/compare/v0.6.0...v0.7.0) (2026-09-10)
+
+
+### Fixes
+
+* **domain:** reject mother bindings to derivatives that state the mother ([#20](https://github.com/Alberto-Codes/saucier/issues/20)) ([1664e75](https://github.com/Alberto-Codes/saucier/commit/1664e75e95c6806ce604cbab0436e4f1bdaab1e0))
+
+
+### Chores
+
+* release as 0.7.0 ([eb30db4](https://github.com/Alberto-Codes/saucier/commit/eb30db4de7f06d2c5784a20c1b26875c0111ec57))
+
 ## [0.6.0](https://github.com/Alberto-Codes/saucier/compare/v0.5.0...v0.6.0) (2026-09-05)
 
 
