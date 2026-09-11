@@ -1,6 +1,6 @@
 [project]
 name = "saucier"
-version = "0.7.0"
+version = "0.7.1"
 description = "Structured procedure extraction from culinary sources."
 readme = "README.md"
 license = "MIT"
