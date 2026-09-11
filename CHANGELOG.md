@@ -3,6 +3,13 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.7.1](https://github.com/Alberto-Codes/saucier/compare/v0.7.0...v0.7.1) (2026-09-11)
+
+
+### Documentation
+
+* **docs:** teach the PR template the ! marker ([#24](https://github.com/Alberto-Codes/saucier/issues/24)) ([434f919](https://github.com/Alberto-Codes/saucier/commit/434f91973535dda2f82a6d328b99877871fc0905))
+
 ## [0.7.0](https://github.com/Alberto-Codes/saucier/compare/v0.6.0...v0.7.0) (2026-09-10)
 
 
