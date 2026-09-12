@@ -391,7 +391,7 @@ it hashes. Measured, three preparations interleave otherwise: 1909 line
 start at the same word, so the order the text carries them does not decide
 between them.
 
-One worked claim, the `LENTEN ESPAGNOLE` assertion. The hash input is the
+One worked claim, the `LENTEN ESPAGNOLE` claim. The hash input is the
 seven fields in the stated key order, with no whitespace, as UTF-8:
 
 ```console
@@ -481,8 +481,8 @@ derivation to keep is an arbitrary choice wearing the costume of
 determinism. A refusal to conclude is an abstention in this record's
 vocabulary. So the parser's `derives-from` claim for a preparation on a
 cycle is abstained. It carries the spans the paragraph stated, and the
-parser never reaches an assertion for it. The resolver's conclusion is the
-output of the whole resolution, the cycle walk included. Where the cycle
+parser never asserts one for it. The resolver's conclusion is the output
+of the whole resolution, the cycle walk included. Where the cycle
 walk lives in the implementation is not decided here. No parent moves
 today:
 
@@ -542,26 +542,33 @@ the re-emission. This record predicts nothing about that measurement.
   it against claim records that may arrive in any order. The change that
   assigns that version decides both. This record decides the claim and its
   projection in the domain, not the shape of the preparation record.
+- **Not the writer's order.** ADR-0016 fixes the order in which catalogue
+  and preparation records are written, so identical catalogues produce
+  identical bytes. Where claim records sit in that order is not decided
+  here. The change that assigns the next schema version fixes it, and the
+  byte-identity rule holds only once it does.
 - **Not the glossary text.** The glossary carries definitional entries for
   the terms this record coins, in this change. The existing entries Record
   and Recorder are not extended here. That extension waits for the change
-  that lands the code, which also resolves three collisions this record
+  that lands the code, which also resolves two collisions this record
   creates. The glossary defines Subject as what an entry's own name
   denotes, and `subject` here is the subject of a triple. The glossary
   scopes Statement to the opening paragraph, and a statement here is any
-  evidence address, including a heading span. The glossary entry for
-  Evidence scopes the term to the claim's `evidence` field, and prose keeps
-  the common noun. This record decides none of the three entries.
+  evidence address, including a heading span. The Evidence entry is written
+  here and scopes the term to the claim's `evidence` field, and prose keeps
+  the common noun. This record decides neither of the two entries.
 
 ## Consequences
 
 ### Positive
 
-- Two of the four jobs separate. The mention becomes a statement address,
-  which carries a record address, a text, and a span. The resolution
-  becomes a claim with a status. The concept id keeps the identity job and
-  the lookup-key job by this record's own decision. A new key needs a table
-  from key to name, and that table is a store.
+- The four identities lab issue 60 names each carry their own id. They are
+  a record address, a concept id, a statement address, and a claim id. Of
+  the four jobs one folded string did, two leave it. The mention becomes a
+  statement address. The resolution becomes a claim with a status. The concept id
+  keeps the identity job and the lookup-key job by this record's own
+  decision. A new key needs a table from key to name, and that table is a
+  store.
 - An abstention has a shape. It carries no span, or the spans the parser
   read. Which candidate a span names is read back from the record's text at
   that span, not from the statement.
