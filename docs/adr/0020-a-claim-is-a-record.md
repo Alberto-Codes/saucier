@@ -200,18 +200,22 @@ names it.
 concept id. The parser records exactly one per preparation. It is
 asserted when the opening paragraph states one candidate, with every span
 of every name of that candidate. It is abstained when the paragraph states
-none or several, with every span of every name of every candidate, in the
-order stated. `stated_candidates` coalesces two names that reach one
-preparation, so one candidate can carry the spans of both. Those
+none or several, with every span of every name of every candidate. It is
+also abstained when the one stated candidate lies on a derivation cycle,
+which ADR-0008 clears, and then it carries that candidate's spans. Every
+span is carried in span order, the one order the id rule names.
+`stated_candidates` coalesces two names that reach one preparation, so one
+candidate can carry the spans of both. Those
 candidates are what `saucier show` prints as `stated` today. The object is
 the value `_recorded` writes now.
 
 **`names`.** The subject is a record address and the object is a concept
-id. The heading reader records one per term `terms_in` yields, with the
-term's span in the heading as evidence. `by_concept` becomes a projection
-of these claims. When two records claim one name, the projection keeps the
-first in source order, as `by_concept` does today
-(`src/saucier/domain/models.py:265-269`). The heading at 1909 line 674
+id. The parser records one per term `terms_in` yields, with the term's
+span in the heading as evidence. Its heading rule names itself as the
+recorder, as the other two predicates do. `by_concept` becomes a
+projection of these claims. When two records claim one name, the
+projection keeps the first in source order, as `by_concept` does today
+(`src/saucier/domain/models.py:266-270`). The heading at 1909 line 674
 shows why that matters:
 
 ```console
@@ -266,6 +270,27 @@ objects in span order.
 `heading` is the preparation record's `title`. `opening` is the first
 paragraph of its `body`, the text before the first blank line. That is what
 `folded_segments` reads (`src/saucier/domain/statement.py:57-61`).
+
+**What a span covers is fixed per predicate.** For `derives-from` it is
+every occurrence of every stated name of the candidate in the opening
+paragraph. For `names` it is the term's own words in the heading. For
+`binds-mother` it is every occurrence of the mother's own words as a run
+inside the bound record's heading. It is never the whole heading:
+
+```console
+$ uv run python -c "
+from saucier.infrastructure.bootstrap import escoffier_sources
+from saucier.services.extraction import extract
+from saucier.domain.statement import folded_segments, spans_in
+c = extract(next(iter(escoffier_sources())))
+for m in ('espagnole', 'veloute'):
+    f = c.find(m); print(m, f.title, f.ref.line, spans_in(m.split('-'), folded_segments(f.title)))"
+espagnole BROWN SAUCE OR ESPAGNOLE 1392 ((0, 3, 4),)
+veloute ORDINARY VELOUTÉ SAUCE 1467 ((0, 1, 2),)
+```
+
+`espagnole` covers one word of a four-word folded heading. `veloute`
+covers one word of `ordinary veloute sauce`.
 
 The reader rejects a statement whose span lies outside the folded segments
 of the text the `text` key names. A reader by hand opens the record address
@@ -381,7 +406,8 @@ writes its own two types:
 
 `N` is the version the emitting change assigns, and it is not a hash
 input. `parser` stands for the rule that read the text, and the emitting
-change fixes that rule's name.
+change fixes that rule's name. The id shown here changes with that name,
+because `recorder` is a hash input.
 
 **The identity a mother's claims point at is its concept id, as the source
 declares it. It is not a new key.** Three measurements settle this.
@@ -440,9 +466,10 @@ later work.
 **`parent` is the object of the parser's current asserted `derives-from`
 claim on the record, and `None` otherwise.** The parser records one
 `derives-from` claim per preparation, so a preparation is resolved when
-that claim is asserted and unresolved when it is abstained. ADR-0002
-stands. `None` means the parser abstained, and it never means the
-preparation has no parent.
+that claim is asserted and unresolved when it is abstained. ADR-0002's
+second sentence stands unchanged. Its first sentence reads, under this
+record, that the parser abstained. `None` never means the preparation has
+no parent.
 
 ADR-0008 clears a cycle and never breaks it by choice. Choosing one
 derivation to keep is an arbitrary choice wearing the costume of
@@ -518,8 +545,8 @@ the re-emission. This record predicts nothing about that measurement.
 - One string stops doing four jobs. A record address, a concept id, a
   statement address, and a claim id each carry their own id. None of them
   is another one spelled differently.
-- An abstention has a shape. None stated and several stated are two
-  records, not one `null`.
+- An abstention has a shape. None stated, several stated, and one stated
+  on a cycle are three shapes, not one `null`.
 - A reading by hand has a record type. ADR-0002 asked that a later stage
   record what filled the value and from what evidence. The record does
   that and prose does not.
