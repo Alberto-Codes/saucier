@@ -118,7 +118,7 @@ A claim record carries the envelope of ADR-0016 and seven fields.
 | --- | --- |
 | `schema` | The version the change that emits the first claim assigns. Not `saucier/1`, whose reader rejects the type (ADR-0016). |
 | `type` | `claim` |
-| `id` | Derived from every field below except `evidence.run`. Recomputed on the way back. |
+| `id` | Derived from every field below. Recomputed on the way back. |
 | `catalogue` | The catalogue id of the witness the claim was read from, as a preparation record names its catalogue (ADR-0016). |
 | `subject` | A record address, or a concept id. |
 | `predicate` | `derives-from`, `names`, or `binds-mother`. |
@@ -199,8 +199,10 @@ names it.
 **`derives-from`.** The subject is a record address and the object is a
 concept id. The parser records exactly one per preparation. It is
 asserted when the opening paragraph states one candidate, with every span
-of that candidate. It is abstained when the paragraph states none or
-several, with every span of every candidate, in the order stated. Those
+of every name of that candidate. It is abstained when the paragraph states
+none or several, with every span of every name of every candidate, in the
+order stated. `stated_candidates` coalesces two names that reach one
+preparation, so one candidate can carry the spans of both. Those
 candidates are what `saucier show` prints as `stated` today. The object is
 the value `_recorded` writes now, so the projection below is an identity.
 
@@ -244,11 +246,10 @@ over the folded segments of that text. That is what the resolver computes
 today, so re-emitting the parser's readings emits exactly what the
 resolver saw.
 
-A fourth element, `run`, is the folded words the span covers. It is
-derived, written for a reader who opens the corpus by hand, and
-recomputed on the way back under ADR-0016's rule for derived fields. The
-reader rejects a statement whose span lies outside the text's folded
-segments or whose run is not what the span covers.
+The reader rejects a statement whose span lies outside the text's folded
+segments. A reader by hand opens the record address and counts the span.
+The reader also rejects a claim whose status is `asserted` and whose
+evidence is empty. Zero evidence is right only for an abstention.
 
 Two worked examples, measured at `434f919`:
 
@@ -257,11 +258,17 @@ Two worked examples, measured at `434f919`:
 | `escoffier-1909:line:1449` derives-from `espagnole` | asserted | opening (0, 11, 12), (1, 2, 3), (2, 20, 21) `espagnole` |
 | `escoffier-1909:line:2192` derives-from | abstained | opening (0, 4, 5) `bechamel`, opening (2, 3, 5) `lobster butter` |
 
-The first is `LENTEN ESPAGNOLE`, whose opening states the mother three
-times, so the claim carries three spans. The second is `CARDINAL SAUCE`,
-which ADR-0015 left unresolved because it states a base and a finish.
-Under this record the abstention carries both spans, and nothing
-recomputes them.
+The concept beside each span labels which candidate the span belongs to.
+It is not a field of the statement. The first example is `LENTEN
+ESPAGNOLE`, whose opening states the mother three times, so the claim
+carries three spans. The second is `CARDINAL SAUCE`, which ADR-0015 left
+unresolved because it states a base and a finish. Under this record the
+abstention carries both spans, and nothing recomputes them.
+
+Both examples are single-name candidates, so the snippet below reduces to
+the object concept. A candidate stated under two names carries the spans
+of both. `MORNAY SAUCE` at 1909 line 2437 states `bechamel` and
+`bechamel sauce`, and the claim carries the spans of both names.
 
 ```console
 $ uv run python -c "
@@ -319,10 +326,9 @@ does not argue for an opaque claim id. Correcting a span creates a new
 claim with a new id, which lab issue 60 also allows.
 
 **A claim id is the SHA-256 of its fields.** The input is `catalogue`,
-`subject`, `predicate`, `object`, `status`, `recorder`, and `evidence`
-without `run`, in that key order, with no whitespace, as UTF-8. The id is
-the hex digest with the prefix `sha256:`, so the function is named in the
-id. Two claims with the same input are one claim, and the reader rejects
+`subject`, `predicate`, `object`, `status`, `recorder`, and `evidence`, in
+that key order, with no whitespace, as UTF-8. The id is the hex digest with
+the prefix `sha256:`, so the function is named in the id. Two claims with the same input are one claim, and the reader rejects
 the second line as a repeated id, which ADR-0016 already does. Two
 witnesses that abstain on one mother differ in `catalogue`, so their ids
 differ.
@@ -413,6 +419,10 @@ the re-emission. This record predicts nothing about that measurement.
   them a writer admits them, once a present use case earns the field.
 - **Not the activity.** Who ran what and when is lab issue 60's activity
   id, and a confidence is metadata on that activity (lab issue 59).
+- **Not the name-run lookup.** The non-mother run match in `matches`
+  (`src/saucier/domain/models.py:297-307`) projects no claim this record
+  defines. It ranks catalogued names and reaches `SAUCE BORDELAISE` from
+  `bordelaise`. Whether it earns a claim of its own is not decided here.
 - **Not procedures.** ADR-0017's procedures stay as they are. An operation
   as a claim is later work.
 - **Not the naming rule.** This record decides that evidence is a field of
@@ -420,7 +430,7 @@ the re-emission. This record predicts nothing about that measurement.
   vocabulary, recorded in its own change, decides when a term such as
   statement earns a named function.
 - **Not the glossary text.** The glossary describes what the code holds.
-  The change that lands the record adds `claim`, `evidence`, `run`, and the
+  The change that lands the record adds `claim`, `evidence`, and the
   three predicates, and extends `record` and `recorder`. That change also
   resolves two collisions this record creates. The glossary defines Subject
   as what an entry's own name denotes, and `subject` here is the subject of
@@ -432,9 +442,10 @@ the re-emission. This record predicts nothing about that measurement.
 
 ### Positive
 
-- One string stops doing four jobs. `by_concept` projects `names` claims,
-  `matches` projects `binds-mother` claims, and `parent` projects
-  `derives-from` claims.
+- One string stops doing four jobs. `by_concept` projects `names` claims.
+  `matches` projects `names` claims for the exact hit, and `binds-mother`
+  claims for the five declared mothers. `parent` projects `derives-from`
+  claims.
 - An abstention has a shape. None stated and several stated are two
   records, not one `null`, and nothing recomputes the candidates at
   display time.
