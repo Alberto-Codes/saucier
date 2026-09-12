@@ -231,8 +231,16 @@ special case.
 mother, and the object is a record address. The parser records one per
 mother per witness. It is asserted with the heading span of the name that
 bound under ADR-0018, and abstained with no evidence when no name
-survives. The `catalogue` field names the witness. A claim on `bechamel`
-in one witness is not a claim on `bechamel` in the other. The claim whose
+survives. The claim projects `Catalogue.matches`
+(`src/saucier/domain/models.py:273-307`) applied to a declared mother. An
+exact catalogued name binds outright. Otherwise the name-run matches that
+survive ADR-0018's guard bind. ADR-0018 states that eight of the nine
+surviving bindings are name-run matches. When more than one name survives
+the guard, the asserted object is the first surviving match in source
+order. ADR-0018 already rules that the remaining matches retain source
+order. That fixes the object and the evidence, so two readers compute one
+id. The `catalogue` field names the witness. A claim on `bechamel` in one
+witness is not a claim on `bechamel` in the other. The claim whose
 `catalogue` is `escoffier-1907` and whose subject is `espagnole` is an
 abstention. The mother's identity and the record's address are two facts,
 so the asymmetry above has no second lookup to come from.
@@ -447,10 +455,9 @@ the re-emission. This record predicts nothing about that measurement.
   id, and a confidence is metadata on that activity (lab issue 59).
 - **Not the name-run lookup.** The run match in `matches`
   (`src/saucier/domain/models.py:297-307`) projects no claim this record
-  defines. It ranks catalogued names and reaches `SAUCE BORDELAISE` from
-  `bordelaise`. It returns 3 records for `veloute` in the 1907 witness,
-  where `binds-mother` is one claim. Whether the lookup earns a claim of
-  its own is not decided here.
+  defines for a concept that is not a declared mother. It reaches
+  `SAUCE BORDELAISE` from `bordelaise`. Whether that lookup earns a claim
+  of its own is not decided here.
 - **Not procedures.** ADR-0017's procedures stay as they are. An operation
   as a claim is later work.
 - **Not the naming rule.** This record decides that evidence is a field of
