@@ -257,10 +257,21 @@ over the folded segments of that text. That is what the resolver computes
 today, so re-emitting the parser's readings emits exactly what the
 resolver saw.
 
-The reader rejects a statement whose span lies outside the text's folded
-segments. A reader by hand opens the record address and counts the span.
-The reader also rejects a claim whose status is `asserted` and whose
-evidence is empty. Zero evidence is right only for an abstention.
+**A statement is written as a JSON object with three keys.** They are
+`record`, the record address, then `text`, either `heading` or `opening`,
+then `span`, a three-element array. The array holds the segment index, the
+first word, and one past the last. `evidence` is a JSON array of such
+objects in span order.
+
+`heading` is the preparation record's `title`. `opening` is the first
+paragraph of its `body`, the text before the first blank line. That is what
+`folded_segments` reads (`src/saucier/domain/statement.py:57-61`).
+
+The reader rejects a statement whose span lies outside the folded segments
+of the text the `text` key names. A reader by hand opens the record address
+and counts the span. The reader also rejects a claim whose status is
+`asserted` and whose evidence is empty. Zero evidence is right only for an
+abstention.
 
 Two worked examples, measured at `434f919`:
 
@@ -350,6 +361,28 @@ triple, so two readers hash the same bytes. `stated_candidates` already
 sorts by it. Two names of one candidate can start at the same word, so the
 order the text carries them does not decide between them.
 
+One worked claim, the `LENTEN ESPAGNOLE` assertion. The hash input is the
+seven fields in the stated key order, with no whitespace, as UTF-8:
+
+```console
+$ uv run python -c "
+import hashlib
+line = '{\"catalogue\":\"escoffier-1909\",\"subject\":\"escoffier-1909:line:1449\",\"predicate\":\"derives-from\",\"object\":\"espagnole\",\"status\":\"asserted\",\"recorder\":\"parser\",\"evidence\":[{\"record\":\"escoffier-1909:line:1449\",\"text\":\"opening\",\"span\":[0,11,12]},{\"record\":\"escoffier-1909:line:1449\",\"text\":\"opening\",\"span\":[1,2,3]},{\"record\":\"escoffier-1909:line:1449\",\"text\":\"opening\",\"span\":[2,20,21]}]}'
+print('sha256:' + hashlib.sha256(line.encode('utf-8')).hexdigest())"
+sha256:f4be097dc18e8ff41a8fc25f177d9a8c511e61941d4752192a7239a5c789d3d0
+```
+
+The record line adds the envelope of ADR-0016 in front, as that record
+writes its own two types:
+
+```json
+{"schema":"saucier/N","type":"claim","id":"sha256:f4be097dc18e8ff41a8fc25f177d9a8c511e61941d4752192a7239a5c789d3d0","catalogue":"escoffier-1909","subject":"escoffier-1909:line:1449","predicate":"derives-from","object":"espagnole","status":"asserted","recorder":"parser","evidence":[{"record":"escoffier-1909:line:1449","text":"opening","span":[0,11,12]},{"record":"escoffier-1909:line:1449","text":"opening","span":[1,2,3]},{"record":"escoffier-1909:line:1449","text":"opening","span":[2,20,21]}]}
+```
+
+`N` is the version the emitting change assigns, and it is not a hash
+input. `parser` stands for the rule that read the text, and the emitting
+change fixes that rule's name.
+
 **The identity a mother's claims point at is its concept id, as the source
 declares it. It is not a new key.** Three measurements settle this.
 
@@ -411,10 +444,15 @@ that claim is asserted and unresolved when it is abstained. ADR-0002
 stands. `None` means the parser abstained, and it never means the
 preparation has no parent.
 
-The projection preserves ADR-0008's cycle rule. A derivation on a cycle is
-cleared, never broken by choice. So `parent` is `None` for a preparation
-whose asserted claim lies on a cycle. Where the cycle rule lives in the
-implementation is not decided here. No parent moves today:
+ADR-0008 clears a cycle and never breaks it by choice. Choosing one
+derivation to keep is an arbitrary choice wearing the costume of
+determinism. A refusal to conclude is an abstention in this record's
+vocabulary. So the parser's `derives-from` claim for a preparation on a
+cycle is abstained. It carries the spans the paragraph stated, and the
+parser never reaches an assertion for it. The resolver's conclusion is the
+output of the whole resolution, the cycle walk included. Where the cycle
+walk lives in the implementation is not decided here. No parent moves
+today:
 
 ```console
 $ uv run python -c "
