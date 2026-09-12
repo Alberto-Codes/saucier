@@ -240,7 +240,7 @@ in the same change.
 ## Claims
 
 **Claim**
-:   One assertion a recorder makes about a record or a concept, with its
+:   What one recorder records about one record or one concept, with its
     predicate, its object, its status, and its evidence. Decided in
     ADR-0020. No released interchange carries one yet. Prose keeps the
     common noun for anything a reader can check against the source. Not

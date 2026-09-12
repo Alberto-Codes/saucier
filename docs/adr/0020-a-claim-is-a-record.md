@@ -563,14 +563,13 @@ the re-emission. This record predicts nothing about that measurement.
   resolves two collisions this record creates. The glossary defines Subject
   as what an entry's own name denotes, and `subject` here is the subject of
   a triple. The glossary scopes Statement to the opening paragraph and to
-  derivations, while
-  `saucier.domain.statement` and its `Span` are reused here for heading
-  evidence too. The code's name for that reader waits for the glossary
-  change. The Evidence entry is written here and scopes the term to the
-  claim's `evidence` field, and prose keeps the common noun. This record
-  decides neither of the two entries. `Span` is the code's name in
-  `saucier.domain.statement`, and this record borrows it and coins no entry
-  for it.
+  derivations, while `saucier.domain.statement` and its `Span` are reused
+  here for heading evidence too. The code's name for that reader waits for
+  the glossary change. The Evidence entry is written here and scopes the
+  term to the claim's `evidence` field, and prose keeps the common noun.
+  This record decides neither the Subject entry nor the Statement entry.
+  `Span` is the code's name in `saucier.domain.statement`, and this record
+  borrows it and coins no entry for it.
 
 ## Consequences
 
