@@ -138,6 +138,7 @@ nav:
       - ADR-0017 A procedure quotes its witness: adr/0017-a-procedure-quotes-its-witness.md
       - ADR-0018 A mother is not its derivative:
           adr/0018-a-mother-does-not-bind-to-its-derivative.md
+      - ADR-0020 A claim is a record: adr/0020-a-claim-is-a-record.md
 
 markdown_extensions:
   - abbr
