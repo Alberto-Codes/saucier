@@ -250,9 +250,10 @@ in the same change.
     `names`, and `binds-mother`. Not "relationship", "edge", or "type".
 
 **Evidence**
-:   The statements a claim rests on, written on the claim in span order.
-    Zero statements is right only for an abstention. Not "proof", "source",
-    or "citation".
+:   The `evidence` field of a claim: the statements it rests on, written on
+    the claim in span order. Zero statements is right only for an
+    abstention. Prose keeps the common noun for anything a reader weighs.
+    Not "proof", "source", or "citation".
 
 **Asserted**
 :   The status of a claim whose recorder reached a conclusion. Its object
@@ -271,9 +272,10 @@ in the same change.
     from its address. Not "mention id" or "evidence id".
 
 **`derives-from`**
-:   The predicate of a claim that a record's opening paragraph states one
-    candidate. Its subject is a record address and its object is a concept
-    id. `parent` is a projection of it. Not "parent-of" or "child-of".
+:   The predicate of a claim that the subject record derives from the
+    object concept. Its subject is a record address and its object is a
+    concept id. One per preparation, asserted or abstained under ADR-0020.
+    `parent` is a projection of it. Not "parent-of" or "child-of".
 
 **`names`**
 :   The predicate of a claim that a record's heading carries a term. Its

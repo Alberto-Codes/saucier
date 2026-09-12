@@ -15,9 +15,10 @@ This is that record. No code lands with it.
 The catalogue stores one value where the domain holds a claim.
 `Preparation.parent` is one nullable concept id
 (`src/saucier/domain/models.py:160`). Nothing on the record says who read
-the text, from which words, or whether the reader refused. Each release
-since v0.1.0 added a property to that value or changed the rule that
-writes it. None added a second kind of record. The investigation report
+the text, from which words, or whether the reader refused. No release
+recorded who read a derivation or from what evidence. v0.5.0 added the
+catalogue and preparation record types and v0.6.0 added the procedure.
+Neither carries a second reading of `parent`. The investigation report
 of 2026-09-12 traces this in its sections 2 and 4.
 
 The same deficiency produced every recent per-record question. The
@@ -162,7 +163,7 @@ witness of the record the evidence anchors to carries the edition. No
 symptom needs a second one.
 
 **`recorded_time` goes.** ADR-0016 writes no timestamp, because a
-timestamp changes the bytes without adding evidence. Framing A re-emits
+timestamp "changes the bytes without adding evidence". Framing A re-emits
 every reading of the parser as a claim, so a time on each would make every
 export differ from the last one. The time a claim was recorded belongs to
 the activity that produced it, which is lab issue 60's activity id and
@@ -201,11 +202,12 @@ concept id. The parser records exactly one per preparation. It is
 asserted when the opening paragraph states one candidate, with every span
 of every name of that candidate. It is abstained when the paragraph states
 none or several, with every span of every name of every candidate. It is
-also abstained when the one stated candidate lies on a derivation cycle,
-which ADR-0008 clears, and then it carries that candidate's spans. Every
-span is carried in span order, the one order the id rule names.
-`stated_candidates` coalesces two names that reach one preparation, so one
-candidate can carry the spans of both. Those
+also abstained when the preparation itself lies on a derivation cycle,
+which ADR-0008 clears, and then it carries that candidate's spans. A
+derivation that leads into a cycle stays asserted, because the walk clears
+only the cycle's members. Every span is carried in span order, the one
+order the id rule names. `stated_candidates` coalesces two names that
+reach one preparation, so one candidate can carry the spans of both. Those
 candidates are what `saucier show` prints as `stated` today. The object is
 the value `_recorded` writes now.
 
@@ -335,7 +337,7 @@ for p in c.preparations:
 A span is measured in folded words, so it is exact only for the text it
 was measured over. The fidelity of a statement is the fidelity of its
 record (ADR-0010). A box on a page image (lab issue 36) is a different
-kind of evidence, and a later record names it.
+kind of statement, and a later record names it.
 
 ### The identities
 
@@ -352,15 +354,15 @@ spelled differently.
   has no id apart from where it sits.
 - A claim id is derived from the claim, as the next rule states.
 
-**Ids are deterministic. No id is opaque.** Four pieces of evidence settle
+**Ids are deterministic. No id is opaque.** Four accepted rules settle
 this, and none points the other way.
 
 1. ADR-0016 decides "no opaque identifiers, because every record already
    has an address a reader can open." A claim record joins that
    interchange.
 2. ADR-0016 requires that identical catalogues produce identical bytes.
-   An id minted at parse time changes the bytes without adding evidence,
-   which is the exact reason ADR-0016 gives for writing no timestamp.
+   An id minted at parse time "changes the bytes without adding
+   evidence", which is the exact reason ADR-0016 gives for no timestamp.
 3. `data/` is not tracked and is reproduced by `saucier parse` (ADR-0004).
    An opaque id needs a place to survive between runs. That place is a
    store, and no store arrives with this record.
@@ -530,14 +532,22 @@ the re-emission. This record predicts nothing about that measurement.
   the claim record and what that field holds. The naming rule for domain
   vocabulary, recorded in its own change, decides when a term such as
   statement earns a named function.
+- **Not the `parent` field of the next preparation record.** Whether the
+  preparation record of the next schema version keeps writing `parent` as
+  a derived field is not decided here. Nor is how the reader then verifies
+  it against claim records that may arrive in any order. The change that
+  assigns that version decides both. This record decides the claim and its
+  projection in the domain, not the shape of the preparation record.
 - **Not the glossary text.** The glossary carries definitional entries for
   the terms this record coins, in this change. The existing entries Record
   and Recorder are not extended here. That extension waits for the change
-  that lands the code, which also resolves two collisions this record
+  that lands the code, which also resolves three collisions this record
   creates. The glossary defines Subject as what an entry's own name
-  denotes, and `subject` here is the subject of a triple. The glossary scopes Statement to the opening paragraph, and a
-  statement here is any evidence address, including a heading span. This
-  record decides neither entry.
+  denotes, and `subject` here is the subject of a triple. The glossary
+  scopes Statement to the opening paragraph, and a statement here is any
+  evidence address, including a heading span. The glossary entry for
+  Evidence scopes the term to the claim's `evidence` field, and prose keeps
+  the common noun. This record decides none of the three entries.
 
 ## Consequences
 
