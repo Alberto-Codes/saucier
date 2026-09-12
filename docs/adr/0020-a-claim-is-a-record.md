@@ -119,17 +119,24 @@ A claim record carries the envelope of ADR-0016 and seven fields.
 | `schema` | The version the change that emits the first claim assigns. Not `saucier/1`, whose reader rejects the type (ADR-0016). |
 | `type` | `claim` |
 | `id` | Derived from every field below except `evidence.run`. Recomputed on the way back. |
+| `catalogue` | The catalogue id of the witness the claim was read from, as a preparation record names its catalogue (ADR-0016). |
 | `subject` | A record address, or a concept id. |
 | `predicate` | `derives-from`, `names`, or `binds-mother`. |
 | `object` | A concept id or a record address. `null` when the status is not `asserted`. |
-| `status` | `asserted`, `abstained`, or `retracted`. |
+| `status` | `asserted` or `abstained`. |
 | `recorder` | Who read the text. `hand` for a person. A rule names itself. |
 | `evidence` | Zero or more statements, in the order the text carries them. |
-| `supersedes` | The id of the claim this one replaces, or `null`. |
 
 Lab issue 59 drafted ten fields and said not to require one until a
 present use case earns it. Section 5.3 of the investigation report lists
 the use cases. Each field was tested against them.
+
+**`catalogue` names the witness.** A `binds-mother` subject is a concept
+id, and both witnesses declare the same five mothers. Without the field,
+one claim cannot be told from the other. ADR-0016 already writes the field
+on a preparation record, so the claim record writes it the same way. Two
+witnesses that abstain on one mother then differ in this field, so their
+claims differ in id.
 
 **`object` stays and `value` goes.** Every object a symptom needs is an id.
 A parent is a concept id. A name reaches a concept id. A mother binds to a
@@ -158,20 +165,28 @@ export differ from the last one. The time a claim was recorded belongs to
 the activity that produced it, which is lab issue 60's activity id and
 later work.
 
-**Three statuses are written and two are read.** Lab issue 59 names five
+**Two statuses are written and two are read.** Lab issue 59 names five
 states: asserted, abstained, contradicted, superseded, retracted. The
-interchange does not mutate, and lab issue 59 makes correction
-append-only, so no line can be rewritten to say it was superseded. A claim
-is superseded when a later claim's `supersedes` names it. A claim is
-contradicted when a current asserted claim shares its subject and
-predicate and differs in object. Both are read off the stream. The record
-writes the other three.
+record writes `asserted` and `abstained`. The interchange does not mutate,
+and lab issue 59 makes correction append-only, so no line can be rewritten
+to say it was contradicted or superseded. Those two states are read off
+the stream.
 
-**A claim by the parser is never superseded.** The parser re-emits every
-claim on every run, and `data/` is not tracked, so there is nothing to
-supersede. `supersedes` exists for a recorder that appends. Whether a
-claim by one recorder may supersede a claim by another is not decided
-here, for the reason given below.
+**Retraction and supersession wait for a writer.** No recorder in this
+release appends. The parser re-emits every claim on every run, and `data/`
+is not tracked, so there is nothing to supersede. The record therefore
+drops `supersedes` and `retracted`, for the reason it drops `value`,
+`valid_time`, and `recorded_time`. The change that gives them a writer
+admits them.
+
+**Cardinality decides what contradiction means.** A predicate is
+single-valued or many-valued, and the rule reads only the single-valued
+ones. `derives-from` is one per preparation. `binds-mother` is one per
+mother per witness. `names` is many per record, because `by_concept` is a
+projection of `names` claims. A single-valued claim is contradicted when a
+current asserted claim shares its catalogue, its subject, and its
+predicate, and differs in object. Two `names` claims on one record never
+contradict.
 
 ### The predicates
 
@@ -200,16 +215,19 @@ $ uv run python -c "from saucier.services.extraction import terms_in; print([(t.
 
 That entry sits in chapter I and is outside the catalogue today
 (ADR-0015). When an entry like it enters, its doubtful name is a `names`
-claim with the heading as evidence. A later recorder retracts it, and the
-parser needs no special case.
+claim with the heading as evidence. The claim carries the span, so a
+reader checks the doubtful name against the heading. The parser needs no
+special case.
 
 **`binds-mother`.** The subject is a concept id the source declares as a
 mother, and the object is a record address. The parser records one per
 mother per witness. It is asserted with the heading span of the name that
 bound under ADR-0018, and abstained with no evidence when no name
-survives. In the 1907 witness, `espagnole` is an abstention. `show` and
-`tree` both read that one claim, so the asymmetry above has no second
-lookup to come from.
+survives. The `catalogue` field names the witness. A claim on `bechamel`
+in one witness is not a claim on `bechamel` in the other. The claim whose
+`catalogue` is `escoffier-1907` and whose subject is `espagnole` is an
+abstention. `show` and `tree` both read that one claim, so the asymmetry
+above has no second lookup to come from.
 
 ### The evidence
 
@@ -295,15 +313,16 @@ Lab issue 60 warns that a content hash detects mutation and is not
 semantic identity, and that renaming a term must not rename the entity.
 That warning governs the concept id, and the next rule answers it. It
 does not argue for an opaque claim id. Correcting a span creates a new
-claim that supersedes the old one, which lab issue 60 also allows.
+claim with a new id, which lab issue 60 also allows.
 
-**A claim id is the SHA-256 of its fields.** The input is `subject`,
-`predicate`, `object`, `status`, `recorder`, `evidence` without `run`, and
-`supersedes`, in that key order, with no whitespace, as UTF-8. The id is
+**A claim id is the SHA-256 of its fields.** The input is `catalogue`,
+`subject`, `predicate`, `object`, `status`, `recorder`, and `evidence`
+without `run`, in that key order, with no whitespace, as UTF-8. The id is
 the hex digest with the prefix `sha256:`, so the function is named in the
 id. Two claims with the same input are one claim, and the reader rejects
-the second line as a repeated id, which ADR-0016 already does. A retraction
-supersedes a claim, so it never repeats the input of the claim it retracts.
+the second line as a repeated id, which ADR-0016 already does. Two
+witnesses that abstain on one mother differ in `catalogue`, so their ids
+differ.
 
 **The identity a mother's claims point at is its concept id, as the source
 declares it. It is not a new key.** Three measurements settle this.
@@ -344,12 +363,12 @@ declares it. It is not a new key.** Three measurements settle this.
 
 The 1907 case then reads as follows. The heading reader records that line
 1730 names `espaqnole`, which is true of the scan. The parser records an
-abstention for `binds-mother espagnole`, because no name survives. `show`
-and `tree` have the same two claims to read: the declaration and the
-abstention. A later recorder can bind the two with a claim of its own.
-The evidence may be the page image (lab issue 36), or an alignment of the
-kind the diff already labels for other headings. Nothing repairs the
-name, and ADR-0013 stands.
+abstention for `binds-mother espagnole` in the catalogue
+`escoffier-1907`, because no name survives. `show` and `tree` have the
+same two claims to read: the declaration and the abstention. A later
+recorder can bind the two with a claim of its own. The evidence may be the
+page image (lab issue 36), or an alignment of the kind the diff already
+labels for other headings. Nothing repairs the name, and ADR-0013 stands.
 
 A concept id is language-bound. A witness in another language declares
 the mother under another name, and folding does not cross languages. That
@@ -382,10 +401,13 @@ the re-emission. This record predicts nothing about that measurement.
   the shape the census rests on and no number in it.
 - **Not the second recorder.** A hand claim or a model claim may one day
   disagree with the parser. Which claim the projection then reads, and
-  whether such a claim may supersede a parser abstention, decides the
+  whether such a claim may replace a parser abstention, decides the
   census. ADR-0012 says a model may not clear an abstention. This record
   adds no rule to that, and the first claim by a recorder other than the
   parser waits for one.
+- **Not retraction or supersession.** `supersedes` and `retracted` have no
+  writer in this release, so the record defers both. The change that gives
+  them a writer admits them, once a present use case earns the field.
 - **Not the activity.** Who ran what and when is lab issue 60's activity
   id, and a confidence is metadata on that activity (lab issue 59).
 - **Not procedures.** ADR-0017's procedures stay as they are. An operation
@@ -396,7 +418,12 @@ the re-emission. This record predicts nothing about that measurement.
   statement earns a named function.
 - **Not the glossary text.** The glossary describes what the code holds.
   The change that lands the record adds `claim`, `evidence`, `run`, and the
-  three predicates, and extends `record` and `recorder`.
+  three predicates, and extends `record` and `recorder`. That change also
+  resolves two collisions this record creates. The glossary defines Subject
+  as what an entry's own name denotes, and `subject` here is the subject of
+  a triple. The glossary scopes Statement to the opening paragraph, and a
+  statement here is any evidence address, including a heading span. This
+  record decides neither entry.
 
 ## Consequences
 
@@ -431,7 +458,9 @@ the re-emission. This record predicts nothing about that measurement.
   characters where ADR-0016 promised an address. The evidence beside it
   is the address.
 - Two of five states are read off the stream, so one line cannot say
-  whether its claim is superseded.
+  whether its claim is contradicted.
+- Two of five states have no writer, so a claim cannot yet be retracted or
+  replaced. A recorder that appends waits for the change that admits them.
 - A concept id as identity is language-bound, and a cross-language mother
   waits for an alignment claim.
 - The first claim by a recorder other than the parser cannot land until
