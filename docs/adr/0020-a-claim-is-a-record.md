@@ -233,10 +233,11 @@ special case.
 
 **`binds-mother`.** The subject is a concept id the source declares as a
 mother, and the object is a record address. The parser records one per
-mother per witness. It is asserted with the heading span of the name that
-bound under ADR-0018, and abstained with no evidence when no name
-survives. The claim projects `Catalogue.matches`
-(`src/saucier/domain/models.py:273-307`) applied to a declared mother. An
+mother per witness. It is asserted with the span of the mother's own words
+inside the bound record's heading, every occurrence. It is abstained with
+no evidence when no name survives under ADR-0018. The claim projects
+`Catalogue.matches` (`src/saucier/domain/models.py:273-307`) applied to a
+declared mother. An
 exact catalogued name binds outright. Otherwise the name-run matches that
 survive ADR-0018's guard bind. ADR-0018 states that eight of the nine
 surviving bindings are name-run matches. When more than one name survives
@@ -529,12 +530,12 @@ the re-emission. This record predicts nothing about that measurement.
   the claim record and what that field holds. The naming rule for domain
   vocabulary, recorded in its own change, decides when a term such as
   statement earns a named function.
-- **Not the glossary text.** The glossary describes what the code holds.
-  The change that lands the record adds `claim`, `evidence`, and the
-  three predicates, and extends `record` and `recorder`. That change also
-  resolves two collisions this record creates. The glossary defines Subject
-  as what an entry's own name denotes, and `subject` here is the subject of
-  a triple. The glossary scopes Statement to the opening paragraph, and a
+- **Not the glossary text.** The glossary carries definitional entries for
+  the terms this record coins, in this change. The existing entries Record
+  and Recorder are not extended here. That extension waits for the change
+  that lands the code, which also resolves two collisions this record
+  creates. The glossary defines Subject as what an entry's own name
+  denotes, and `subject` here is the subject of a triple. The glossary scopes Statement to the opening paragraph, and a
   statement here is any evidence address, including a heading span. This
   record decides neither entry.
 
@@ -542,9 +543,12 @@ the re-emission. This record predicts nothing about that measurement.
 
 ### Positive
 
-- One string stops doing four jobs. A record address, a concept id, a
-  statement address, and a claim id each carry their own id. None of them
-  is another one spelled differently.
+- One of the four jobs separates. The mention becomes a statement
+  address, which carries a record address, a text, and a span. The concept
+  id keeps the identity job and the lookup-key job by this record's own
+  decision. A new key needs a table from key to name, and that table is a
+  store. The resolution becomes a claim with a status, and the claim's
+  object is the value `_recorded` writes now.
 - An abstention has a shape. None stated, several stated, and one stated
   on a cycle are three shapes, not one `null`.
 - A reading by hand has a record type. ADR-0002 asked that a later stage
@@ -575,7 +579,8 @@ the re-emission. This record predicts nothing about that measurement.
   waits for an alignment claim.
 - The first claim by a recorder other than the parser cannot land until
   the second-recorder rule is decided, because that rule moves the census.
-- The glossary lags the decision until the code lands.
+- The existing entries Record, Recorder, Subject, and Statement lag the
+  decision until the code lands.
 - A span is measured in folded words over one text. A change to the fold
   or the segmenter moves every span, and the reader will reject the old
   ones. That is the correct failure and it is a loud one.

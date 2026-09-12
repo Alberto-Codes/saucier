@@ -237,6 +237,54 @@ in the same change.
     the interchange that shaped it. `type` says which kind of record it is.
     `id` is its source-local address. Not "header" or "metadata".
 
+## Claims
+
+**Claim**
+:   One assertion a recorder makes about a record or a concept, with its
+    predicate, its object, its status, and its evidence. Decided in
+    ADR-0020. No released interchange carries one yet. Not "assertion",
+    "fact", or "value".
+
+**Predicate**
+:   The relation a claim asserts. Three in ADR-0020: `derives-from`,
+    `names`, and `binds-mother`. Not "relationship", "edge", or "type".
+
+**Evidence**
+:   The statements a claim rests on, written on the claim in span order.
+    Zero statements is right only for an abstention. Not "proof", "source",
+    or "citation".
+
+**Asserted**
+:   The status of a claim whose recorder reached a conclusion. Its object
+    is set and its evidence is not empty. Not "resolved", which names the
+    projection, and not "confirmed".
+
+**Abstained**
+:   The status of a claim whose recorder refused to conclude. Its object is
+    `null`. It carries the spans the recorder read, which may be none. Not
+    "unresolved", which names the projection, and not "failed" or
+    "unknown".
+
+**Statement address**
+:   Where one statement sits: a record address, which text of that record
+    (`heading` or `opening`), and a span. A statement has no identity apart
+    from its address. Not "mention id" or "evidence id".
+
+**`derives-from`**
+:   The predicate of a claim that a record's opening paragraph states one
+    candidate. Its subject is a record address and its object is a concept
+    id. `parent` is a projection of it. Not "parent-of" or "child-of".
+
+**`names`**
+:   The predicate of a claim that a record's heading carries a term. Its
+    subject is a record address and its object is a concept id. Many per
+    record. Not "alias" or "label".
+
+**`binds-mother`**
+:   The predicate of a claim that a declared mother's entry in one witness
+    is one record. Its subject is a concept id and its object is a record
+    address. One per mother per witness. Not "mother-of" or "is-mother".
+
 ## Names this project does not use
 
 **`shortorder`**
