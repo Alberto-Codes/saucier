@@ -125,7 +125,7 @@ A claim record carries the envelope of ADR-0016 and seven fields.
 | `object` | A concept id or a record address. `null` when the status is not `asserted`. |
 | `status` | `asserted` or `abstained`. |
 | `recorder` | Who read the text. `hand` for a person. A rule names itself. |
-| `evidence` | Zero or more statements, in the order the text carries them. |
+| `evidence` | Zero or more statements, in span order, as the id rule below states it. |
 
 Lab issue 59 drafted ten fields and said not to require one until a
 present use case earns it. Section 5.3 of the investigation report lists
@@ -204,12 +204,15 @@ none or several, with every span of every name of every candidate, in the
 order stated. `stated_candidates` coalesces two names that reach one
 preparation, so one candidate can carry the spans of both. Those
 candidates are what `saucier show` prints as `stated` today. The object is
-the value `_recorded` writes now, so the projection below is an identity.
+the value `_recorded` writes now.
 
 **`names`.** The subject is a record address and the object is a concept
 id. The heading reader records one per term `terms_in` yields, with the
 term's span in the heading as evidence. `by_concept` becomes a projection
-of these claims. The heading at 1909 line 674 shows why that matters:
+of these claims. When two records claim one name, the projection keeps the
+first in source order, as `by_concept` does today
+(`src/saucier/domain/models.py:265-269`). The heading at 1909 line 674
+shows why that matters:
 
 ```console
 $ sed -n '674p' corpus/escoffier-1909.txt
@@ -231,8 +234,8 @@ bound under ADR-0018, and abstained with no evidence when no name
 survives. The `catalogue` field names the witness. A claim on `bechamel`
 in one witness is not a claim on `bechamel` in the other. The claim whose
 `catalogue` is `escoffier-1907` and whose subject is `espagnole` is an
-abstention. `show` and `tree` both read that one claim, so the asymmetry
-above has no second lookup to come from.
+abstention. The mother's identity and the record's address are two facts,
+so the asymmetry above has no second lookup to come from.
 
 ### The evidence
 
@@ -328,10 +331,16 @@ claim with a new id, which lab issue 60 also allows.
 **A claim id is the SHA-256 of its fields.** The input is `catalogue`,
 `subject`, `predicate`, `object`, `status`, `recorder`, and `evidence`, in
 that key order, with no whitespace, as UTF-8. The id is the hex digest with
-the prefix `sha256:`, so the function is named in the id. Two claims with the same input are one claim, and the reader rejects
-the second line as a repeated id, which ADR-0016 already does. Two
-witnesses that abstain on one mother differ in `catalogue`, so their ids
-differ.
+the prefix `sha256:`, so the function is named in the id. Two claims with
+the same input are one claim, and the reader rejects the second line as a
+repeated id, which ADR-0016 already does. Two witnesses that abstain on one
+mother differ in `catalogue`, so their ids differ.
+
+**Statements are written in span order.** The order is the segment index,
+then the first word, then one past the last. That is a total order on the
+triple, so two readers hash the same bytes. `stated_candidates` already
+sorts by it. Two names of one candidate can start at the same word, so the
+order the text carries them does not decide between them.
 
 **The identity a mother's claims point at is its concept id, as the source
 declares it. It is not a new key.** Three measurements settle this.
@@ -373,11 +382,11 @@ declares it. It is not a new key.** Three measurements settle this.
 The 1907 case then reads as follows. The heading reader records that line
 1730 names `espaqnole`, which is true of the scan. The parser records an
 abstention for `binds-mother espagnole` in the catalogue
-`escoffier-1907`, because no name survives. `show` and `tree` have the
-same two claims to read: the declaration and the abstention. A later
-recorder can bind the two with a claim of its own. The evidence may be the
-page image (lab issue 36), or an alignment of the kind the diff already
-labels for other headings. Nothing repairs the name, and ADR-0013 stands.
+`escoffier-1907`, because no name survives. Both facts are claims a reader
+can open: the declaration and the abstention. A later recorder can bind
+the two with a claim of its own. The evidence may be the page image (lab
+issue 36), or an alignment of the kind the diff already labels for other
+headings. Nothing repairs the name, and ADR-0013 stands.
 
 A concept id is language-bound. A witness in another language declares
 the mother under another name, and folding does not cross languages. That
@@ -393,6 +402,23 @@ claim on the record, and `None` otherwise.** The parser records one
 that claim is asserted and unresolved when it is abstained. ADR-0002
 stands. `None` means the parser abstained, and it never means the
 preparation has no parent.
+
+The projection preserves ADR-0008's cycle rule. A derivation on a cycle is
+cleared, never broken by choice. So `parent` is `None` for a preparation
+whose asserted claim lies on a cycle. Where the cycle rule lives in the
+implementation is not decided here. No parent moves today:
+
+```console
+$ uv run python -c "
+from saucier.infrastructure.bootstrap import escoffier_sources
+from saucier.services.extraction import extract, parent_candidates, resolve_parent, own_names
+for s in escoffier_sources():
+    c = extract(s); k = parent_candidates(c)
+    cleared = [p.title for p in c.preparations if p.parent is None and resolve_parent(p.body, own_names(p), k) is not None]
+    print(c.source_id, 'parents cleared by the cycle walk', len(cleared), cleared)"
+escoffier-1909 parents cleared by the cycle walk 0 []
+escoffier-1907 parents cleared by the cycle walk 0 []
+```
 
 The change that lands this record measures the census before and after
 the re-emission. This record predicts nothing about that measurement.
@@ -419,10 +445,12 @@ the re-emission. This record predicts nothing about that measurement.
   them a writer admits them, once a present use case earns the field.
 - **Not the activity.** Who ran what and when is lab issue 60's activity
   id, and a confidence is metadata on that activity (lab issue 59).
-- **Not the name-run lookup.** The non-mother run match in `matches`
+- **Not the name-run lookup.** The run match in `matches`
   (`src/saucier/domain/models.py:297-307`) projects no claim this record
   defines. It ranks catalogued names and reaches `SAUCE BORDELAISE` from
-  `bordelaise`. Whether it earns a claim of its own is not decided here.
+  `bordelaise`. It returns 3 records for `veloute` in the 1907 witness,
+  where `binds-mother` is one claim. Whether the lookup earns a claim of
+  its own is not decided here.
 - **Not procedures.** ADR-0017's procedures stay as they are. An operation
   as a claim is later work.
 - **Not the naming rule.** This record decides that evidence is a field of
@@ -442,15 +470,11 @@ the re-emission. This record predicts nothing about that measurement.
 
 ### Positive
 
-- One string stops doing four jobs. `by_concept` projects `names` claims.
-  `matches` projects `names` claims for the exact hit, and `binds-mother`
-  claims for the five declared mothers. `parent` projects `derives-from`
-  claims.
+- One string stops doing four jobs. A record address, a concept id, a
+  statement address, and a claim id each carry their own id. None of them
+  is another one spelled differently.
 - An abstention has a shape. None stated and several stated are two
-  records, not one `null`, and nothing recomputes the candidates at
-  display time.
-- `show` and `tree` read one set of claims, so the 1907 Espagnole cannot
-  answer differently in the two.
+  records, not one `null`.
 - A reading by hand has a record type. ADR-0002 asked that a later stage
   record what filled the value and from what evidence. The record does
   that and prose does not.
@@ -459,7 +483,7 @@ the re-emission. This record predicts nothing about that measurement.
 - A sentence about the corpus in a later record can point at a claim id
   and a span. A test then reads the span, which is lab issue 61's first
   question.
-- Ids are derived, so two runs export identical bytes and the reader
+- Ids derive from the claim's fields, so the reader recomputes and
   verifies every id.
 
 ### Negative
@@ -490,6 +514,7 @@ the re-emission. This record predicts nothing about that measurement.
 - [ADR-0003: Culinary terms carry a language tag and are never translated](0003-terms-are-never-translated.md)
 - [ADR-0004: Source material is committed, derived output is not](0004-corpus-is-committed-data-is-derived.md)
 - [ADR-0006: Storage arrives in stages](0006-storage-arrives-in-stages.md)
+- [ADR-0008: A parent may be any catalogued preparation](0008-a-parent-may-be-any-catalogued-preparation.md)
 - [ADR-0010: Fidelity is a property of the record](0010-fidelity-is-a-property-of-the-record.md)
 - [ADR-0012: A resolver may refuse, never rank](0012-a-resolver-may-refuse-never-rank.md)
 - [ADR-0013: Normalisation repairs structure, never content](0013-repair-structure-never-content.md)
