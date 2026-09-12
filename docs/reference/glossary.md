@@ -242,8 +242,9 @@ in the same change.
 **Claim**
 :   One assertion a recorder makes about a record or a concept, with its
     predicate, its object, its status, and its evidence. Decided in
-    ADR-0020. No released interchange carries one yet. Not "assertion",
-    "fact", or "value".
+    ADR-0020. No released interchange carries one yet. Prose keeps the
+    common noun for anything a reader can check against the source. Not
+    "assertion", "fact", or "value".
 
 **Predicate**
 :   The relation a claim asserts. Three in ADR-0020: `derives-from`,

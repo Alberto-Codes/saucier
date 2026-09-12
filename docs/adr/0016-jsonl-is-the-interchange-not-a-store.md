@@ -174,9 +174,6 @@ over them later without rewriting a byte. No difference rows, because the
 domain does not own them. No opaque identifiers, because every record already
 has an address a reader can open.
 
-*Amended by [ADR-0020](0020-a-claim-is-a-record.md).* That later record is
-ADR-0020.
-
 ## Consequences
 
 ### Positive

@@ -56,10 +56,10 @@ escoffier-1907 none 82 several 7
 ```
 
 **One folded string does four jobs.** A `Term.concept` is folded from the
-surface form (`models.py:75`). The same string is the mention in a
-heading, the identity `parent` points at, the key `by_concept` indexes
-(`models.py:256-271`), and the resolution `_recorded` writes
-(`extraction.py:422-435`). Lab issue 60 names the cost: a resolution
+surface form (`models.py:75`). The report names four jobs. The same string
+is the mention in a heading, the identity `parent` points at, the key
+`by_concept` indexes (`models.py:256-271`), and the resolution `_recorded`
+writes (`extraction.py:422-435`). Lab issue 60 names the cost: a resolution
 decision becomes identity and cannot later abstain.
 
 **The scan spells a mother's name `ESPAQNOLE`.** The 1907 witness declares
@@ -152,19 +152,20 @@ record address. No claim in this catalogue carries a literal, so no field
 holds one.
 
 **`evidence` is inline, not a list of ids.** An element of evidence has no
-identity apart from where it sits, which lab issue 60 requires of a
-mention. A
-separate evidence record would need an id of its own, and the only stable
-id it could carry is its address. So the address is written on the claim.
+identity apart from where it sits, which lab issue 60 requires of what it
+calls a mention. A separate evidence record would need an id of its own,
+and the only stable id it could carry is its address. So the address is
+written on the claim.
 
 **`recorder` replaces `generated_by`.** The glossary already names who
-recorded a thing: `hand` in this release, and a rule reader or a model
-names itself. One concept takes one term. The value for the parser is the
-name of the rule that read the text, as `RecordedProcedures` already names
-its recorder.
+recorded a procedure, and this record uses the same term for who recorded
+a claim. It is `hand` in this release, and a rule reader or a model names
+itself. One concept takes one term. The value for the parser is the name of
+the rule that read the text, as `RecordedProcedures` already names its
+recorder.
 
-**`valid_time` goes.** The time an evidence address holds is the edition,
-and the witness of the record the evidence anchors to carries the edition. No
+**`valid_time` goes.** The time a claim holds is the edition, and the
+witness of the record the evidence anchors to carries the edition. No
 symptom needs a second one.
 
 **`recorded_time` goes.** ADR-0016 writes no timestamp, because a
@@ -349,8 +350,8 @@ spelled differently.
 - A concept id is `espagnole`, as ADR-0003 defines it. What lab issue 60
   calls an entity id is a concept id in this vocabulary, and the glossary
   forbids "entity" as a synonym.
-- An evidence address is a record address, a text, and a span. A mention
-  has no id apart from where it sits.
+- An evidence address is a record address, a text, and a span. It has no
+  id apart from where it sits.
 - A claim id is derived from the claim, as the next rule states.
 
 **Ids are deterministic. No id is opaque.** Four accepted rules settle
@@ -382,12 +383,15 @@ the same input are one claim, and the reader rejects the second line as a
 repeated id, which ADR-0016 already does. Two witnesses that abstain on one
 mother differ in `catalogue`, so their ids differ.
 
-**Evidence addresses are written in span order.** The order is the segment
-index, then the first word, then one past the last. That is a total order on the
-triple, so two readers hash the same bytes. `stated_candidates` sorts
-candidates by their first span and returns concept ids. So the emitting
-change sorts the addresses again, across candidates, by the triple before
-it hashes. Measured, three preparations interleave otherwise: 1909 line
+**Evidence addresses are written in span order.** The key is the whole
+address: `record`, then `text`, then the span triple. The span triple
+orders by segment index, then first word, then one past the last. Every
+predicate this record defines draws evidence from one record and one text,
+so no id of any claim defined here changes. The key stays total for a later
+predicate whose evidence spans two records. Two readers therefore hash the
+same bytes. `stated_candidates` sorts candidates by their first span and
+returns concept ids. So the emitting change sorts the addresses again,
+across candidates, by the whole address before it hashes. Measured, three preparations interleave otherwise: 1909 line
 2103 and the two `JOINVILLE SAUCE` records. Two names of one candidate can
 start at the same word, so the order the text carries them does not decide
 between them.
@@ -452,14 +456,15 @@ declares it. It is not a new key.** Three measurements settle this.
 3. A new key needs a table from key to name. That table is a store, which
    ADR-0006 stages later and this record does not build.
 
-The 1907 case then reads as follows. The heading reader records that line
-1730 names `espaqnole`, which is true of the scan. The parser records an
+The 1907 case then reads as follows. The parser's heading rule records that
+line 1730 names `espaqnole`, which is true of the scan. The parser records an
 abstention for `binds-mother espagnole` in the catalogue
 `escoffier-1907`, because no name survives. Both facts are claims a reader
 can open: the declaration and the abstention. A later recorder can bind
 the two with a claim of its own. The evidence may be the page image (lab
-issue 36), or an alignment of the kind the diff already labels for other
-headings. Nothing repairs the name, and ADR-0013 stands.
+issue 36). It may also be what lab issue 43 calls an alignment, of the kind
+the diff already labels for other headings. Nothing repairs the name, and
+ADR-0013 stands.
 
 A concept id is language-bound. A witness in another language declares
 the mother under another name, and folding does not cross languages. That
@@ -549,17 +554,21 @@ the re-emission. This record predicts nothing about that measurement.
   here. The change that assigns the next schema version fixes it, and the
   byte-identity rule holds only once it does.
 - **Not the glossary text.** The glossary carries definitional entries for
-  the terms this record coins, in this change. The existing entries Record
-  and Recorder are not extended here. That extension waits for the change
-  that lands the code, which also resolves two collisions this record
-  creates. The glossary defines Subject as what an entry's own name
-  denotes, and `subject` here is the subject of a triple. The glossary
+  the terms this record coins, in this change. The existing entries Record,
+  Recorder, and Envelope are not extended here. The code change also
+  extends Unresolved and Resolved, because unresolved now means the parser
+  abstained. That extension waits for the change that lands the code, which
+  also resolves two collisions this record creates. The glossary defines
+  Subject as what an entry's own name denotes, and `subject` here is the
+  subject of a triple. The glossary
   scopes Statement to the opening paragraph and to derivations, while
   `saucier.domain.statement` and its `Span` are reused here for heading
   evidence too. The code's name for that reader waits for the glossary
   change. The Evidence entry is written here and scopes the term to the
   claim's `evidence` field, and prose keeps the common noun. This record
-  decides neither of the two entries.
+  decides neither of the two entries. `Span` is the code's name in
+  `saucier.domain.statement`, and this record borrows it and coins no entry
+  for it.
 
 ## Consequences
 
@@ -567,11 +576,11 @@ the re-emission. This record predicts nothing about that measurement.
 
 - The four identities lab issue 60 names each carry their own id. They are
   a record address, a concept id, an evidence address, and a claim id. Of
-  the four jobs one folded string did, two leave it. The mention becomes an
-  evidence address. The resolution becomes a claim with a status. The
-  concept id keeps the identity job and the lookup-key job by this record's
-  own decision. A new key needs a table from key to name, and that table is a
-  store.
+  the four jobs one folded string did, two leave it. The place a term sits
+  in a heading or an opening becomes an evidence address. The resolution
+  becomes a claim with a status. The concept id keeps the identity job and
+  the lookup-key job by this record's own decision. A new key needs a table
+  from key to name, and that table is a store.
 - An abstention has a shape. It carries no span, or the spans the parser
   read. Which candidate a span names is read back from the record's text at
   that span, not from the evidence address.
@@ -602,8 +611,8 @@ the re-emission. This record predicts nothing about that measurement.
   waits for an alignment claim.
 - The first claim by a recorder other than the parser cannot land until
   the second-recorder rule is decided, because that rule moves the census.
-- The existing entries Record, Recorder, Subject, and Statement lag the
-  decision until the code lands.
+- The existing entries Record, Recorder, Envelope, Unresolved, Resolved,
+  Subject, and Statement lag the decision until the code lands.
 - A span is measured in folded words over one text. A change to the fold
   or the segmenter moves every span, and the reader will reject the old
   ones. That is the correct failure and it is a loud one.
