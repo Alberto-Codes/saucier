@@ -136,7 +136,10 @@ id, and both witnesses declare the same five mothers. Without the field,
 one claim cannot be told from the other. ADR-0016 already writes the field
 on a preparation record, so the claim record writes it the same way. Two
 witnesses that abstain on one mother then differ in this field, so their
-claims differ in id.
+claims differ in id. When `subject` or `object` is a record address, the
+catalogue id inside that address must equal the `catalogue` field. The
+reader rejects a claim where the two disagree, as ADR-0016 rejects a
+preparation whose catalogue the stream never carries.
 
 **`object` stays and `value` goes.** Every object a symptom needs is an id.
 A parent is a concept id. A name reaches a concept id. A mother binds to a
@@ -165,12 +168,12 @@ export differ from the last one. The time a claim was recorded belongs to
 the activity that produced it, which is lab issue 60's activity id and
 later work.
 
-**Two statuses are written and two are read.** Lab issue 59 names five
+**Two statuses are written and one is read.** Lab issue 59 names five
 states: asserted, abstained, contradicted, superseded, retracted. The
 record writes `asserted` and `abstained`. The interchange does not mutate,
 and lab issue 59 makes correction append-only, so no line can be rewritten
-to say it was contradicted or superseded. Those two states are read off
-the stream.
+to say it was contradicted. That state is read off the stream. In this
+release every claim in the stream is current, because nothing supersedes.
 
 **Retraction and supersession wait for a writer.** No recorder in this
 release appends. The parser re-emits every claim on every run, and `data/`
@@ -457,7 +460,7 @@ the re-emission. This record predicts nothing about that measurement.
 - A claim id is checked by a tool and not by eye. A reader sees 64 hex
   characters where ADR-0016 promised an address. The evidence beside it
   is the address.
-- Two of five states are read off the stream, so one line cannot say
+- One of five states is read off the stream, so one line cannot say
   whether its claim is contradicted.
 - Two of five states have no writer, so a claim cannot yet be retracted or
   replaced. A recorder that appends waits for the change that admits them.
