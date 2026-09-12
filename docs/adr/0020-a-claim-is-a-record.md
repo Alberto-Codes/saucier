@@ -384,17 +384,19 @@ repeated id, which ADR-0016 already does. Two witnesses that abstain on one
 mother differ in `catalogue`, so their ids differ.
 
 **Evidence addresses are written in span order.** The key is the whole
-address: `record`, then `text`, then the span triple. The span triple
-orders by segment index, then first word, then one past the last. Every
-predicate this record defines draws evidence from one record and one text,
-so no id of any claim defined here changes. The key stays total for a later
-predicate whose evidence spans two records. Two readers therefore hash the
-same bytes. `stated_candidates` sorts candidates by their first span and
-returns concept ids. So the emitting change sorts the addresses again,
-across candidates, by the whole address before it hashes. Measured, three preparations interleave otherwise: 1909 line
-2103 and the two `JOINVILLE SAUCE` records. Two names of one candidate can
-start at the same word, so the order the text carries them does not decide
-between them.
+address: `record`, then `text`, then the span triple. `record` and `text`
+order as UTF-8 byte strings, so `heading` sorts before `opening`. The span
+triple orders by segment index, then first word, then one past the last.
+That is a total order on the address, so two readers hash the same bytes.
+Every predicate this record defines draws evidence from one record and one
+text, so no id of any claim defined here changes. A later predicate whose
+evidence spans two records orders by the same key. `stated_candidates`
+sorts candidates by their first span and returns concept ids. So the
+emitting change sorts the addresses again, across candidates, by the whole
+address before it hashes. Measured, three preparations interleave
+otherwise: 1909 line 2103 and the two `JOINVILLE SAUCE` records. Two names
+of one candidate can start at the same word, so the order the text carries
+them does not decide between them.
 
 One worked claim, the `LENTEN ESPAGNOLE` claim. The hash input is the
 seven fields in the stated key order, with no whitespace, as UTF-8:
@@ -555,13 +557,13 @@ the re-emission. This record predicts nothing about that measurement.
   byte-identity rule holds only once it does.
 - **Not the glossary text.** The glossary carries definitional entries for
   the terms this record coins, in this change. The existing entries Record,
-  Recorder, and Envelope are not extended here. The code change also
-  extends Unresolved and Resolved, because unresolved now means the parser
-  abstained. That extension waits for the change that lands the code, which
-  also resolves two collisions this record creates. The glossary defines
-  Subject as what an entry's own name denotes, and `subject` here is the
-  subject of a triple. The glossary
-  scopes Statement to the opening paragraph and to derivations, while
+  Recorder, and Envelope are not extended here, and their extension waits
+  for the change that lands the code. That change also extends Unresolved
+  and Resolved, because unresolved then means the parser abstained. It also
+  resolves two collisions this record creates. The glossary defines Subject
+  as what an entry's own name denotes, and `subject` here is the subject of
+  a triple. The glossary scopes Statement to the opening paragraph and to
+  derivations, while
   `saucier.domain.statement` and its `Span` are reused here for heading
   evidence too. The code's name for that reader waits for the glossary
   change. The Evidence entry is written here and scopes the term to the
