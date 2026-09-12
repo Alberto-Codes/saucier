@@ -2,8 +2,11 @@
 
 ## Status
 
-Accepted. ADR-0016 remains accepted. Its section "What version one stops
-before" defers claim records to a later record that changes the domain.
+Accepted. ADR-0016 remains accepted. This record amends ADR-0016 in one
+respect. Its rule that an id is a source-local address governs its two
+record types, and a claim id is a digest of the claim's fields. Its
+section "What version one stops before" defers claim records to a later
+record that changes the domain.
 This is that record. No code lands with it.
 
 ## Date
@@ -89,8 +92,9 @@ exit=0
 
 Both are correct under ADR-0018. `tree` falls back to the declared mother
 (`cli.py:348`) and `show` reads `matches` alone (`cli.py:412-415`). The
-asymmetry exists because the mother's identity and the record's address
-are one lookup rather than two facts.
+binding is a lookup at read time and not a record, so nothing carries the
+fact that the mother is unbound in that witness. Each command then decides
+for itself what an empty lookup means.
 
 The investigation report put two framings to the captain. Framing A makes
 `parent` a projection of claims on day one and re-emits every reading of
@@ -169,28 +173,22 @@ export differ from the last one. The time a claim was recorded belongs to
 the activity that produced it, which is lab issue 60's activity id and
 later work.
 
-**Two statuses are written and one is read.** Lab issue 59 names five
-states: asserted, abstained, contradicted, superseded, retracted. The
-record writes `asserted` and `abstained`. The interchange does not mutate,
-and lab issue 59 makes correction append-only, so no line can be rewritten
-to say it was contradicted. That state is read off the stream. In this
+**Two statuses are written.** Lab issue 59 names five states: asserted,
+abstained, contradicted, superseded, retracted. The record writes
+`asserted` and `abstained`. Contradicted, superseded, and retracted wait
+for a second recorder, and this record defines no test for them. In this
 release every claim in the stream is current, because nothing supersedes.
 
-**Retraction and supersession wait for a writer.** No recorder in this
-release appends. The parser re-emits every claim on every run, and `data/`
-is not tracked, so there is nothing to supersede. The record therefore
-drops `supersedes` and `retracted`, for the reason it drops `value`,
-`valid_time`, and `recorded_time`. The change that gives them a writer
-admits them.
+**Contradiction, retraction, and supersession wait for a writer.** No
+recorder in this release appends or contradicts. The parser re-emits every
+claim on every run, and `data/` is not tracked, so there is nothing to
+supersede. The record therefore drops `supersedes` and `retracted`, for
+the reason it drops `value`, `valid_time`, and `recorded_time`. The change
+that gives them a writer admits them.
 
-**Cardinality decides what contradiction means.** A predicate is
-single-valued or many-valued, and the rule reads only the single-valued
-ones. `derives-from` is one per preparation. `binds-mother` is one per
-mother per witness. `names` is many per record, because `by_concept` is a
-projection of `names` claims. A single-valued claim is contradicted when a
-current asserted claim shares its catalogue, its subject, and its
-predicate, and differs in object. Two `names` claims on one record never
-contradict.
+**Cardinality is fixed per predicate.** `derives-from` is one per
+preparation. `binds-mother` is one per mother per witness. `names` is many
+per record, because `by_concept` is a projection of `names` claims.
 
 ### The predicates
 
@@ -249,8 +247,8 @@ order. That fixes the object and the evidence, so two readers compute one
 id. The `catalogue` field names the witness. A claim on `bechamel` in one
 witness is not a claim on `bechamel` in the other. The claim whose
 `catalogue` is `escoffier-1907` and whose subject is `espagnole` is an
-abstention. The mother's identity and the record's address are two facts,
-so the asymmetry above has no second lookup to come from.
+abstention. Under this record the abstention is a claim a reader can open.
+What each command does with it is code, and this record decides no code.
 
 ### The evidence
 
@@ -385,9 +383,13 @@ mother differ in `catalogue`, so their ids differ.
 
 **Statements are written in span order.** The order is the segment index,
 then the first word, then one past the last. That is a total order on the
-triple, so two readers hash the same bytes. `stated_candidates` already
-sorts by it. Two names of one candidate can start at the same word, so the
-order the text carries them does not decide between them.
+triple, so two readers hash the same bytes. `stated_candidates` sorts
+candidates by their first span and returns concept ids. So the emitting
+change sorts the statements again, across candidates, by the triple before
+it hashes. Measured, three preparations interleave otherwise: 1909 line
+2103 and the two `JOINVILLE SAUCE` records. Two names of one candidate can
+start at the same word, so the order the text carries them does not decide
+between them.
 
 One worked claim, the `LENTEN ESPAGNOLE` assertion. The hash input is the
 seven fields in the stated key order, with no whitespace, as UTF-8:
@@ -516,9 +518,11 @@ the re-emission. This record predicts nothing about that measurement.
   census. ADR-0012 says a model may not clear an abstention. This record
   adds no rule to that, and the first claim by a recorder other than the
   parser waits for one.
-- **Not retraction or supersession.** `supersedes` and `retracted` have no
-  writer in this release, so the record defers both. The change that gives
-  them a writer admits them, once a present use case earns the field.
+- **Not contradiction, retraction, or supersession.** `supersedes` and
+  `retracted` have no writer in this release, so the record defers both.
+  The record also defines no contradiction test. No two current
+  single-valued claims can share a catalogue, a subject, and a predicate in
+  this release. The change that gives them a writer admits all three.
 - **Not the activity.** Who ran what and when is lab issue 60's activity
   id, and a confidence is metadata on that activity (lab issue 59).
 - **Not the name-run lookup.** The run match in `matches`
@@ -553,14 +557,14 @@ the re-emission. This record predicts nothing about that measurement.
 
 ### Positive
 
-- One of the four jobs separates. The mention becomes a statement
-  address, which carries a record address, a text, and a span. The concept
-  id keeps the identity job and the lookup-key job by this record's own
-  decision. A new key needs a table from key to name, and that table is a
-  store. The resolution becomes a claim with a status, and the claim's
-  object is the value `_recorded` writes now.
-- An abstention has a shape. None stated, several stated, and one stated
-  on a cycle are three shapes, not one `null`.
+- Two of the four jobs separate. The mention becomes a statement address,
+  which carries a record address, a text, and a span. The resolution
+  becomes a claim with a status. The concept id keeps the identity job and
+  the lookup-key job by this record's own decision. A new key needs a table
+  from key to name, and that table is a store.
+- An abstention has a shape. It carries no span, or the spans the parser
+  read. Which candidate a span names is read back from the record's text at
+  that span, not from the statement.
 - A reading by hand has a record type. ADR-0002 asked that a later stage
   record what filled the value and from what evidence. The record does
   that and prose does not.
@@ -581,10 +585,9 @@ the re-emission. This record predicts nothing about that measurement.
 - A claim id is checked by a tool and not by eye. A reader sees 64 hex
   characters where ADR-0016 promised an address. The evidence beside it
   is the address.
-- One of five states is read off the stream, so one line cannot say
-  whether its claim is contradicted.
-- Two of five states have no writer, so a claim cannot yet be retracted or
-  replaced. A recorder that appends waits for the change that admits them.
+- Three of five states wait for a second recorder: contradicted,
+  superseded, and retracted. A recorder that appends waits for the change
+  that admits them.
 - A concept id as identity is language-bound, and a cross-language mother
   waits for an alignment claim.
 - The first claim by a recorder other than the parser cannot land until
