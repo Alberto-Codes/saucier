@@ -130,7 +130,7 @@ A claim record carries the envelope of ADR-0016 and seven fields.
 | `object` | A concept id or a record address. `null` when the status is not `asserted`. |
 | `status` | `asserted` or `abstained`. |
 | `recorder` | Who read the text. `hand` for a person. A rule names itself. |
-| `evidence` | Zero or more statements, in span order, as the id rule below states it. |
+| `evidence` | Zero or more evidence addresses, in span order, as the id rule below states it. |
 
 Lab issue 59 drafted ten fields and said not to require one until a
 present use case earns it. Section 5.3 of the investigation report lists
@@ -151,8 +151,9 @@ A parent is a concept id. A name reaches a concept id. A mother binds to a
 record address. No claim in this catalogue carries a literal, so no field
 holds one.
 
-**`evidence` is inline, not a list of ids.** A statement has no identity
-apart from where it sits, which lab issue 60 requires of a mention. A
+**`evidence` is inline, not a list of ids.** An element of evidence has no
+identity apart from where it sits, which lab issue 60 requires of a
+mention. A
 separate evidence record would need an id of its own, and the only stable
 id it could carry is its address. So the address is written on the claim.
 
@@ -162,8 +163,8 @@ names itself. One concept takes one term. The value for the parser is the
 name of the rule that read the text, as `RecordedProcedures` already names
 its recorder.
 
-**`valid_time` goes.** The time a statement holds is the edition, and the
-witness of the record the evidence anchors to carries the edition. No
+**`valid_time` goes.** The time an evidence address holds is the edition,
+and the witness of the record the evidence anchors to carries the edition. No
 symptom needs a second one.
 
 **`recorded_time` goes.** ADR-0016 writes no timestamp, because a
@@ -252,9 +253,9 @@ What each command does with it is code, and this record decides no code.
 
 ### The evidence
 
-**The evidence of a claim is zero or more statements, and a statement
-reuses `Span` unchanged.** A statement is three things. The first is the
-address of the record whose text carries it. The second is which text of
+**The evidence of a claim is zero or more evidence addresses, and each
+reuses `Span` unchanged.** An evidence address is three things. The first
+is the address of the record whose text carries it. The second is which text of
 that record, `heading` or `opening`. The third is the triple
 `saucier.domain.statement` declares at line 42.
 The triple is a segment index, a first word, and one past the last,
@@ -262,7 +263,7 @@ over the folded segments of that text. That is what the resolver computes
 today, so re-emitting the parser's readings emits exactly what the
 resolver saw.
 
-**A statement is written as a JSON object with three keys.** They are
+**An evidence address is written as a JSON object with three keys.** They are
 `record`, the record address, then `text`, either `heading` or `opening`,
 then `span`, a three-element array. The array holds the segment index, the
 first word, and one past the last. `evidence` is a JSON array of such
@@ -293,8 +294,8 @@ veloute ORDINARY VELOUTÉ SAUCE 1467 ((0, 1, 2),)
 `espagnole` covers one word of a four-word folded heading. `veloute`
 covers one word of `ordinary veloute sauce`.
 
-The reader rejects a statement whose span lies outside the folded segments
-of the text the `text` key names. A reader by hand opens the record address
+The reader rejects an evidence address whose span lies outside the folded
+segments of the text the `text` key names. A reader by hand opens the record address
 and counts the span. The reader also rejects a claim whose status is
 `asserted` and whose evidence is empty. Zero evidence is right only for an
 abstention.
@@ -307,7 +308,7 @@ Two worked examples, measured at `434f919`:
 | `escoffier-1909:line:2192` derives-from | abstained | opening (0, 4, 5) `bechamel`, opening (2, 3, 5) `lobster butter` |
 
 The concept beside each span labels which candidate the span belongs to.
-It is not a field of the statement. The first example is `LENTEN
+It is not a field of the evidence address. The first example is `LENTEN
 ESPAGNOLE`, whose opening states the mother three times, so the claim
 carries three spans. The second is `CARDINAL SAUCE`, which ADR-0015 left
 unresolved because it states a base and a finish. Under this record the
@@ -333,14 +334,14 @@ for p in c.preparations:
 ```
 
 A span is measured in folded words, so it is exact only for the text it
-was measured over. The fidelity of a statement is the fidelity of its
-record (ADR-0010). A box on a page image (lab issue 36) is a different
-kind of statement, and a later record names it.
+was measured over. The fidelity of an evidence address is the fidelity of
+its record (ADR-0010). A box on a page image (lab issue 36) is a different
+kind of evidence address, and a later record names it.
 
 ### The identities
 
 **Four identities, each with its own id.** A record address, a concept
-id, a statement address, and a claim id. None of them is another one
+id, an evidence address, and a claim id. None of them is another one
 spelled differently.
 
 - A record address is `escoffier-1909:line:1392`, as ADR-0016 defines it.
@@ -348,7 +349,7 @@ spelled differently.
 - A concept id is `espagnole`, as ADR-0003 defines it. What lab issue 60
   calls an entity id is a concept id in this vocabulary, and the glossary
   forbids "entity" as a synonym.
-- A statement address is a record address, a text, and a span. A mention
+- An evidence address is a record address, a text, and a span. A mention
   has no id apart from where it sits.
 - A claim id is derived from the claim, as the next rule states.
 
@@ -381,11 +382,11 @@ the same input are one claim, and the reader rejects the second line as a
 repeated id, which ADR-0016 already does. Two witnesses that abstain on one
 mother differ in `catalogue`, so their ids differ.
 
-**Statements are written in span order.** The order is the segment index,
-then the first word, then one past the last. That is a total order on the
+**Evidence addresses are written in span order.** The order is the segment
+index, then the first word, then one past the last. That is a total order on the
 triple, so two readers hash the same bytes. `stated_candidates` sorts
 candidates by their first span and returns concept ids. So the emitting
-change sorts the statements again, across candidates, by the triple before
+change sorts the addresses again, across candidates, by the triple before
 it hashes. Measured, three preparations interleave otherwise: 1909 line
 2103 and the two `JOINVILLE SAUCE` records. Two names of one candidate can
 start at the same word, so the order the text carries them does not decide
@@ -553,25 +554,27 @@ the re-emission. This record predicts nothing about that measurement.
   that lands the code, which also resolves two collisions this record
   creates. The glossary defines Subject as what an entry's own name
   denotes, and `subject` here is the subject of a triple. The glossary
-  scopes Statement to the opening paragraph, and a statement here is any
-  evidence address, including a heading span. The Evidence entry is written
-  here and scopes the term to the claim's `evidence` field, and prose keeps
-  the common noun. This record decides neither of the two entries.
+  scopes Statement to the opening paragraph and to derivations, while
+  `saucier.domain.statement` and its `Span` are reused here for heading
+  evidence too. The code's name for that reader waits for the glossary
+  change. The Evidence entry is written here and scopes the term to the
+  claim's `evidence` field, and prose keeps the common noun. This record
+  decides neither of the two entries.
 
 ## Consequences
 
 ### Positive
 
 - The four identities lab issue 60 names each carry their own id. They are
-  a record address, a concept id, a statement address, and a claim id. Of
-  the four jobs one folded string did, two leave it. The mention becomes a
-  statement address. The resolution becomes a claim with a status. The concept id
-  keeps the identity job and the lookup-key job by this record's own
-  decision. A new key needs a table from key to name, and that table is a
+  a record address, a concept id, an evidence address, and a claim id. Of
+  the four jobs one folded string did, two leave it. The mention becomes an
+  evidence address. The resolution becomes a claim with a status. The
+  concept id keeps the identity job and the lookup-key job by this record's
+  own decision. A new key needs a table from key to name, and that table is a
   store.
 - An abstention has a shape. It carries no span, or the spans the parser
   read. Which candidate a span names is read back from the record's text at
-  that span, not from the statement.
+  that span, not from the evidence address.
 - A reading by hand has a record type. ADR-0002 asked that a later stage
   record what filled the value and from what evidence. The record does
   that and prose does not.

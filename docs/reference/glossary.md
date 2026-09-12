@@ -250,8 +250,8 @@ in the same change.
     `names`, and `binds-mother`. Not "relationship", "edge", or "type".
 
 **Evidence**
-:   The `evidence` field of a claim: the statements it rests on, written on
-    the claim in span order. Zero statements is right only for an
+:   The `evidence` field of a claim: the evidence addresses it rests on,
+    written on the claim in span order. Zero addresses is right only for an
     abstention. Prose keeps the common noun for anything a reader weighs.
     Not "proof", "source", or "citation".
 
@@ -266,10 +266,11 @@ in the same change.
     "unresolved", which names the projection, and not "failed" or
     "unknown".
 
-**Statement address**
-:   Where one statement sits: a record address, which text of that record
-    (`heading` or `opening`), and a span. A statement has no identity apart
-    from its address. Not "mention id" or "evidence id".
+**Evidence address**
+:   Where one element of a claim's evidence sits: a record address, which
+    text of that record (`heading` or `opening`), and a span. An element of
+    evidence has no identity apart from its address. Not "statement
+    address", "mention id", or "evidence id".
 
 **`derives-from`**
 :   The predicate of a claim that the subject record derives from the
