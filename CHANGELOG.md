@@ -3,6 +3,15 @@
 Maintained by [release-please](https://github.com/googleapis/release-please)
 from conventional commit messages. Do not edit by hand.
 
+## [0.7.1](https://github.com/Alberto-Codes/saucier/compare/v0.7.0...v0.7.1) (2026-09-13)
+
+
+### Documentation
+
+* **adr:** decide the claim record and its ids ([#25](https://github.com/Alberto-Codes/saucier/issues/25)) ([fde3f3d](https://github.com/Alberto-Codes/saucier/commit/fde3f3d2a06e385720eb5e1a8b1e378cd9e9a6bd))
+* **docs:** teach the PR template the ! marker ([#24](https://github.com/Alberto-Codes/saucier/issues/24)) ([434f919](https://github.com/Alberto-Codes/saucier/commit/434f91973535dda2f82a6d328b99877871fc0905))
+* **docs:** write the domain naming rule ([#26](https://github.com/Alberto-Codes/saucier/issues/26)) ([a720efb](https://github.com/Alberto-Codes/saucier/commit/a720efb1ac965908e039de1209295a8a5232c62b))
+
 ## [0.7.0](https://github.com/Alberto-Codes/saucier/compare/v0.6.0...v0.7.0) (2026-09-10)
 
 
