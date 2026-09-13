@@ -239,6 +239,19 @@ in the same change.
 
 ## Claims
 
+**Record address**
+:   The id of a catalogue or preparation record: the source id, or the
+    source id and the heading line, joined. ADR-0016 calls it a
+    source-local address. It says where a reader opens the text and never
+    says what the text resolves to. Not "pointer", "reference", or
+    "entity id".
+
+**Claim id**
+:   The id of a claim record: `sha256:` followed by the hex SHA-256 digest
+    of the claim's seven fields in the writer's key order. Two claims with
+    the same fields have one id, and the reader recomputes it on the way
+    back. Decided in ADR-0020. Not "uuid", "key", or "checksum".
+
 **Claim**
 :   What one recorder records about one record or one concept, with its
     predicate, its object, its status, and its evidence. Decided in
@@ -247,8 +260,9 @@ in the same change.
     "assertion", "fact", or "value".
 
 **Predicate**
-:   The relation a claim asserts. Three in ADR-0020: `derives-from`,
-    `names`, and `binds-mother`. Not "relationship", "edge", or "type".
+:   The relation a claim is about, whether its recorder asserted or
+    abstained. Three in ADR-0020: `derives-from`, `names`, and
+    `binds-mother`. Not "relationship", "edge", or "type".
 
 **Evidence**
 :   The `evidence` field of a claim: the evidence addresses it rests on,

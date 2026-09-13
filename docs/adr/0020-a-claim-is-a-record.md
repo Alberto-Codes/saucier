@@ -309,7 +309,7 @@ Two worked examples, measured at `434f919`:
 | Claim | Status | Evidence |
 | --- | --- | --- |
 | `escoffier-1909:line:1449` derives-from `espagnole` | asserted | opening (0, 11, 12), (1, 2, 3), (2, 20, 21) `espagnole` |
-| `escoffier-1909:line:2192` derives-from | abstained | opening (0, 4, 5) `bechamel`, opening (2, 3, 5) `lobster butter` |
+| `escoffier-1909:line:2192` derives-from | abstained | opening (0, 4, 5) `bechamel`, opening (2, 3, 5) `lobster-butter` |
 
 The concept beside each span labels which candidate the span belongs to.
 It is not a field of the evidence address. The first example is `LENTEN
@@ -560,7 +560,9 @@ the re-emission. This record predicts nothing about that measurement.
   here. The change that assigns the next schema version fixes it, and the
   byte-identity rule holds only once it does.
 - **Not the glossary text.** The glossary carries definitional entries for
-  the terms this record coins, in this change. The existing entries Record,
+  the terms this record coins, in this change. Those are Record address,
+  Claim id, Claim, Predicate, Evidence, Asserted, Abstained, Evidence
+  address, and the three predicates. The existing entries Record,
   Recorder, and Envelope are not extended here, and their extension waits
   for the change that lands the code. That change also extends Unresolved
   and Resolved, because unresolved then means the parser abstained. It also
