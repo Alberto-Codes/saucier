@@ -3,11 +3,12 @@
 ## Status
 
 Accepted. ADR-0016 remains accepted. This record amends ADR-0016 in one
-respect. Its rule that an id is a source-local address governs its two
-record types, and a claim id is a digest of the claim's fields. Its
-section "What version one stops before" defers claim records to a later
-record that changes the domain.
-This is that record. No code lands with it.
+respect and ADR-0002 in one respect. ADR-0016's rule that an id is a
+source-local address governs its two record types, and a claim id is a
+digest of the claim's fields. ADR-0002's first decision sentence reads,
+under this record, that the parser abstained. ADR-0016's section "What
+version one stops before" defers claim records to a later record that
+changes the domain. This is that record. No code lands with it.
 
 ## Date
 
@@ -39,9 +40,10 @@ record does not carry them.
 
 **Two states stand where the text has three.** An unresolved parent
 is `None` whether the opening paragraph states no candidate or states
-several. ADR-0002 spent a whole record establishing that the second
-reading exists, because the field cannot say which one applies. The split
-is measurable and the record hides it:
+several. ADR-0002 established that `None` means the source did not say,
+never that the preparation has no mother. The field cannot also say whether
+the paragraph stated no candidate or several. That split is measurable and
+the record hides it:
 
 ```console
 $ uv run python -c "
@@ -159,10 +161,10 @@ written on the claim.
 
 **`recorder` replaces `generated_by`.** The glossary already names who
 recorded a procedure, and this record uses the same term for who recorded
-a claim. It is `hand` in this release, and a rule reader or a model names
-itself. One concept takes one term. The value for the parser is the name of
-the rule that read the text, as `RecordedProcedures` already names its
-recorder.
+a claim. The procedure recorder is `hand` in this release, and a rule
+reader or a model names itself. One concept takes one term. The value for
+the parser is the name of the rule that read the text, as
+`RecordedProcedures` already names its recorder.
 
 **`valid_time` goes.** The time a claim holds is the edition, and the
 witness of the record the evidence anchors to carries the edition. No
@@ -299,7 +301,8 @@ The reader rejects an evidence address whose span lies outside the folded
 segments of the text the `text` key names. A reader by hand opens the record address
 and counts the span. The reader also rejects a claim whose status is
 `asserted` and whose evidence is empty. Zero evidence is right only for an
-abstention.
+abstention. The reader also rejects a claim whose status is `abstained` and
+whose `object` is not `null`.
 
 Two worked examples, measured at `434f919`:
 
@@ -479,10 +482,11 @@ later work.
 **`parent` is the object of the parser's current asserted `derives-from`
 claim on the record, and `None` otherwise.** The parser records one
 `derives-from` claim per preparation, so a preparation is resolved when
-that claim is asserted and unresolved when it is abstained. ADR-0002's
-second sentence stands unchanged. Its first sentence reads, under this
-record, that the parser abstained. `None` never means the preparation has
-no parent.
+that claim is asserted and unresolved when it is abstained. This record
+amends ADR-0002's first decision sentence. `None` means the parser
+abstained, which includes the cycle case ADR-0008 clears. ADR-0002's second
+sentence stands unchanged. `None` never means the preparation has no
+parent.
 
 ADR-0008 clears a cycle and never breaks it by choice. Choosing one
 derivation to keep is an arbitrary choice wearing the costume of

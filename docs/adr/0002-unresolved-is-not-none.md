@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. First decision sentence amended by
+[ADR-0020](0020-a-claim-is-a-record.md).
 
 ## Date
 
@@ -35,6 +36,10 @@ source.
 
 **`parent = None` means the source stated no mother. It never means the
 preparation has none, and no code may treat the two as equivalent.**
+
+*Amended by [ADR-0020](0020-a-claim-is-a-record.md).* Under that record
+`None` means the parser abstained, which includes a derivation cycle
+ADR-0008 clears.
 
 Three rules follow.
 
