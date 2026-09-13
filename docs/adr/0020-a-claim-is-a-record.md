@@ -321,7 +321,7 @@ abstention carries both spans, and nothing recomputes them.
 Both examples are single-name candidates, so the snippet below reduces to
 the object concept. A candidate stated under two names carries the spans
 of both. `MORNAY SAUCE` at 1909 line 2437 states `bechamel` and
-`bechamel sauce`, and the claim carries the spans of both names.
+`bechamel-sauce`, and the claim carries the spans of both names.
 
 ```console
 $ uv run python -c "
@@ -561,9 +561,10 @@ the re-emission. This record predicts nothing about that measurement.
   byte-identity rule holds only once it does.
 - **Not the glossary text.** The glossary carries definitional entries for
   the terms this record coins, in this change. Those are Record address,
-  Claim id, Claim, Predicate, Evidence, Asserted, Abstained, Evidence
-  address, and the three predicates. The existing entries Record,
-  Recorder, and Envelope are not extended here, and their extension waits
+  Claim id, Claim, Predicate, Object, Status, Evidence, Asserted,
+  Abstained, Evidence address, and the three predicates. The existing
+  entries Record, Recorder, and Envelope are not extended here, and their
+  extension waits
   for the change that lands the code. That change also extends Unresolved
   and Resolved, because unresolved then means the parser abstained. It also
   resolves two collisions this record creates. The glossary defines Subject
