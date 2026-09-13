@@ -47,6 +47,11 @@ They fail the build. Do not route around them.
 holds one term per concept. It is "preparation", never "recipe". Coining a term
 needs a glossary entry in the same change.
 
+**Domain vocabulary needs written authority.** A word earns a named function
+when the glossary defines it, or an ADR decision sentence names what that
+function does. Nothing else earns one, and the caller count does not matter.
+Lookup accessors such as `children_of` and `by_concept` stay outside this rule.
+
 **The parser does not guess.** Prefer a rule that resolves less and is right to
 one that resolves more and is sometimes wrong. The unresolved count is
 published. Inflating it by guessing is the one unrecoverable mistake here.
