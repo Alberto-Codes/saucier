@@ -237,6 +237,82 @@ in the same change.
     the interchange that shaped it. `type` says which kind of record it is.
     `id` is its source-local address. Not "header" or "metadata".
 
+## Claims
+
+**Record address**
+:   The id of a catalogue or preparation record: the source id, or the
+    source id and the heading line, joined. It is local to one source,
+    which is how ADR-0016 describes it. It says where a reader opens the
+    text and never says what the text resolves to. Not "pointer",
+    "reference", or "entity id".
+
+**Claim id**
+:   The id of a claim record: `sha256:` followed by the hex SHA-256 digest
+    of the claim's seven fields in the key order ADR-0020 fixes. Two
+    claims with the same fields have one id, and the reader recomputes it
+    on the way back. Decided in ADR-0020. Not "uuid", "key", or "checksum".
+
+**Claim**
+:   What one recorder records about one record or one concept, with its
+    predicate, its object, its status, and its evidence. Decided in
+    ADR-0020. No released interchange carries one yet. Prose keeps the
+    common noun for anything a reader can check against the source. Not
+    "assertion", "fact", or "value".
+
+**Predicate**
+:   The relation a claim is about, whether its recorder asserted or
+    abstained. Three in ADR-0020: `derives-from`, `names`, and
+    `binds-mother`. Not "relationship", "edge", or "type".
+
+**Object**
+:   The field of a claim that holds what the predicate reaches: a concept
+    id or a record address. It is `null` when the recorder abstained. Not
+    "target", "value", or "answer".
+
+**Status**
+:   The field of a claim that says whether its recorder asserted or
+    abstained. Two values in ADR-0020: `asserted` and `abstained`. Not
+    "state", "confidence", or "result".
+
+**Evidence**
+:   The `evidence` field of a claim: the evidence addresses it rests on,
+    written on the claim in span order. Zero addresses is right only for an
+    abstention. Prose keeps the common noun for anything a reader weighs.
+    Not "proof", "source", or "citation".
+
+**Asserted**
+:   The status of a claim whose recorder reached a conclusion. Its object
+    is set and its evidence is not empty. Not "resolved", which names the
+    projection, and not "confirmed".
+
+**Abstained**
+:   The status of a claim whose recorder refused to conclude. Its object is
+    `null`. It carries the spans the recorder read, which may be none. Not
+    "unresolved", which names the projection, and not "failed" or
+    "unknown".
+
+**Evidence address**
+:   Where one element of a claim's evidence sits: a record address, which
+    text of that record (`heading` or `opening`), and a span. An element of
+    evidence has no identity apart from its address. Not "statement
+    address", "mention id", or "evidence id".
+
+**`derives-from`**
+:   The predicate of a claim that the subject record derives from the
+    object concept. Its subject is a record address and its object is a
+    concept id. One per preparation, asserted or abstained under ADR-0020.
+    `parent` is a projection of it. Not "parent-of" or "child-of".
+
+**`names`**
+:   The predicate of a claim that a record's heading carries a term. Its
+    subject is a record address and its object is a concept id. Many per
+    record. Not "alias" or "label".
+
+**`binds-mother`**
+:   The predicate of a claim that a declared mother's entry in one witness
+    is one record. Its subject is a concept id and its object is a record
+    address. One per mother per witness. Not "mother-of" or "is-mother".
+
 ## Names this project does not use
 
 **`shortorder`**
