@@ -47,6 +47,10 @@ They fail the build. Do not route around them.
 holds one term per concept. It is "preparation", never "recipe". Coining a term
 needs a glossary entry in the same change.
 
+**Domain names need written authority.** Domain vocabulary earns a named
+function or method if and only if an ADR decision sentence or glossary entry
+names it. This rule also applies when there is only one caller.
+
 **The parser does not guess.** Prefer a rule that resolves less and is right to
 one that resolves more and is sometimes wrong. The unresolved count is
 published. Inflating it by guessing is the one unrecoverable mistake here.
