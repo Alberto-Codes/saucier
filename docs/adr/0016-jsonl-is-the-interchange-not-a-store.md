@@ -3,7 +3,8 @@
 ## Status
 
 Accepted. Amends the JSONL row of
-[ADR-0006](0006-storage-arrives-in-stages.md).
+[ADR-0006](0006-storage-arrives-in-stages.md). Id rule amended by
+[ADR-0020](0020-a-claim-is-a-record.md).
 
 ## Date
 
@@ -95,6 +96,10 @@ domain does not forbid two preparations on one line, so the writer
 refuses such a catalogue rather than emit a stream its reader rejects.
 Separating record, entity, mention, and claim identity is later work, and
 none of it arrives here.
+
+*Amended by [ADR-0020](0020-a-claim-is-a-record.md).* That rule governs the
+catalogue and preparation records. A claim record's id is a digest of its
+fields.
 
 **A catalogue id is a source id, not a witness id.** `Witness.source_id` is
 the work and the edition year. A second scan or a second transcription of

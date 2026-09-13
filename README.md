@@ -155,7 +155,7 @@ reference is generated from the docstrings, so it cannot drift from the code.
 - [How-to](https://alberto-codes.github.io/saucier/how-to/add-a-source/) — point it at a different book
 - [Reference](https://alberto-codes.github.io/saucier/reference/cli/) — commands and data model
 - [Explanation](https://alberto-codes.github.io/saucier/explanation/why-no-model-yet/) — why a parser comes first
-- [Decisions](https://alberto-codes.github.io/saucier/adr/) — the seventeen records, and what each one accepted
+- [Decisions](https://alberto-codes.github.io/saucier/adr/) — every record, and what each one accepted
 
 ## Licence
 
