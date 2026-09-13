@@ -26,7 +26,7 @@ Neither carries a second reading of `parent`. The investigation report
 of 2026-09-12 traces this in its sections 2 and 4.
 
 The same deficiency produced every recent per-record question. The
-captain calls those questions the canary in the coal mine. Four of them
+maintainer calls those questions the canary in the coal mine. Four of them
 are measured here at `434f919`.
 
 **The evidence is computed and discarded.** `Span` at
@@ -98,10 +98,10 @@ binding is a lookup at read time and not a record, so nothing carries the
 fact that the mother is unbound in that witness. Each command then decides
 for itself what an empty lookup means.
 
-The investigation report put two framings to the captain. Framing A makes
+The investigation report put two framings to the maintainer. Framing A makes
 `parent` a projection of claims on day one and re-emits every reading of
 the parser as a claim. Framing B adds a claim record beside the untouched
-value. The captain chose A on 2026-09-12 and called it a growth spurt.
+value. The maintainer chose A on 2026-09-12 and called it a growth spurt.
 This record is the design that choice needs.
 
 It comes before the code for one reason. Lab issue 60 asks for the four
@@ -522,7 +522,7 @@ the re-emission. This record predicts nothing about that measurement.
   Delete it, replay, obtain the same answers, claims included.
 - **No re-emission now.** The parser's readings become claims in the
   change that lands the record.
-- **Not the census.** The captain has not decided it. This record changes
+- **Not the census.** The maintainer has not decided it. This record changes
   the shape the census rests on and no number in it.
 - **Not the second recorder.** A hand claim or a model claim may one day
   disagree with the parser. Which claim the projection then reads, and
