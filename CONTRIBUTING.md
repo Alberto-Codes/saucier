@@ -47,13 +47,13 @@ They fail the build. Do not route around them.
 holds one term per concept. It is "preparation", never "recipe". Coining a term
 needs a glossary entry in the same change.
 
-**Domain names need written authority.** A domain name is a word the glossary
-defines or an ADR decision sentence decides. It earns a named function or
-method if and only if that glossary entry or that decision sentence names it.
-An ADR decision sentence counts only when it names the operation the function
-performs, not a noun inside the sentence. This rule also applies when there is
-only one caller. Accessors and helpers that describe a lookup are not domain
-names, so `children_of` and `by_concept` sit outside this rule.
+**Domain vocabulary needs written authority.** Domain vocabulary is a word the
+glossary defines or an ADR decision sentence decides. That word earns a named
+function or method if and only if that glossary entry or that decision sentence
+names it. A decision sentence counts only when it names what the function does,
+not a noun inside the sentence. The rule holds when there is only one caller.
+An accessor or a helper that describes a lookup is not domain vocabulary, so
+`children_of` and `by_concept` sit outside this rule.
 
 **The parser does not guess.** Prefer a rule that resolves less and is right to
 one that resolves more and is sometimes wrong. The unresolved count is

@@ -36,7 +36,7 @@ conversation. It is "preparation" (never "recipe"), "mother" (never "base
 sauce"), "unresolved" (never "missing"). Coining a term requires a glossary
 entry in the same change.
 
-When a domain term earns a named function is a House rule in
+When domain vocabulary earns a named function is a House rule in
 [CONTRIBUTING.md](CONTRIBUTING.md#house-rules).
 
 `scripts/check_doc_refs.py` verifies that every dotted `saucier.*` reference
