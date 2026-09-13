@@ -64,5 +64,5 @@ repository, because they govern the writing rather than this implementation.
   derivative](0018-a-mother-does-not-bind-to-its-derivative.md). Why a stated
   derivative cannot supply a mother's identity when a scan loses its name.
 - [ADR-0020: A claim is a record](0020-a-claim-is-a-record.md). Why
-  `parent` becomes a projection of what the parser claimed, and which four
-  identities stop sharing one string.
+  `parent` becomes a projection of what the parser claimed, and why a claim
+  carries its recorder and its evidence.
